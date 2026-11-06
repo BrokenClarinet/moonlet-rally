@@ -48,6 +48,7 @@ All keys can be changed in Controls (main menu or pause menu). Defaults:
 - Moonlets map: fly back to any unlocked moonlet. Each moonlet's grass is kept (localStorage `moonletRally.life.<n>`, 4 bits per point), and restoring more of an old moonlet raises its Gem Garden output.
 - Gem Garden: every restored moonlet becomes a silo that grows gems (also while you're away, up to 8 hours, each silo holds 2 hours). Harvest, upgrade silos and buy sprinklers there.
 - Garage Upgrades tab: ten levelled upgrades bought with gems (wider tires, engine, tread, nitro tank, springs, trick wax, gem magnet, bull bar, gem polish, combo keeper).
+- Garage: 6 bodies, 14 paints, 6 wheel sets, 9 toppers and 5 drift/boost trails. Bodies, wheels and toppers each have a perk; paint and trails are cosmetic.
 - Garage parts change how the car plays (bodies, wheels and toppers each have a perk; paint is cosmetic).
 
 ## Menus and settings

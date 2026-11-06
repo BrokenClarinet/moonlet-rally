@@ -91,6 +91,8 @@
   .chip.locked { background:#cbbbd9; }
   .chip.swatch { width:30px; height:30px; padding:0; border-radius:50%; background:var(--sw); }
   .chip.swatch.on { outline:3px solid var(--paper); outline-offset:1px; }
+  .chip.swatch.locked { width:auto; min-width:30px; padding:0 7px; border-radius:15px; background:var(--sw); }
+  .chip.swatch.locked small { font-size:10px; font-weight:900; color:var(--paper); text-shadow:1px 1px 0 var(--ink), -1px -1px 0 var(--ink); opacity:1; }
   .chip.nope { animation:nope .35s; }
   @keyframes nope { 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
   .btn.alt2 { background:var(--gem); }
@@ -170,6 +172,7 @@
     <div class="grow"><label>Paint</label><div class="chips" id="g-paint"></div></div>
     <div class="grow"><label>Wheels</label><div class="chips" id="g-wheels"></div></div>
     <div class="grow"><label>Topper</label><div class="chips" id="g-topper"></div></div>
+    <div class="grow"><label>Trail</label><div class="chips" id="g-trail"></div></div>
     </div>
     <div id="gUpg" hidden></div>
   </div>
@@ -708,10 +711,15 @@ function recount(p) {
 
 // ---------------------------------------------------------------- car (built from garage parts)
 const CAR_OPTS = {
-  body: [{ id: 'buggy', name: 'Dune Buggy', cost: 0 }, { id: 'pebble', name: 'Pebble', cost: 150 }, { id: 'strider', name: 'Strider 6x6', cost: 400 }],
-  paint: [['Coral', 0xff6b4a], ['Sunflower', 0xffc43d], ['Mint', 0x5fd6a4], ['Sky', 0x5bb6ff], ['Lilac', 0xb48cff], ['Bubblegum', 0xff8fc7], ['Cream', 0xfff1d6], ['Midnight', 0x3b2f5c]].map(([name, hex]) => ({ id: hex, name, cost: 0 })),
-  wheels: [{ id: 'classic', name: 'Classic', cost: 0 }, { id: 'chunky', name: 'Chunky', cost: 80 }, { id: 'halo', name: 'Halo', cost: 200 }],
-  topper: [{ id: 'antenna', name: 'Antenna', cost: 0 }, { id: 'none', name: 'None', cost: 0 }, { id: 'flag', name: 'Flag', cost: 60 }, { id: 'spoiler', name: 'Spoiler', cost: 120 }, { id: 'lamps', name: 'Roof lamps', cost: 200 }],
+  body: [{ id: 'buggy', name: 'Dune Buggy', cost: 0 }, { id: 'pebble', name: 'Pebble', cost: 150 }, { id: 'scarab', name: 'Scarab', cost: 250 }, { id: 'strider', name: 'Strider 6x6', cost: 400 },
+    { id: 'hauler', name: 'Moon Hauler', cost: 600 }, { id: 'comet', name: 'Comet', cost: 900 }],
+  paint: [['Coral', 0xff6b4a, 0], ['Sunflower', 0xffc43d, 0], ['Mint', 0x5fd6a4, 0], ['Sky', 0x5bb6ff, 0], ['Lilac', 0xb48cff, 0], ['Bubblegum', 0xff8fc7, 0], ['Cream', 0xfff1d6, 0], ['Midnight', 0x3b2f5c, 0],
+    ['Tangerine', 0xff9a3d, 40], ['Lagoon', 0x2fb3a8, 40], ['Ruby', 0xe8506e, 60], ['Frost', 0xbfe9ff, 60], ['Moss', 0x7a9a3c, 60], ['Gold', 0xe0b23a, 150]].map(([name, hex, cost]) => ({ id: hex, name, cost })),
+  wheels: [{ id: 'classic', name: 'Classic', cost: 0 }, { id: 'chunky', name: 'Chunky', cost: 80 }, { id: 'spiked', name: 'Spiked', cost: 150 }, { id: 'halo', name: 'Halo', cost: 200 },
+    { id: 'bubble', name: 'Bubble', cost: 260 }, { id: 'star', name: 'Star rims', cost: 320 }],
+  topper: [{ id: 'antenna', name: 'Antenna', cost: 0 }, { id: 'none', name: 'None', cost: 0 }, { id: 'flag', name: 'Flag', cost: 60 }, { id: 'ears', name: 'Critter ears', cost: 90 }, { id: 'spoiler', name: 'Spoiler', cost: 120 },
+    { id: 'dish', name: 'Radar dish', cost: 180 }, { id: 'lamps', name: 'Roof lamps', cost: 200 }, { id: 'booster', name: 'Rocket pack', cost: 300 }, { id: 'crown', name: 'Crown', cost: 500 }],
+  trail: [{ id: 'leaf', name: 'Moonlet', cost: 0 }, { id: 'sparks', name: 'Sparks', cost: 120 }, { id: 'frost', name: 'Frost', cost: 120 }, { id: 'candy', name: 'Candy', cost: 160 }, { id: 'rainbow', name: 'Rainbow', cost: 300 }],
 };
 // what each garage part does in play (paint is cosmetic)
 const PART_FX = {
@@ -726,6 +734,21 @@ const PART_FX = {
   flag: { fx: { bonus: 1.2 }, note: '+20% bonus gems' },
   spoiler: { fx: { top: 1.1, airCtl: 2.2 }, note: '+10% top speed, air steering' },
   lamps: { fx: { fresh: 1.4 }, note: '+40% gems for new ground' },
+  scarab: { fx: { grip: 1.12, driftPaint: 1.3, nitro: 1.15 }, note: 'Drift machine: wide drift tracks' },
+  hauler: { fx: { accel: 0.92, smash: 0.7, reach: 1.25, bonus: 1.15 }, note: 'Tough hauler, +15% bonus gems' },
+  comet: { fx: { top: 1.14, accel: 1.06, grip: 0.9, air: 1.1 }, note: 'Fastest car, a bit slippery' },
+  spiked: { fx: { iceGrip: 1.8, smash: 0.85 }, note: 'Bites ice, cracks rocks' },
+  bubble: { fx: { air: 1.18, grip: 0.95 }, note: 'Bouncy: higher jumps' },
+  star: { fx: { fresh: 1.15, paint: 1.08 }, note: '+15% gems for new ground' },
+  ears: { fx: { air: 1.06 }, note: 'Cute. A little more hop' },
+  dish: { fx: { reach: 1.5, bonus: 1.08 }, note: 'Wider pickups, +8% bonus' },
+  booster: { fx: { nitro: 1.35, top: 1.03 }, note: '+35% nitro charge' },
+  crown: { fx: { bonus: 1.3 }, note: '+30% bonus gems' },
+  leaf: { fx: {}, note: "The moonlet's colors" },
+  sparks: { fx: {}, note: 'Golden sparks' },
+  frost: { fx: {}, note: 'Icy glitter' },
+  candy: { fx: {}, note: 'Pink and lilac' },
+  rainbow: { fx: {}, note: 'Every color' },
 };
 let CS = {};
 function computeStats() {
@@ -745,7 +768,7 @@ function computeStats() {
   CS.bonus *= 1 + 0.1 * u('polish');
   CS.comboHold = 0.7 + 0.3 * u('combo');
 }
-const DEFAULT_CAR = { body: 'buggy', paint: 0xff6b4a, wheels: 'classic', topper: 'antenna' };
+const DEFAULT_CAR = { body: 'buggy', paint: 0xff6b4a, wheels: 'classic', topper: 'antenna', trail: 'leaf' };
 
 function buildCar(cfg) {
   const g = new THREE.Group();
@@ -769,6 +792,31 @@ function buildCar(cfg) {
     for (const z of [-0.36, -0.8]) box(0.92, 0.32, 0.07, 0, 0.74, z, dark, 0.015);
     for (const sx of [-0.3, 0.3]) box(0.18, 0.1, 0.04, sx, 0.5, 1.11, lamp, 0.015);
     wheelSpots = [[0.62, 0.78], [-0.62, 0.78], [0.62, 0], [-0.62, 0], [0.62, -0.78], [-0.62, -0.78]]; wr = 0.28; roofY = 1.02; rearY = 0.9;
+  } else if (cfg.body === 'scarab') {
+    g.add(inked(new THREE.SphereGeometry(0.85, 9, 5, 0, Math.PI * 2, 0, Math.PI / 2).scale(0.78, 0.72, 1.18).translate(0, 0.34, -0.05), paint, 0.04));
+    box(1.28, 0.1, 1.85, 0, 0.34, -0.05, trim, 0.02);
+    box(0.05, 0.06, 1.5, 0, 0.95, -0.1, dark, 0.015);
+    g.add(inked(new THREE.SphereGeometry(0.32, 8, 4).scale(1.3, 0.62, 0.9).translate(0, 0.62, 0.62), glass, 0.025));
+    for (const sx of [-0.28, 0.28]) { const l = new THREE.Mesh(new THREE.CircleGeometry(0.07, 6), lamp); l.position.set(sx, 0.44, 1.02); g.add(l); }
+    wheelSpots = [[0.6, 0.62], [-0.6, 0.62], [0.6, -0.66], [-0.6, -0.66]]; wr = 0.28; roofY = 0.98; rearY = 0.78;
+  } else if (cfg.body === 'hauler') {
+    box(1.12, 0.28, 2.35, 0, 0.52, 0, trim, 0.04);
+    box(1.05, 0.62, 0.82, 0, 0.96, 0.62, paint);
+    box(1.07, 0.24, 0.5, 0, 1.06, 0.66, glass, 0.02);
+    box(0.8, 0.24, 0.04, 0, 1.04, 1.04, glass, 0.02);
+    box(1.05, 0.3, 1.15, 0, 0.8, -0.52, paint);
+    box(0.86, 0.06, 0.95, 0, 0.96, -0.52, dark, 0.012);
+    box(1.15, 0.12, 0.16, 0, 0.5, 1.2, dark, 0.02);
+    for (const sx of [-0.32, 0.32]) box(0.2, 0.12, 0.04, sx, 0.72, 1.04, lamp, 0.015);
+    wheelSpots = [[0.64, 0.74], [-0.64, 0.74], [0.64, -0.72], [-0.64, -0.72]]; wr = 0.34; roofY = 1.3; rearY = 0.98;
+  } else if (cfg.body === 'comet') {
+    g.add(inked(new THREE.CylinderGeometry(0.4, 0.44, 1.45, 8).rotateX(Math.PI / 2).translate(0, 0.56, -0.08), paint, 0.04));
+    g.add(inked(new THREE.ConeGeometry(0.4, 0.8, 8).rotateX(Math.PI / 2).translate(0, 0.56, 1.04), paint, 0.04));
+    g.add(inked(new THREE.SphereGeometry(0.27, 8, 4).scale(1, 0.8, 1.6).translate(0, 0.9, 0.12), glass, 0.025));
+    box(1.5, 0.06, 0.36, 0, 0.44, -0.55, trim, 0.02);
+    box(0.06, 0.5, 0.42, 0, 1.0, -0.62, trim, 0.02);
+    g.add(inked(new THREE.CylinderGeometry(0.3, 0.36, 0.16, 8).rotateX(Math.PI / 2).translate(0, 0.56, -0.86), dark, 0.02));
+    wheelSpots = [[0.58, 0.52], [-0.58, 0.52], [0.58, -0.56], [-0.58, -0.56]]; wr = 0.27; roofY = 1.12; rearY = 0.96;
   } else {
     const sh = new THREE.Shape();
     sh.moveTo(-0.9, 0.25); sh.lineTo(0.92, 0.25); sh.lineTo(1.0, 0.45); sh.lineTo(0.55, 0.56); sh.lineTo(0.1, 0.6); sh.lineTo(-0.6, 0.64); sh.lineTo(-0.92, 0.52); sh.closePath();
@@ -791,6 +839,20 @@ function buildCar(cfg) {
     } else if (cfg.wheels === 'halo') {
       w.add(inked(new THREE.CylinderGeometry(wr, wr, 0.16, 10).rotateZ(Math.PI / 2), dark, 0.02));
       for (const s of [-1, 1]) { const r = new THREE.Mesh(new THREE.TorusGeometry(wr * 0.85, 0.035, 4, 14).rotateY(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x7ef3ff })); r.position.x = s * 0.085; w.add(r); }
+    } else if (cfg.wheels === 'spiked') {
+      w.add(inked(new THREE.CylinderGeometry(wr * 0.92, wr * 0.92, 0.26, 8).rotateZ(Math.PI / 2), dark, 0.025));
+      const sp = new THREE.ConeGeometry(0.055, 0.14, 4).translate(0, wr * 0.92 + 0.05, 0);
+      for (let k = 0; k < 8; k++) w.add(new THREE.Mesh(sp.clone().rotateX(k * Math.PI / 4), toon({ color: 0xd8d0e8 })));
+      w.add(new THREE.Mesh(new THREE.CylinderGeometry(wr * 0.4, wr * 0.4, 0.28, 6).rotateZ(Math.PI / 2), trim));
+    } else if (cfg.wheels === 'bubble') {
+      w.add(inked(new THREE.SphereGeometry(wr * 1.05, 8, 6).scale(0.8, 1, 1), toon({ color: 0x9fe8ff, transparent: true, opacity: 0.8 }), 0.02));
+      w.add(new THREE.Mesh(new THREE.SphereGeometry(wr * 0.42, 6, 4), paint));
+    } else if (cfg.wheels === 'star') {
+      w.add(inked(new THREE.CylinderGeometry(wr, wr, 0.24, 10).rotateZ(Math.PI / 2), dark, 0.025));
+      const st = new THREE.Shape();
+      for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5, r = k % 2 ? wr * 0.3 : wr * 0.75; k ? st.lineTo(Math.cos(a) * r, Math.sin(a) * r) : st.moveTo(r, 0); }
+      const sg = new THREE.ShapeGeometry(st).rotateY(Math.PI / 2), sm = new THREE.MeshBasicMaterial({ color: 0xffd84a, side: THREE.DoubleSide });
+      for (const s of [-1, 1]) { const m = new THREE.Mesh(sg, sm); m.position.x = s * 0.125; w.add(m); }
     } else {
       w.add(inked(new THREE.CylinderGeometry(wr, wr, 0.24, 8).rotateZ(Math.PI / 2), dark, 0.025));
       w.add(new THREE.Mesh(new THREE.CylinderGeometry(wr * 0.45, wr * 0.45, 0.26, 6).rotateZ(Math.PI / 2), paint));
@@ -799,7 +861,7 @@ function buildCar(cfg) {
   }
 
   // topper
-  let wobble = null, flag = null;
+  let wobble = null, flag = null, spin = null;
   if (cfg.topper === 'antenna') {
     wobble = new THREE.Group(); wobble.position.set(0.28, rearY - 0.05, -0.55);
     wobble.add(new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.75, 4).translate(0, 0.37, 0), dark));
@@ -817,11 +879,33 @@ function buildCar(cfg) {
   } else if (cfg.topper === 'lamps') {
     box(0.75, 0.07, 0.12, 0, roofY, 0.05, dark, 0.02);
     for (const sx of [-0.24, 0, 0.24]) box(0.14, 0.12, 0.1, sx, roofY + 0.09, 0.08, lamp, 0.015);
+  } else if (cfg.topper === 'ears') {
+    for (const sx of [-1, 1]) {
+      const e = inked(new THREE.ConeGeometry(0.15, 0.3, 4).rotateZ(-sx * 0.35).translate(sx * 0.24, roofY + 0.1, 0.02), paint, 0.025); g.add(e);
+      g.add(new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 4).rotateZ(-sx * 0.35).translate(sx * 0.23, roofY + 0.08, 0.07), toon({ color: 0xff8fc7 })));
+    }
+  } else if (cfg.topper === 'dish') {
+    spin = new THREE.Group(); spin.position.set(-0.22, roofY - 0.02, -0.25);
+    spin.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 4).translate(0, 0.15, 0), dark));
+    const dish = inked(new THREE.SphereGeometry(0.3, 10, 3, 0, Math.PI * 2, 0, Math.PI / 3).rotateX(Math.PI).rotateX(-0.6).translate(0, 0.52, 0), trim, 0.02); spin.add(dish);
+    spin.add(new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4).translate(0, 0.42, 0.08), new THREE.MeshBasicMaterial({ color: 0xff6b4a })));
+    g.add(spin);
+  } else if (cfg.topper === 'booster') {
+    for (const sx of [-0.26, 0.26]) {
+      g.add(inked(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8).rotateX(Math.PI / 2).translate(sx, rearY + 0.08, -0.7), trim, 0.025));
+      g.add(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.2, 8).rotateX(Math.PI / 2).translate(sx, rearY + 0.08, -0.32), paint));
+      g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.08, 8).rotateX(Math.PI / 2).translate(sx, rearY + 0.08, -1.03), dark));
+    }
+  } else if (cfg.topper === 'crown') {
+    const gold = toon({ color: 0xffc43d, emissive: 0x3a2400 });
+    g.add(inked(new THREE.CylinderGeometry(0.26, 0.22, 0.16, 6, 1).translate(0, roofY + 0.06, 0), gold, 0.02));
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; g.add(new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 4).translate(Math.cos(a) * 0.24, roofY + 0.22, Math.sin(a) * 0.24), gold)); }
+    g.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0).translate(0, roofY + 0.08, 0.24), new THREE.MeshBasicMaterial({ color: 0x7fe3ff })));
   }
 
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.1, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.3, depthWrite: false }));
   shadow.position.y = 0.03; shadow.scale.set(0.75, 1, cfg.body === 'strider' ? 1.4 : 1.1); g.add(shadow);
-  g.userData = { wheels, shadow, wobble, flag, wr };
+  g.userData = { wheels, shadow, wobble, flag, spin, wr };
   return g;
 }
 const car = new THREE.Group();
@@ -930,7 +1014,7 @@ addEventListener('wheel', (e) => { if (!(e.target instanceof Element && e.target
 
 // ---------------------------------------------------------------- garage
 let garageOpen = false;
-const GARAGE_ROWS = [['body', 'g-body'], ['paint', 'g-paint'], ['wheels', 'g-wheels'], ['topper', 'g-topper']];
+const GARAGE_ROWS = [['body', 'g-body'], ['paint', 'g-paint'], ['wheels', 'g-wheels'], ['topper', 'g-topper'], ['trail', 'g-trail']];
 function owns(kind, id) { return CAR_OPTS[kind].find(o => o.id === id).cost === 0 || G.owned.includes(`${kind}:${id}`); }
 const UPG = [
   { id: 'tires', name: 'Wider tires', note: '+18% track width per level', max: 8, base: 50, k: 1.7 },
@@ -970,7 +1054,7 @@ function renderGarage() {
       const b = document.createElement('button');
       const have = owns(kind, o.id), on = G.car[kind] === o.id;
       b.className = 'chip' + (on ? ' on' : '') + (have ? '' : ' locked') + (kind === 'paint' ? ' swatch' : '');
-      if (kind === 'paint') { b.style.setProperty('--sw', '#' + o.id.toString(16).padStart(6, '0')); b.title = o.name; b.setAttribute('aria-label', o.name); }
+      if (kind === 'paint') { b.style.setProperty('--sw', '#' + o.id.toString(16).padStart(6, '0')); b.title = have ? o.name : `${o.name} · ${o.cost} gems`; b.setAttribute('aria-label', b.title); if (!have) b.innerHTML = `<small>${o.cost} ${GEM}</small>`; }
       else b.innerHTML = `<span>${o.name}${have ? '' : ` <small>${o.cost} ${GEM}</small>`}</span><em>${PART_FX[o.id].note}</em>`;
       b.onclick = () => {
         if (!have) {
@@ -1309,6 +1393,14 @@ const ACCEL = 16, MAXV = 15, MAXV_BOOST = 24, DRAG = 0.6, GRAV = 24, SMASH_SPEED
 let driftCombo = 0, driftShown = 0, freshFrame = 0, freshTimer = 0, comboTime = 0, combo = 1, shake = 0;
 const hints = {};
 const FLAME = [new THREE.Color(0xffc040), new THREE.Color(0xff6a2a)];
+const TRAILS = { sparks: [0xffd84a, 0xffa53d, 0xfff3b0], frost: [0x9fe8ff, 0xffffff, 0x7fc8ff], candy: [0xff8fc7, 0xb48cff, 0xfff1f8] };
+const trailCol = new THREE.Color();
+// sparkle color for drifts and boosts; null means the default look
+function trailColor() {
+  const t = G.car.trail;
+  if (t === 'rainbow') return trailCol.setHSL((performance.now() / 1500 + Math.random() * 0.15) % 1, 0.85, 0.62);
+  const set = TRAILS[t]; return set ? trailCol.setHex(set[(Math.random() * set.length) | 0]) : null;
+}
 const ROCK_DUST = new THREE.Color(0x8a8296);
 
 function bonusText(msg) { $('drift').innerHTML = msg; driftShown = 1.3; }
@@ -1722,13 +1814,13 @@ function step(dt) {
         if (Math.random() < 0.5 + S.drift * 0.15) {
           carPos.copy(wheelW).multiplyScalar(R + groundH(wheelW) + 0.1);
           const alive = S.drift > 2.2;
-          spawn(carPos, S.p, alive ? new THREE.Color(planet.def.leaf).offsetHSL(0, 0, Math.random() * 0.2) : new THREE.Color(planet.def.dead[0]), alive ? 3 : 1.5);
+          spawn(carPos, S.p, alive ? (trailColor() || new THREE.Color(planet.def.leaf).offsetHSL(0, 0, Math.random() * 0.2)) : new THREE.Color(planet.def.dead[0]), alive ? 3 : 1.5);
         }
       }
     } else { lastWheel[0].set(0, 0, 0); lastWheel[1].set(0, 0, 0); }
     if (S.boosting) {
       carPos.copy(S.p).multiplyScalar(R + S.alt + 0.4).addScaledVector(S.f, -1.1);
-      for (let k = 0; k < 2; k++) spawn(carPos, tmp.copy(S.f).multiplyScalar(-1.5).add(S.p), FLAME[k], 1.2);
+      for (let k = 0; k < 2; k++) spawn(carPos, tmp.copy(S.f).multiplyScalar(-1.5).add(S.p), (k && trailColor()) || FLAME[k], 1.2);
     }
 
     // fresh-ground combo: keep painting new ground to build a multiplier
@@ -1855,6 +1947,7 @@ function render(dt) {
   for (const w of car.userData.wheels) w.rotation.x = S.wheelSpin;
   const tNow = performance.now() / 1000, spdNow = S.v.length();
   if (car.userData.wobble) { car.userData.wobble.rotation.x = -Math.min(0.45, spdNow * 0.025) + Math.sin(tNow * 9) * 0.04 * Math.min(1, spdNow / 8); car.userData.wobble.rotation.z = lean * 2.5; }
+  if (car.userData.spin) car.userData.spin.rotation.y = tNow * 2.2;
   if (car.userData.flag) car.userData.flag.rotation.y = Math.sin(tNow * 11) * (0.1 + Math.min(0.3, spdNow * 0.02));
   car.userData.shadow.visible = S.mode === 'drive';
   const hAbove = Math.max(0, S.alt - groundH(S.p));
