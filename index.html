@@ -356,12 +356,64 @@ const PLANET_DEFS = [
     flowers: [0xfff3a0, 0xff9fc8, 0x9fd8ff], rock: [0xb8b8d0, 0x7c7c9a, 0x50506a],
     sky: { top: 0x05061a, hor: 0x4a3a8a, top2: 0x1a2a6a, hor2: 0xa8a0e0 },
     twist: 'stars', title: 'Starfall Moon', intro: 'Starfall Moon: catch falling star-seeds before they land!' },
+  { name: 'Moonlet VIII', R: 12, goal: 0.62, seed: 811, rate: 420,
+    dead: [0xc9b6d8, 0xa792bd], alive: [0xff9fd0, 0xe06aa8], pollen: 0xfff0a8, leaf: 0xf07ab8, trunk: 0x8a4a7a,
+    flowers: [0x9fe8ff, 0xfff3a0, 0xb48cff], rock: [0xf0dcf4, 0xc8a8d8, 0x8c6aa4],
+    sky: { top: 0x2a1048, hor: 0xff9fc8, top2: 0x4a2a8a, hor2: 0xffd0e8 },
+    twist: 'bouncy', title: 'Jelly Moon', intro: 'Jelly Moon: the ground is bouncy! Chain bounces into trick combos.' },
+  { name: 'Moonlet IX', R: 7, goal: 0.6, seed: 907, rate: 700, grav: 0.75,
+    dead: [0xb8a890, 0x958670], alive: [0xffd36b, 0xe8a83a], pollen: 0xffffff, leaf: 0xe0b040, trunk: 0x7a5a3a,
+    flowers: [0xff7f6a, 0x7fd0ff, 0xffffff], rock: [0xe8dcc8, 0xb8a888, 0x7a6a50],
+    sky: { top: 0x1a2048, hor: 0xffc08a, top2: 0x2a5aa0, hor2: 0xffe8b0 },
+    twists: ['hoops'], title: 'Teacup Moon', intro: 'Teacup Moon: a tiny, floaty moonlet. Loop the hoops!' },
+  { name: 'Moonlet X', R: 13, goal: 0.62, seed: 1013, rate: 1150,
+    dead: [0xe4f2fa, 0xb6d0e4], alive: [0x8fd8ff, 0x4aa8d8], pollen: 0xffffff, leaf: 0x5ab8e0, trunk: 0x5a6a8a,
+    flowers: [0xffffff, 0xb48cff, 0xfff3a0], rock: [0xffffff, 0xc8dcec, 0x8aa4c0],
+    sky: { top: 0x101a3a, hor: 0xc8e0ff, top2: 0x2a4a8a, hor2: 0xf0f8ff },
+    twists: ['ice', 'wind'], title: 'Blizzard Moon', intro: 'Blizzard Moon: icy ground AND wind gusts. Hold on!' },
+  { name: 'Moonlet XI', R: 13, goal: 0.64, seed: 1109, rate: 1900, grav: 0.6,
+    dead: [0x5a4a50, 0x40343a], alive: [0xff8a4a, 0xd85a2a], pollen: 0xffe07a, leaf: 0xf07a3a, trunk: 0x4a3030,
+    flowers: [0xffd84a, 0xff5a5a, 0xfff3a0], rock: [0x8a7078, 0x5a4850, 0x3a2c32],
+    sky: { top: 0x1a0a14, hor: 0xff7a4a, top2: 0x4a1a2a, hor2: 0xffb08a },
+    twists: ['geysers', 'wisps'], title: 'Ember Moon', intro: 'Ember Moon: geysers to launch you and wisps to ram, in low gravity!' },
+  { name: 'Moonlet XII', R: 14, goal: 0.65, seed: 1201, rate: 3100,
+    dead: [0x4a5a7a, 0x34405a], alive: [0xb0f080, 0x6ac05a], pollen: 0xfff3a0, leaf: 0x8ad86a, trunk: 0x4a4a6a,
+    flowers: [0xffd84a, 0x9fe8ff, 0xff9fc8], rock: [0x9aa8c8, 0x6a789a, 0x46506a],
+    sky: { top: 0x040818, hor: 0x5a4aa0, top2: 0x10205a, hor2: 0xb0a8f0 },
+    twists: ['stars', 'hoops'], title: 'Comet Moon', intro: 'Comet Moon: falling stars and hoop runs at the same time!' },
+  { name: 'Moonlet XIII', R: 13, goal: 0.66, seed: 1303, rate: 5000,
+    dead: [0xb0a0c0, 0x8a7aa0], alive: [0x9be37a, 0x5ab04a], pollen: 0xffd66b, leaf: 0x6ac05a, trunk: 0x7a5a3c,
+    flowers: [0xff7fa8, 0xffcf4a, 0x8fe3ff], rock: [0xe0d4ee, 0xa898c0, 0x6a5a8a],
+    sky: { top: 0x1a1048, hor: 0xffa0a0, top2: 0x2a3aa0, hor2: 0xffe0b0 },
+    twists: ['bouncy', 'geysers'], title: 'Trampoline Moon', intro: 'Trampoline Moon: bouncy ground and geysers. Go big!' },
 ];
-const planetDef = (i) => {
-  const d = PLANET_DEFS[i % PLANET_DEFS.length];
-  const loop = Math.floor(i / PLANET_DEFS.length);
-  return { ...d, name: loop ? `${d.name} ${'+'.repeat(loop)}` : d.name, seed: d.seed + loop * 101, rate: d.rate * Math.pow(2, loop * 7), R: d.R + loop * 2, goal: Math.min(0.8, d.goal + loop * 0.05) };
-};
+// moonlets can have one twist or a mix of several
+const hasTwist = (def, t) => def.twists ? def.twists.includes(t) : def.twist === t;
+const roman = (n) => { let r = ''; for (const [v, s] of [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]) while (n >= v) { r += s; n -= v; } return r; };
+// after the hand-made moonlets, every further moonlet is generated from its number: own name, colors, size and twist mix
+const TWIST_POOL = ['ice', 'geysers', 'wisps', 'wind', 'hoops', 'stars', 'bouncy'];
+const TWIST_TEXT = { ice: 'slippery ice', geysers: 'geysers', wisps: 'grass-eating wisps', wind: 'wind gusts', hoops: 'hoop runs', stars: 'falling stars', bouncy: 'bouncy ground' };
+const NAME_A = ['Vel', 'Mor', 'Tess', 'Quill', 'Bram', 'Lum', 'Pip', 'Zor', 'Nim', 'Cal', 'Fen', 'Oro', 'Sol', 'Ash', 'Wren', 'Kip', 'Tam', 'Rue', 'Juni', 'Bix', 'Lark', 'Ivo', 'Moss', 'Dov'];
+const NAME_B = ['a', 'ix', 'ora', 'en', 'u', 'ette', 'ar', 'is', 'o', 'ina', 'el', 'wick', 'by', 'ara', 'on', 'ie'];
+function genDef(i) {
+  const rng = rngFrom(i * 7919 + 17), pick = (a) => a[Math.floor(rng() * a.length)];
+  const h = rng(), hsl = (hh, ss, ll) => new THREE.Color().setHSL(((hh % 1) + 1) % 1, ss, ll).getHex();
+  const nT = rng() < 0.55 ? 1 : 2, pool = [...TWIST_POOL], twists = [];
+  for (let k = 0; k < nT; k++) twists.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+  const title = pick(NAME_A) + pick(NAME_B) + ' Moon', extra = i - PLANET_DEFS.length;
+  const deadH = h + 0.45 + rng() * 0.2;
+  return {
+    name: `Moonlet ${roman(i + 1)}`, R: Math.round(10 + rng() * 4 + Math.min(4, extra * 0.15)), goal: Math.min(0.75, 0.66 + extra * 0.004), seed: 2000 + i * 37,
+    rate: Math.round(5000 * Math.pow(1.6, extra + 1)), grav: twists.includes('wisps') || rng() < 0.2 ? 0.6 + rng() * 0.25 : 1,
+    dead: [hsl(deadH, 0.18, 0.66), hsl(deadH, 0.18, 0.52)], alive: [hsl(h, 0.6, 0.62), hsl(h + 0.03, 0.55, 0.45)],
+    pollen: hsl(h + 0.15, 0.9, 0.82), leaf: hsl(h, 0.55, 0.52), trunk: hsl(h + 0.55, 0.3, 0.3),
+    flowers: [hsl(h + 0.33, 0.85, 0.66), hsl(h + 0.6, 0.8, 0.7), hsl(h + 0.85, 0.75, 0.72)],
+    rock: [hsl(deadH, 0.2, 0.84), hsl(deadH, 0.18, 0.6), hsl(deadH, 0.2, 0.38)],
+    sky: { top: hsl(h + 0.6, 0.55, 0.1), hor: hsl(h + 0.05, 0.75, 0.72), top2: hsl(h + 0.6, 0.5, 0.3), hor2: hsl(h + 0.1, 0.8, 0.86) },
+    twists, title, intro: `${title}: ${twists.map(t => TWIST_TEXT[t]).join(' and ')}!`,
+  };
+}
+const planetDef = (i) => i < PLANET_DEFS.length ? PLANET_DEFS[i] : genDef(i);
 
 function icosphere(sub) {
   const t = (1 + Math.sqrt(5)) / 2;
@@ -641,7 +693,7 @@ function buildPlanet(index) {
   }
 
   const geysers = [], stars = [];
-  if (def.twist === 'geysers') {
+  if (hasTwist(def, 'geysers')) {
     const ventGeo = facet([[new THREE.CylinderGeometry(0.9, 1.3, 0.45, 7).translate(0, 0.2, 0), def.rock[1]], [new THREE.CylinderGeometry(0.55, 0.6, 0.47, 7).translate(0, 0.22, 0), 0x3a2758]]);
     const ventMat = toon({ vertexColors: true });
     const steamGeo = new THREE.CylinderGeometry(0.45, 0.8, 1, 7, 1, true).translate(0, 0.5, 0);
@@ -654,7 +706,7 @@ function buildPlanet(index) {
       group.add(m); geysers.push({ d, mesh: m, steam, t: rng() * 5 });
     }
   }
-  if (def.twist === 'stars') {
+  if (hasTwist(def, 'stars')) {
     const seedGeo = facet([[new THREE.OctahedronGeometry(0.55, 0), 0xfff3a0], [new THREE.ConeGeometry(0.3, 1.6, 4).translate(0, 1.1, 0), 0xffc43d]]);
     const seedMat = toon({ vertexColors: true, emissive: 0x7a5a00 });
     const markGeo = new THREE.RingGeometry(1.5, 1.85, 24).rotateX(-Math.PI / 2), markMat = new THREE.MeshBasicMaterial({ color: 0xfff3a0, transparent: true, opacity: 0.8, depthWrite: false, side: THREE.DoubleSide });
@@ -666,7 +718,7 @@ function buildPlanet(index) {
   }
   // ---- twists
   const wisps = [], hoops = [];
-  if (def.twist === 'wisps') {
+  if (hasTwist(def, 'wisps')) {
     const wGeo = facet([
       [lumpy(new THREE.IcosahedronGeometry(0.6, 0), 0.12, 5), 0x3e2c66],
       [lumpy(new THREE.IcosahedronGeometry(0.42, 0), 0.12, 6).translate(0.5, 0.15, -0.1), 0x51407e],
@@ -680,7 +732,7 @@ function buildPlanet(index) {
       group.add(m); wisps.push({ d: V(), h: V(), mesh: m, body, alive: false, wait: 2 + i * 1.5 });
     }
   }
-  if (def.twist === 'hoops') {
+  if (hasTwist(def, 'hoops')) {
     const ringGeo = new THREE.TorusGeometry(1.55, 0.15, 5, 18), postGeo = new THREE.CylinderGeometry(0.08, 0.1, 1.7, 5);
     const hoopMat = toon({ color: 0xffc43d, emissive: 0x4a2c00 }), postMat = toon({ color: 0x7a4d8a });
     for (let i = 0; i < 6; i++) {
@@ -952,7 +1004,9 @@ function save() {
 // ---------------------------------------------------------------- UI
 const $ = (id) => document.getElementById(id);
 const GEM = '<i class="gem"></i>';
-const fmt = (n) => n < 1000 ? Math.floor(n).toString() : n < 1e6 ? (n / 1e3).toFixed(1) + 'k' : (n / 1e6).toFixed(2) + 'M';
+const FMT_U = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+const fmtR = (n) => n < 100 ? (n || 0).toFixed(1) : fmt(n);
+const fmt = (n) => { if (!(n >= 1000)) return Math.floor(n || 0).toString(); const e = Math.min(FMT_U.length - 1, Math.floor(Math.log10(n) / 3)); const v = n / Math.pow(1000, e); return (e >= FMT_U.length - 1 && v >= 1000 ? n.toExponential(2) : v.toFixed(e === 1 ? 1 : 2) + FMT_U[e]); };
 let toastTimer = 0;
 function toast(msg, secs = 2.5) { $('toast').innerHTML = msg; $('toast').style.opacity = 1; toastTimer = secs; }
 const costT = () => Math.round(50 * Math.pow(1.7, G.tires)), costS = () => Math.round(75 * Math.pow(1.8, G.sprink));
@@ -964,7 +1018,7 @@ function updateUI() {
   $('pct').textContent = frac >= goal ? `${(frac * 100).toFixed(0)}% restored · ramp open!` : `${(frac * 100).toFixed(0)}% of ${(goal * 100).toFixed(0)}% to open the ramp`;
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
-  $('rate').innerHTML = `garden grows ${gemRate().toFixed(1)} ${GEM}/s`;
+  $('rate').innerHTML = `garden grows ${fmtR(gemRate())} ${GEM}/s`;
   const nUp = UPG.filter(u => upLvl(u.id) < u.max && G.gems >= upCost(u)).length;
   $('upT').innerHTML = nUp ? `Upgrades · ${nUp} ready` : 'Upgrades';
   $('gardenBtn').innerHTML = `Gem Garden${touch.active ? '' : ` (${kn('garden')})`} · ${fmt(gardenReady())} ${GEM}`;
@@ -1161,7 +1215,7 @@ function renderGarden() {
   for (const it of items) {
     const row = document.createElement('div'); row.className = 'gdrow';
     const fill = Math.min(100, (it.d.silo || 0) / capOf(it) * 100);
-    row.innerHTML = `<div class="gdname"><b>${it.name}</b> ${it.title}${it.current ? ' <i>(here now)</i>' : ''}<small>${(it.frac * 100).toFixed(0)}% restored · ${prodOf(it).toFixed(1)} ${GEM}/s · level ${it.d.lvl || 0}</small></div>
+    row.innerHTML = `<div class="gdname"><b>${it.name}</b> ${it.title}${it.current ? ' <i>(here now)</i>' : ''}<small>${(it.frac * 100).toFixed(0)}% restored · ${fmtR(prodOf(it))} ${GEM}/s · level ${it.d.lvl || 0}</small></div>
       <div class="gdsilo"><div style="width:${fill.toFixed(0)}%"></div><span>${fmt(it.d.silo || 0)} ${GEM}</span></div>`;
     const up = document.createElement('button'); up.className = 'btn'; up.innerHTML = `+50% · ${fmt(lvlCost(it))} ${GEM}`; up.disabled = G.gems < lvlCost(it);
     up.onclick = () => { if (G.gems >= lvlCost(it)) { G.gems -= lvlCost(it); it.d.lvl = (it.d.lvl || 0) + 1; renderGarden(); save(); } };
@@ -1712,7 +1766,7 @@ function step(dt) {
     S.boosting = boosting;
     if (boosting) { G.nitro = Math.max(0, G.nitro - 0.4 * CS.drain * dt); }
     const airK = S.grounded ? 1 : (CS.airCtl > 1 ? 0.3 : 0);
-    const onIce = planet.def.twist === 'ice' && S.grounded && planet.lifeAt(S.p) < 0.5, traction = onIce ? 0.7 : 1;
+    const onIce = hasTwist(planet.def, 'ice') && S.grounded && planet.lifeAt(S.p) < 0.5, traction = onIce ? 0.7 : 1;
     S.onIce = onIce;
     S.precise = inp.precise && S.grounded;
     const steerAmt = inp.steer * (inp.drift ? 3.0 : S.precise ? 3.2 : 2.3) * clamp(Math.abs(fwd) / (S.precise ? 2 : 4), 0, 1) * Math.sign(fwd || 1) * airK;
@@ -1772,7 +1826,12 @@ function step(dt) {
     const g = groundH(S.p);
     S.valt -= GRAV * (planet.def.grav || 1) * dt;
     const nextAlt = S.alt + S.valt * dt;
-    if (nextAlt <= g || (S.grounded && nextAlt < g + 0.12)) {
+    if (hasTwist(planet.def, 'bouncy') && !S.grounded && nextAlt <= g && S.valt < -7) {
+      land(); S.grounded = true; takeoff();
+      S.valt = Math.min(22, -S.valt * 0.68); S.alt = g + 0.05; S.grounded = false; S.air = 0.01;
+      paintAt(S.p, 1.6, 1); shake = Math.max(shake, 0.25);
+      if (!hints.boing) { hints.boing = true; toast('BOING! Flip between bounces for combos', 2.5); }
+    } else if (nextAlt <= g || (S.grounded && nextAlt < g + 0.12)) {
       if (!S.grounded) land();
       S.valt = clamp((g - S.alt) / dt, -5, 14);
       S.alt = g; S.grounded = true;
@@ -1787,11 +1846,11 @@ function step(dt) {
     }
 
     updateGemArcs(dt);
-    if (planet.def.twist === 'wisps') updateWisps(dt);
-    if (planet.def.twist === 'hoops') updateHoops(dt);
-    if (planet.def.twist === 'geysers') updateGeysers(dt);
-    if (planet.def.twist === 'wind') updateWind(dt);
-    if (planet.def.twist === 'stars') updateStars(dt);
+    if (hasTwist(planet.def, 'wisps')) updateWisps(dt);
+    if (hasTwist(planet.def, 'hoops')) updateHoops(dt);
+    if (hasTwist(planet.def, 'geysers')) updateGeysers(dt);
+    if (hasTwist(planet.def, 'wind')) updateWind(dt);
+    if (hasTwist(planet.def, 'stars')) updateStars(dt);
     updateRush(dt);
 
     // seed pods
