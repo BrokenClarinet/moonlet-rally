@@ -91,4 +91,4 @@ All visuals are generated in code from basic shapes (toon shading, ink outlines,
 
 ## Moon critters
 
-Fluffy critters move onto the grass you grow; more appear as a moonlet fills up. Bumping one costs gems and breaks your combos. Whizzing past one at speed without touching it pays a small bonus.
+Fluffy critters move onto the grass you grow; more appear as a moonlet fills up. Bumping one costs 5 to 10% of the gems you carry and breaks your combos (then 4 seconds of grace). Slow driving only nudges past them. Whizzing past one at speed without touching it pays a small bonus.
