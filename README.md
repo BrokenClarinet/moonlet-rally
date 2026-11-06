@@ -58,7 +58,7 @@ A loading bar runs while the moonlet is built, then the main menu offers Play/Co
 
 - Build: `python3 tools/build_site.py` creates `dist/site/` and `dist/moonlet-rally-site.zip`.
 - Manual upload: unzip onto any host with PHP 7.4+ (Apache hosts such as IONOS also honor the included `.htaccess` files). Edit `secret.php` on the server and put your password between the quotes. Optionally set `$contact` in `index.php` to show a support email.
-- GitHub deploy: add repository secrets `FTP_SERVER` (host name, e.g. `ftp.example.com`),, `FTP_USERNAME`, `FTP_PASSWORD` and `SITE_PASSWORD` (optionally variable `FTP_DIR`), then run **Actions > Deploy website**. It builds from the repo and uploads with FTP (encrypted when the host supports it), writing `secret.php` from `SITE_PASSWORD`. For hosts that use SFTP (like IONOS), add a repository variable `FTP_PROTOCOL` set to `sftp`.
+- GitHub deploy: add repository secrets `FTP_SERVER` (host name, e.g. `ftp.example.com`),, `FTP_USERNAME`, `FTP_PASSWORD` and `SITE_PASSWORD` (optionally variable `FTP_DIR`), then run **Actions > Deploy website**. It builds from the repo and uploads with SFTP, falling back to FTP (encrypted when the host supports it), and writes `secret.php` from `SITE_PASSWORD`. A repository variable `FTP_PROTOCOL` (`sftp` or `ftp`) forces one.
 - The site build turns the Poki SDK off (`MR_PLATFORM = 'none'`) and has no ads.
 
 ## Platform (Poki)

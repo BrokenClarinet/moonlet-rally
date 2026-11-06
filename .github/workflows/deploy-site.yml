@@ -2,7 +2,7 @@
 # Runs only when you start it (Actions tab > Deploy website > Run workflow).
 # Repository secrets needed: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, SITE_PASSWORD
 # Optional repository variables: FTP_DIR (folder on the host, default the login folder)
-#   and FTP_PROTOCOL (ftp or sftp, default ftp)
+#   and FTP_PROTOCOL (sftp or ftp; by default it tries sftp, then ftp)
 name: Deploy website
 on:
   workflow_dispatch:
@@ -30,13 +30,17 @@ jobs:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL || 'ftp' }}
+          FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL }}
           FTP_DIR: ${{ vars.FTP_DIR || '.' }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp >/dev/null
           host="${FTP_SERVER#*://}"
-          # ftp: uses TLS when the server offers it, plain FTP otherwise. sftp: SSH file transfer.
+          # Tries SFTP first, then FTP (with TLS when the server offers it), unless FTP_PROTOCOL picks one.
           export LFTP_PASSWORD="$FTP_PASSWORD"
-          lftp -c "set ftp:ssl-allow yes; set ftp:ssl-force no; set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20;
-            open -u \"$FTP_USERNAME\" --env-password $FTP_PROTOCOL://$host;
-            mirror --reverse --verbose --no-perms ./dist/site/ '$FTP_DIR'"
+          for proto in ${FTP_PROTOCOL:-sftp ftp}; do
+            echo "Trying $proto..."
+            if lftp -c "set ftp:ssl-allow yes; set ftp:ssl-force no; set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20;
+              open -u \"$FTP_USERNAME\" --env-password $proto://$host;
+              mirror --reverse --verbose --no-perms ./dist/site/ '$FTP_DIR'"; then echo "Uploaded with $proto"; exit 0; fi
+          done
+          echo "::error::Upload failed. Check FTP_SERVER, FTP_USERNAME and FTP_PASSWORD, and FTP_DIR if your site lives in a subfolder."; exit 1
