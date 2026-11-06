@@ -16,6 +16,7 @@ python3 -m http.server 8000
 - Arrows / WASD: drive
 - Space: drift
 - Shift or E: nitro boost (charged by drifting, seed pods and smashing rocks)
+- G: garage (car bodies, paint, wheels, toppers; some unlock with gems)
 - Phones: on-screen buttons, auto-accelerate
 
 ## How it plays
@@ -26,3 +27,7 @@ python3 -m http.server 8000
 - Purple mushrooms launch you into the air. Long jumps bloom where you land.
 - Restored ground grows gems over time, also while you're away (50%, capped at 2 hours).
 - Restore enough of a moonlet (50% on the first, then 65% and 75%) and a launch ramp opens to fly you to the next one.
+
+## Art and licensing
+
+All visuals are generated in code from basic shapes (toon shading, ink outlines, faceted props, gradient sky). The UI icons are our own inline SVG. No third-party models, textures, fonts or icon sets are used. Three.js is MIT-licensed; see `vendor/THREE-LICENSE.txt`.
