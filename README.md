@@ -24,14 +24,14 @@ All keys can be changed in Controls (main menu or pause menu). Defaults:
 - G: garage (car bodies, paint, wheels, toppers; some unlock with gems)
 - H: Gem Garden (idle area to harvest and upgrade gem silos)
 - P or Esc: pause (Esc also closes menus)
-- Phones: on-screen buttons, auto-accelerate; hold JUMP in the air to flip
+- Phones and tablets: the car drives itself forward. Drag the left thumb stick to steer, pull it back to brake or reverse; in the air push it up/down to flip and sideways to spin. Right side: JUMP, BOOST, DRIFT and SLOW (precision).
 
 ## How it plays
 
 - Tire tracks bring dead ground to life. Painting fresh ground builds an x2 to x5 combo.
 - Seed pods (glowing beams) make a big bloom and refill nitro.
 - Rocks bounce you off at low speed and smash at high speed or while boosting.
-- Purple mushrooms and charged jumps launch you into the air. Flips and spins score gems and nitro, and chaining tricks builds a combo. Land crooked and it's sloppy; land on your roof and you crash.
+- Purple mushrooms and charged jumps launch you into the air. Flips and spins score gems and nitro; bigger tricks pay more per rotation (a triple flip pays six times a single), and chaining tricks builds a combo. Land crooked and it's sloppy; land on your roof and you crash.
 - Gem trails arc over mushrooms and hops. Grab a whole trail for a bonus.
 - Bloom Rush: every so often, fresh ground pays triple gems for 15 seconds.
 - An arrow points to the launch ramp (or next hoop), and the car gently steers into the ramp when you're close.

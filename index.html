@@ -46,10 +46,30 @@
   #title p { margin:8px 0; opacity:.92; max-width:520px; text-wrap:balance; }
   #title .go { font-family:inherit; cursor:pointer; margin-top:14px; font-size:22px; font-weight:900; padding:10px 34px; border-radius:30px; background:var(--coral); color:var(--paper); border:3px solid var(--ink); box-shadow:3px 4px 0 var(--ink); animation:pulse 1.2s infinite; }
   @keyframes pulse { 50% { transform:scale(1.06) rotate(-1deg); } }
-  #touch { position:fixed; inset:auto 0 0 0; height:40%; display:none; pointer-events:none; }
-  .tb { position:absolute; bottom:18px; width:76px; height:76px; border-radius:50%; background:rgba(58,39,88,.7); border:3px solid var(--ink); box-shadow:2px 3px 0 var(--ink); pointer-events:auto; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:900; color:var(--paper); }
-  .tb.on { background:var(--sun); color:var(--ink); }
-  #tL { left:18px; } #tR { left:108px; } #tD { right:18px; width:92px; height:92px; font-size:15px; } #tB { right:122px; font-size:14px; } #tJ { right:30px; bottom:124px; font-size:14px; }
+  #touch { position:fixed; inset:0; display:none; pointer-events:none; -webkit-touch-callout:none; }
+  #tzone { position:absolute; left:0; bottom:0; width:48%; height:72%; pointer-events:auto; touch-action:none; }
+  #stick { position:absolute; left:34px; bottom:34px; width:116px; height:116px; margin:0; border-radius:50%; background:rgba(58,39,88,.45); border:3px solid rgba(42,24,56,.8); pointer-events:none; opacity:.55; transition:opacity .15s; }
+  #stick.on { opacity:1; transition:none; }
+  #stick i { position:absolute; left:50%; top:50%; width:54px; height:54px; margin:-27px 0 0 -27px; border-radius:50%; background:var(--sun); border:3px solid var(--ink); box-shadow:2px 3px 0 var(--ink); }
+  #stick b { position:absolute; inset:6px; border-radius:50%; background:
+    radial-gradient(circle at 50% 8%, var(--paper) 0 3px, transparent 4px), radial-gradient(circle at 50% 92%, var(--paper) 0 3px, transparent 4px),
+    radial-gradient(circle at 8% 50%, var(--paper) 0 3px, transparent 4px), radial-gradient(circle at 92% 50%, var(--paper) 0 3px, transparent 4px); opacity:.7; }
+  .tb { position:absolute; width:76px; height:76px; border-radius:50%; background:rgba(58,39,88,.75); border:3px solid var(--ink); box-shadow:2px 3px 0 var(--ink); pointer-events:auto; touch-action:none; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:900; color:var(--paper); user-select:none; -webkit-user-select:none; }
+  .tb.on { background:var(--sun); color:var(--ink); transform:translate(1px,2px); box-shadow:1px 1px 0 var(--ink); }
+  #tJ { right:20px; bottom:20px; width:98px; height:98px; font-size:17px; background:rgba(255,107,74,.85); }
+  #tB { right:128px; bottom:24px; }
+  #tD { right:30px; bottom:128px; width:72px; height:72px; }
+  #tP { right:128px; bottom:112px; width:58px; height:58px; font-size:11px; }
+  body.touch #precise { left:auto; right:200px; bottom:100px; }
+  body.touch #combo { bottom:48px; } body.touch #nitro { bottom:16px; width:min(200px,34vw); }
+  body.touch #guide { bottom:auto; top:96px; }
+  #rotateHint { display:none; font-weight:800; color:var(--sun); }
+  @media (orientation:portrait) and (pointer:coarse) { #rotateHint { display:block; } }
+  @media (max-width:600px) {
+    #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; } #right { transform-origin:top right; }
+    #toast { top:26%; white-space:normal; width:92vw; font-size:19px; }
+    body.touch #nitro { bottom:auto; top:140px; } body.touch #combo { bottom:auto; top:162px; }
+    body.touch #guide { top:190px; } #rush { top:200px; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
   .gpanel { touch-action:pan-y; overscroll-behavior:contain; pointer-events:auto; width:min(640px,100%); max-height:52vh; overflow:auto; background:var(--panel); border:3px solid var(--ink); border-radius:18px; box-shadow:4px 5px 0 var(--ink); padding:10px 14px 12px; box-sizing:border-box; display:flex; flex-direction:column; gap:8px; }
@@ -159,7 +179,7 @@
     <div id="gdlist"></div>
   </div>
 </div>
-<div id="touch"><div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div><div class="tb" id="tB">BOOST</div><div class="tb" id="tD">DRIFT</div><div class="tb" id="tJ">JUMP</div></div>
+<div id="touch"><div id="tzone"><div id="stick"><b></b><i></i></div></div><div class="tb" id="tB">BOOST</div><div class="tb" id="tD">DRIFT</div><div class="tb" id="tP">SLOW</div><div class="tb" id="tJ">JUMP</div></div>
 <button class="btn alt" id="pauseBtn" aria-label="Pause"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="#2a1838"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="#2a1838"/></svg></button>
 <div id="fps" class="hud" hidden></div>
 <div id="title"><h1>MOONLET<span>RALLY</span></h1>
@@ -167,6 +187,7 @@
   <div id="menuView" hidden>
     <p>Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
     <p id="hint" style="font-size:13px;opacity:.75"></p>
+    <p id="rotateHint">Turn your phone sideways for the best view</p>
     <button class="go" id="playBtn">PLAY</button>
     <div class="menurow"><button class="btn alt" id="mSettings">Settings</button><button class="btn alt" id="mControls">Controls</button></div>
     <button class="btn alt" id="login" hidden style="margin-top:12px">Log in to save progress across devices</button>
@@ -203,7 +224,7 @@ const loadStep = async (f, txt) => { document.getElementById('loadfill').style.w
 
 // ---------------------------------------------------------------- settings (saved per device; Poki syncs these too)
 const SET_KEY = 'moonletRally.settings';
-const SET_DEF = { quality: 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false };
+const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false };
 let SET = { ...SET_DEF };
 try { Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch {}
 const saveSettings = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch {} };
@@ -841,7 +862,7 @@ function updateUI() {
   $('rate').innerHTML = `garden grows ${gemRate().toFixed(1)} ${GEM}/s`;
   const nUp = UPG.filter(u => upLvl(u.id) < u.max && G.gems >= upCost(u)).length;
   $('upT').innerHTML = nUp ? `Upgrades · ${nUp} ready` : 'Upgrades';
-  $('gardenBtn').innerHTML = `Gem Garden (${kn('garden')}) · ${fmt(gardenReady())} ${GEM}`;
+  $('gardenBtn').innerHTML = `Gem Garden${touch.active ? '' : ` (${kn('garden')})`} · ${fmt(gardenReady())} ${GEM}`;
   $('nitrofill').style.width = (G.nitro * 100).toFixed(0) + '%';
   $('combo').textContent = combo > 1 ? `x${combo} FRESH GROUND` : '';
   $('combo').style.opacity = combo > 1 ? 1 : 0;
@@ -1046,7 +1067,7 @@ function renderGardenScene(dt) {
 
 // ---------------------------------------------------------------- input
 const keys = {};
-const touch = { L: false, R: false, D: false, B: false, J: false, active: false };
+const touch = { sx: 0, sy: 0, D: false, B: false, J: false, P: false, active: false };
 // rebindable keys: two slots per action, saved per device
 const ACTIONS = [
   ['up', 'Drive / flip forward', ['KeyW', 'ArrowUp']], ['down', 'Reverse / flip back', ['KeyS', 'ArrowDown']],
@@ -1097,13 +1118,13 @@ function renderControls() {
   }
 }
 function updateLabels() {
-  $('hint').innerHTML = touchActive() ? 'Steer with ◀ ▶, tap JUMP, hold DRIFT and BOOST<br>Grab seed pods, smash rocks, flip off mushrooms'
+  $('hint').innerHTML = touchActive() ? 'Left thumb: drag to steer, pull back to brake<br>Right thumb: JUMP, BOOST, DRIFT · in the air, push the stick to flip and spin'
     : `${kn('up')} ${kn('left')} ${kn('down')} ${kn('right')} drive · ${kn('drift')} drift · ${kn('boost')} boost · ${kn('jump')} jump · ${kn('precise')} precision<br>In the air: ${kn('up')} ${kn('down')} flip, ${kn('left')} ${kn('right')} spin · ${kn('garage')} garage · ${kn('garden')} Gem Garden · ${kn('pause')} pause`;
-  $('garageBtn').innerHTML = `Garage (${kn('garage')})`;
+  $('garageBtn').innerHTML = touchActive() ? 'Garage' : `Garage (${kn('garage')})`;
 }
 addEventListener('keydown', (e) => { if (Platform.adBusy) { e.preventDefault(); return; } keys[e.code] = true; if (BOUND.has(e.code) || ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; for (const k of ['D', 'B', 'J', 'P']) touch[k] = false; touch.sx = touch.sy = 0; });
 const touchDetected = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const touchActive = () => SET.touch === 'on' || (SET.touch === 'auto' && touchDetected);
 // settings screen
@@ -1123,7 +1144,7 @@ function applySettings() {
   renderer.setPixelRatio(SET.quality === 'low' ? Math.min(dpr, 1) * 0.75 : SET.quality === 'medium' ? Math.min(dpr, 1.25) : Math.min(dpr, 2));
   renderer.setSize(innerWidth, innerHeight);
   for (const c of [camera, GD.cam]) SET.outlines ? c.layers.enable(1) : c.layers.disable(1);
-  touch.active = touchActive(); $('touch').style.display = touch.active ? 'block' : 'none';
+  touch.active = touchActive(); $('touch').style.display = touch.active ? 'block' : 'none'; document.body.classList.toggle('touch', touch.active);
   $('fps').hidden = !SET.fps;
   updateLabels();
 }
@@ -1169,11 +1190,36 @@ addEventListener('keydown', (e) => {
 });
 // clicked buttons drop focus so Space and Enter keep driving the car
 addEventListener('pointerup', () => { const a = document.activeElement; if (a && a.tagName === 'BUTTON') a.blur(); });
-for (const [id, k] of [['tL', 'L'], ['tR', 'R'], ['tD', 'D'], ['tB', 'B'], ['tJ', 'J']]) {
-  const el = $(id);
-  const on = (e) => { e.preventDefault(); touch[k] = true; el.classList.add('on'); };
-  const off = (e) => { e.preventDefault(); touch[k] = false; el.classList.remove('on'); };
-  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off);
+// touch: a floating thumb stick on the left half, buttons on the right; each finger is tracked on its own
+const capture = (el, e) => { try { el.setPointerCapture(e.pointerId); } catch {} };
+const stick = { id: null, ox: 0, oy: 0, el: $('stick'), knob: $('stick').querySelector('i') };
+const STICK_R = 52, STICK_DEAD = 0.18;
+function stickRest() {
+  stick.id = null; touch.sx = touch.sy = 0;
+  stick.el.classList.remove('on'); stick.el.style.left = ''; stick.el.style.top = ''; stick.el.style.bottom = ''; stick.knob.style.transform = '';
+}
+$('tzone').addEventListener('pointerdown', (e) => {
+  e.preventDefault(); if (stick.id !== null) return;
+  const r = $('tzone').getBoundingClientRect();
+  stick.id = e.pointerId; stick.ox = e.clientX; stick.oy = e.clientY; capture($('tzone'), e);
+  stick.el.classList.add('on'); stick.el.style.bottom = 'auto';
+  stick.el.style.left = (e.clientX - r.left - 58) + 'px'; stick.el.style.top = (e.clientY - r.top - 58) + 'px';
+});
+$('tzone').addEventListener('pointermove', (e) => {
+  if (e.pointerId !== stick.id) return;
+  e.preventDefault();
+  let dx = e.clientX - stick.ox, dy = e.clientY - stick.oy; const d = Math.hypot(dx, dy);
+  if (d > STICK_R) { dx *= STICK_R / d; dy *= STICK_R / d; }
+  stick.knob.style.transform = `translate(${dx.toFixed(0)}px,${dy.toFixed(0)}px)`;
+  const dz = (v) => Math.abs(v) < STICK_DEAD ? 0 : Math.sign(v) * (Math.abs(v) - STICK_DEAD) / (1 - STICK_DEAD);
+  touch.sx = dz(dx / STICK_R); touch.sy = dz(-dy / STICK_R);
+});
+for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) $('tzone').addEventListener(t, (e) => { if (e.pointerId === stick.id) stickRest(); });
+for (const [id, k] of [['tD', 'D'], ['tB', 'B'], ['tJ', 'J'], ['tP', 'P']]) {
+  const el = $(id); let pid = null;
+  const on = (e) => { e.preventDefault(); pid = e.pointerId; capture(el, e); touch[k] = true; el.classList.add('on'); };
+  const off = (e) => { if (e.pointerId !== pid) return; pid = null; touch[k] = false; el.classList.remove('on'); };
+  el.addEventListener('pointerdown', on); for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(t, off);
 }
 function readInput() {
   let thr = 0, steer = 0;
@@ -1183,8 +1229,8 @@ function readInput() {
   if (act('right')) steer -= 1;
   let drift = act('drift'), boost = act('boost'), jump = act('jump'), precise = act('precise');
   if (touch.active) {
-    if (touch.L) steer += 1; if (touch.R) steer -= 1; if (touch.D) drift = true; if (touch.B) boost = true; if (touch.J) jump = true;
-    if (thr === 0) thr = 1; // auto-throttle on touch
+    steer -= touch.sx; if (touch.D) drift = true; if (touch.B) boost = true; if (touch.J) jump = true; if (touch.P) precise = true;
+    if (thr === 0) thr = touch.sy < -0.55 ? -1 : 1; // auto-throttle on touch; pull the stick back to brake and reverse
   }
   return { thr, steer: clamp(steer, -1, 1), drift, boost, jump, precise };
 }
@@ -1218,15 +1264,15 @@ const TAU = Math.PI * 2;
 let trickChain = 0, lastTrickAt = -10;
 function trickKeys() {
   return {
-    fl: act('up') || (touch.J && S.air > 0.25), bk: act('down'),
-    l: act('left') || touch.L, r: act('right') || touch.R,
+    fl: act('up') || touch.sy > 0.5, bk: act('down') || touch.sy < -0.5,
+    l: act('left') || touch.sx < -0.5, r: act('right') || touch.sx > 0.5,
   };
 }
 function takeoff() {
   if (!S.grounded) return;
   const k = trickKeys();
   S.tr = { pitch: 0, yaw: 0 };
-  S.arm = { fl: !k.fl, bk: !k.bk, l: !k.l, r: !k.r }; // keys held at takeoff only count once re-pressed
+  S.arm = { fl: !k.fl || (touch.active && !act('up')), bk: !k.bk, l: !k.l, r: !k.r }; // keys held at takeoff only count once re-pressed (the touch stick's forward isn't the throttle, so it counts at once)
 }
 function airTricks(dt) {
   const k = trickKeys();
@@ -1247,9 +1293,11 @@ function land() {
   }
   if (yr > 0.7) { S.v.multiplyScalar(0.55); trickChain = 0; shake = 0.5; bonusText('SLOPPY LANDING'); return; }
   const flips = Math.round(Math.abs(P) / TAU), spins = Math.round(Math.abs(Y) / TAU), names = [];
-  if (flips) names.push((P > 0 ? 'FRONTFLIP' : 'BACKFLIP') + (flips > 1 ? ` x${flips}` : ''));
+  const MULTI = ['', '', 'DOUBLE ', 'TRIPLE ', 'QUAD '], multi = (n) => MULTI[n] ?? `${n}x `;
+  if (flips) names.push(multi(flips) + (P > 0 ? 'FRONTFLIP' : 'BACKFLIP'));
   if (spins) names.push(`${spins * 360} SPIN`);
-  const points = flips * 20 + spins * 12;
+  // bigger tricks pay more per rotation: every extra flip or spin adds 50% to the whole trick
+  const turns = flips + spins, points = (flips * 20 + spins * 12) * (1 + 0.5 * Math.max(0, turns - 1));
   if (points) {
     const now = performance.now() / 1000;
     trickChain = now - lastTrickAt < 4 ? trickChain + 1 : 1; lastTrickAt = now;
@@ -1267,7 +1315,7 @@ function land() {
   G.gems += gems; bonusText(`AIR ${air.toFixed(1)}s +${gems} ${GEM}`);
   burst(at, S.p, new THREE.Color(planet.def.leaf), 30, 8);
   shake = Math.max(shake, Math.min(0.8, air * 0.4));
-  if (!hints.trick) { hints.trick = true; toast(touch.active ? 'In the air: hold JUMP to flip, ◀ ▶ to spin' : `In the air: press ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin`, 3); }
+  if (!hints.trick) { hints.trick = true; toast(touch.active ? 'In the air: push the stick up or down to flip, sideways to spin' : `In the air: press ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin`, 3); }
 }
 function updateGemArcs(dt) {
   const R = planet.R, cp = carPos.copy(S.p).multiplyScalar(R + S.alt + 0.5);
@@ -1554,7 +1602,7 @@ function step(dt) {
     // jump: off the ground the instant it's pressed; keep holding for a higher hop
     if (S.grounded && inp.jump && !S.jumpHeld) {
       takeoff(); S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3;
-      if (!hints.jump) { hints.jump = true; toast(touch.active ? 'In the air: hold JUMP to flip, ◀ ▶ to spin' : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
+      if (!hints.jump) { hints.jump = true; toast(touch.active ? 'In the air: push the stick up or down to flip, sideways to spin. Land upright!' : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
     }
     S.jumpHeld = inp.jump;
     if (!S.grounded && S.jumpBoost > 0) { if (inp.jump) { S.valt += 26 * Math.sqrt(CS.air) * dt; S.jumpBoost -= dt; } else S.jumpBoost = 0; }
