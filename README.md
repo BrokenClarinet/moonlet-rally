@@ -13,15 +13,17 @@ python3 -m http.server 8000
 
 ## Controls
 
+All keys can be changed in Controls (main menu or pause menu). Defaults:
+
 - Arrows / WASD: drive
 - Shift: drift (charges nitro)
 - E or Q: nitro boost (charged by drifting, seed pods and smashing rocks)
 - C or Ctrl (hold): precision mode, slower with tight steering for lining up the ramp
-- Space: jump (hold to charge a higher jump)
+- Space: jump, instantly (keep holding for a higher hop)
 - In the air: Up/Down to flip, Left/Right to spin
 - G: garage (car bodies, paint, wheels, toppers; some unlock with gems)
 - H: Gem Garden (idle area to harvest and upgrade gem silos)
-- Esc: close menus
+- P or Esc: pause (Esc also closes menus)
 - Phones: on-screen buttons, auto-accelerate; hold JUMP in the air to flip
 
 ## How it plays
@@ -43,7 +45,12 @@ python3 -m http.server 8000
   - Starfall Moon: catch falling star-seeds for big blooms.
   - After seven moonlets the loop repeats with bigger, richer moonlets.
 - Gem Garden: every restored moonlet becomes a silo that grows gems (also while you're away, up to 8 hours, each silo holds 2 hours). Harvest, upgrade silos and buy sprinklers there.
+- Garage Upgrades tab: ten levelled upgrades bought with gems (wider tires, engine, tread, nitro tank, springs, trick wax, gem magnet, bull bar, gem polish, combo keeper).
 - Garage parts change how the car plays (bodies, wheels and toppers each have a perk; paint is cosmetic).
+
+## Menus and settings
+
+A loading bar runs while the moonlet is built, then the main menu offers Play/Continue, Settings and Controls. Settings (graphics quality, ink outlines, camera shake, speed zoom, camera distance, guide arrow, touch buttons, FPS counter, reset progress) are saved under `moonletRally.settings` and key bindings under `moonletRally.keys`. The game pauses itself when the tab is hidden.
 
 ## Platform (Poki)
 

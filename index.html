@@ -40,11 +40,11 @@
   #guide { bottom:96px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; font-weight:900; text-shadow:1px 1px 0 var(--ink); }
   #guide i { width:34px; height:34px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M17 3 30 28 17 21 4 28z' fill='%23ffc43d' stroke='%232a1838' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; }
   #fade { inset:0; background:#fff6ea; opacity:0; }
-  #title { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 60%, rgba(255,159,134,.35), rgba(28,22,80,.92) 70%); cursor:pointer; text-align:center; padding:16px; box-sizing:border-box; }
+  #title { position:fixed; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 60%, rgba(255,159,134,.35), rgba(28,22,80,.92) 70%); text-align:center; padding:16px; box-sizing:border-box; }
   #title h1 { font-size:clamp(40px,9vw,84px); margin:0; line-height:.95; letter-spacing:1px; color:var(--sun); font-weight:900; text-shadow:3px 4px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink); transform:rotate(-3deg); }
   #title h1 span { display:block; color:var(--mint); font-size:.62em; transform:rotate(2deg); }
   #title p { margin:8px 0; opacity:.92; max-width:520px; text-wrap:balance; }
-  #title .go { margin-top:18px; font-size:22px; font-weight:900; padding:10px 34px; border-radius:30px; background:var(--coral); color:var(--paper); border:3px solid var(--ink); box-shadow:3px 4px 0 var(--ink); animation:pulse 1.2s infinite; }
+  #title .go { font-family:inherit; cursor:pointer; margin-top:14px; font-size:22px; font-weight:900; padding:10px 34px; border-radius:30px; background:var(--coral); color:var(--paper); border:3px solid var(--ink); box-shadow:3px 4px 0 var(--ink); animation:pulse 1.2s infinite; }
   @keyframes pulse { 50% { transform:scale(1.06) rotate(-1deg); } }
   #touch { position:fixed; inset:auto 0 0 0; height:40%; display:none; pointer-events:none; }
   .tb { position:absolute; bottom:18px; width:76px; height:76px; border-radius:50%; background:rgba(58,39,88,.7); border:3px solid var(--ink); box-shadow:2px 3px 0 var(--ink); pointer-events:auto; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:900; color:var(--paper); }
@@ -91,13 +91,44 @@
   @media (max-height:500px) { #left,#right { transform:scale(.82); transform-origin:top left; } #right { transform-origin:top right; }
     #garage { inset:0 0 0 auto; padding:8px; align-items:stretch; }
     #gardenPanel { left:auto; right:8px; top:8px; bottom:8px; transform:none; width:min(470px,60vw); max-height:none; } .gdrow { grid-template-columns:1fr 96px; } .gdbtns { grid-column:1 / -1; } .gpanel { width:min(460px,58vw); max-height:none; padding:8px 10px; gap:5px; } .ghead { font-size:15px; } .grow { grid-template-columns:1fr; gap:3px; } }
-  @media (prefers-reduced-motion: reduce) { #title .go { animation:none; } }
+  #loadView, #menuView { display:flex; flex-direction:column; align-items:center; }
+  #loadbar { width:min(320px,70vw); height:16px; margin-top:22px; border:2.5px solid var(--ink); border-radius:9px; background:var(--panel); overflow:hidden; box-shadow:2px 3px 0 var(--ink); }
+  #loadfill { height:100%; width:8%; background:repeating-linear-gradient(-45deg,#9be37a 0 8px,#7fd060 8px 16px); transition:width .25s; }
+  #loadtxt { font-size:13px; margin-top:8px; opacity:.85; }
+  .menurow { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center; }
+  .menurow .btn { font-size:14px; padding:7px 16px; }
+  .modal { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; background:rgba(28,22,80,.55); padding:12px; box-sizing:border-box; }
+  #pause { z-index:12; }
+  .modal .gpanel { width:min(540px,100%); max-height:calc(100vh - 24px); }
+  .gpanel.menu { width:min(260px,100%); }
+  .gpanel.menu .btn { font-size:15px; padding:9px; }
+  .srow { display:grid; grid-template-columns:130px 1fr; align-items:center; gap:8px; }
+  .srow label { font-size:13px; font-weight:800; }
+  .seg { display:flex; flex-wrap:wrap; gap:5px; }
+  .kbrow { display:grid; grid-template-columns:1fr 96px 96px; gap:6px; align-items:center; font-size:13px; font-weight:700; }
+  .kb { font-family:inherit; font-weight:800; font-size:12px; color:var(--ink); background:var(--paper); border:2.5px solid var(--ink); border-radius:10px; padding:4px 6px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+  .kb.empty { opacity:.55; }
+  .kb.wait { background:var(--gem); animation:pulse .8s infinite; }
+  .gtabs { display:flex; gap:6px; }
+  .gtabs .chip { flex-direction:row; font-size:13px; }
+  .uprow { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; padding:5px 0; border-top:2px solid var(--panel2); }
+  .uprow b { font-size:13px; } .uprow small { display:block; font-size:11px; opacity:.8; }
+  .pips { display:inline-flex; gap:2px; margin-left:6px; vertical-align:middle; }
+  .pips i { width:7px; height:7px; border-radius:50%; border:1.5px solid var(--ink); background:var(--panel2); }
+  .pips i.on { background:var(--sun); }
+  #pauseBtn { position:fixed; top:12px; left:50%; transform:translateX(-50%); width:38px; height:38px; padding:0; border-radius:50%; }
+  #pauseBtn:active { transform:translate(-50%,0) translate(2px,3px); }
+  #fps { top:56px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:800; opacity:.85; text-shadow:1px 1px 0 var(--ink); }
+  body.in-garage #pauseBtn, body.in-garden #pauseBtn { display:none !important; }
+  @media (max-height:500px) { #title h1 { font-size:50px; } #title p { font-size:13px; margin:4px 0; } #title .go { font-size:19px; padding:8px 30px; margin-top:8px; } .menurow { margin-top:10px; }
+    .modal { padding:8px; } .modal .gpanel { max-height:calc(100vh - 16px); } .srow { grid-template-columns:110px 1fr; } .kbrow { grid-template-columns:1fr 84px 84px; } }
+  @media (prefers-reduced-motion: reduce) { #title .go, .kb.wait { animation:none; } }
 </style>
 </head>
 <body>
 <div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div></div>
 <div id="right" class="hud"><div id="gems">0</div><div id="rate">0.0 / sec</div>
-  <div id="shop"><button class="btn" id="upT">Wider tires</button><button class="btn alt2" id="gardenBtn">Gem Garden (H)</button><button class="btn alt" id="garageBtn">Garage (G)</button></div></div>
+  <div id="shop"><button class="btn" id="upT">Upgrades</button><button class="btn alt2" id="gardenBtn">Gem Garden (H)</button><button class="btn alt" id="garageBtn">Garage (G)</button></div></div>
 <div id="toast" class="hud"></div>
 <div id="drift" class="hud"></div>
 <div id="combo" class="hud"></div>
@@ -109,10 +140,14 @@
 <div id="garage" hidden>
   <div class="gpanel">
     <div class="ghead"><b>Garage</b><span id="ggems"></span><button class="btn alt" id="gad" hidden>Watch ad for gems</button><button class="btn" id="gclose">Drive!</button></div>
+    <div class="gtabs"><button class="chip" id="tabParts">Parts</button><button class="chip" id="tabUpg">Upgrades</button></div>
+    <div id="gParts">
     <div class="grow"><label>Body</label><div class="chips" id="g-body"></div></div>
     <div class="grow"><label>Paint</label><div class="chips" id="g-paint"></div></div>
     <div class="grow"><label>Wheels</label><div class="chips" id="g-wheels"></div></div>
     <div class="grow"><label>Topper</label><div class="chips" id="g-topper"></div></div>
+    </div>
+    <div id="gUpg" hidden></div>
   </div>
 </div>
 <div id="gardenUI" hidden>
@@ -125,11 +160,33 @@
   </div>
 </div>
 <div id="touch"><div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div><div class="tb" id="tB">BOOST</div><div class="tb" id="tD">DRIFT</div><div class="tb" id="tJ">JUMP</div></div>
+<button class="btn alt" id="pauseBtn" aria-label="Pause"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="#2a1838"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="#2a1838"/></svg></button>
+<div id="fps" class="hud" hidden></div>
 <div id="title"><h1>MOONLET<span>RALLY</span></h1>
-  <p>Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
-  <p style="font-size:13px;opacity:.75">Arrows / WASD drive · Shift drift · E boost · C precision · Space jump (hold to charge)<br>In the air: ↑ ↓ flip, ← → spin · G garage · H Gem Garden<br>Grab seed pods, smash rocks, jump off mushrooms</p>
-  <div class="go">PLAY</div>
-  <button class="btn alt" id="login" hidden style="margin-top:14px">Log in to save progress across devices</button></div>
+  <div id="loadView"><div id="loadbar"><div id="loadfill"></div></div><div id="loadtxt">Loading...</div></div>
+  <div id="menuView" hidden>
+    <p>Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
+    <p id="hint" style="font-size:13px;opacity:.75"></p>
+    <button class="go" id="playBtn">PLAY</button>
+    <div class="menurow"><button class="btn alt" id="mSettings">Settings</button><button class="btn alt" id="mControls">Controls</button></div>
+    <button class="btn alt" id="login" hidden style="margin-top:12px">Log in to save progress across devices</button>
+  </div>
+</div>
+<div id="pause" class="modal" hidden><div class="gpanel menu">
+  <div class="ghead"><b>Paused</b></div>
+  <button class="btn" id="pResume">Resume</button><button class="btn alt" id="pSettings">Settings</button><button class="btn alt" id="pControls">Controls</button><button class="btn alt2" id="pMenu">Main menu</button>
+</div></div>
+<div id="settings" class="modal" hidden><div class="gpanel">
+  <div class="ghead"><b>Settings</b><button class="btn" id="sClose" style="margin-left:auto">Done</button></div>
+  <div id="sList" style="display:flex;flex-direction:column;gap:7px"></div>
+  <div class="srow"><label>Progress</label><div><button class="btn" id="sReset" style="background:var(--coral);color:var(--paper)">Reset progress</button></div></div>
+</div></div>
+<div id="controls" class="modal" hidden><div class="gpanel">
+  <div class="ghead"><b>Controls</b><button class="btn alt" id="kReset" style="margin-left:auto">Reset to default</button><button class="btn" id="kClose">Done</button></div>
+  <p class="gdhint" id="kHint"></p>
+  <div id="kList" style="display:flex;flex-direction:column;gap:5px"></div>
+  <p class="gdhint">Phones and tablets use the on-screen buttons. Esc always pauses or goes back.</p>
+</div></div>
 
 <script>window.MR_PLATFORM = 'poki'; // set to 'none' for other portals</script>
 <script type="module">
@@ -141,6 +198,16 @@ const randDir = (r) => { const z = r() * 2 - 1, a = r() * Math.PI * 2, s = Math.
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const V = () => new THREE.Vector3();
+// loading screen: update the bar and let the browser paint between heavy steps
+const loadStep = async (f, txt) => { document.getElementById('loadfill').style.width = (f * 100).toFixed(0) + '%'; document.getElementById('loadtxt').textContent = txt; await new Promise((r) => setTimeout(r, 0)); };
+
+// ---------------------------------------------------------------- settings (saved per device; Poki syncs these too)
+const SET_KEY = 'moonletRally.settings';
+const SET_DEF = { quality: 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false };
+let SET = { ...SET_DEF };
+try { Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch {}
+const saveSettings = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch {} };
+let resetting = false, started = false;
 
 // ---------------------------------------------------------------- art kit: toon shading, ink outlines, faceted props
 const INK = 0x2a1838;
@@ -182,7 +249,7 @@ function outlineNormals(g) {
 }
 function inked(geo, mat, t = 0.035) {
   outlineNormals(geo);
-  const m = new THREE.Mesh(geo, mat); m.add(new THREE.Mesh(geo, inkMat(t)));
+  const m = new THREE.Mesh(geo, mat), o = new THREE.Mesh(geo, inkMat(t)); o.layers.set(1); m.add(o);
   return m;
 }
 // merge [geometry, color] parts into one flat-shaded, vertex-colored geometry
@@ -273,6 +340,7 @@ function icosphere(sub) {
   return { v, f };
 }
 const SPHERE = icosphere(6); // 40962 vertices, shared by every planet
+await loadStep(0.35, 'Painting the sky');
 
 // ---------------------------------------------------------------- renderer / scene
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -325,6 +393,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), skyMat); sky.
   }
 }
 
+await loadStep(0.5, 'Sprouting seeds');
 // ---------------------------------------------------------------- planet
 let planet = null;
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
@@ -432,7 +501,7 @@ function buildPlanet(index) {
     k.inst.frustumCulled = false; group.add(k.inst);
     if (k.ink) {
       const o = new THREE.InstancedMesh(outlineNormals(k.geo), inkMat(k.ink), k.n);
-      o.instanceMatrix = k.inst.instanceMatrix; o.frustumCulled = false; group.add(o);
+      o.instanceMatrix = k.inst.instanceMatrix; o.frustumCulled = false; o.layers.set(1); group.add(o);
     }
   }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = V(), pv = V(), Y = Y_AXIS;
@@ -622,6 +691,17 @@ function computeStats() {
   for (const k of ['accel', 'grip', 'top', 'air', 'paint', 'smash', 'iceGrip', 'nitro', 'driftPaint', 'reach', 'bonus', 'airCtl', 'fresh']) {
     CS[k] = [G.car.body, G.car.wheels, G.car.topper].reduce((v, id) => v * (PART_FX[id]?.fx[k] || 1), 1);
   }
+  // workshop upgrades stack on top of the parts
+  const u = (k) => k === 'tires' ? G.tires : (G.up[k] || 0);
+  CS.accel *= 1 + 0.05 * u('engine'); CS.top *= 1 + 0.04 * u('engine');
+  CS.grip *= 1 + 0.06 * u('grip'); CS.iceGrip *= 1 + 0.1 * u('grip');
+  CS.nitro *= 1 + 0.15 * u('tank'); CS.drain = 1 / (1 + 0.12 * u('tank'));
+  CS.air *= 1 + 0.12 * u('springs');
+  CS.spin = 1 + 0.08 * u('wax'); CS.trick = 1 + 0.1 * u('wax');
+  CS.reach *= 1 + 0.2 * u('magnet'); CS.magnet = 1 + 0.2 * u('magnet');
+  CS.smash *= Math.pow(0.92, u('bumper'));
+  CS.bonus *= 1 + 0.1 * u('polish');
+  CS.comboHold = 0.7 + 0.3 * u('combo');
 }
 const DEFAULT_CAR = { body: 'buggy', paint: 0xff6b4a, wheels: 'classic', topper: 'antenna' };
 
@@ -730,7 +810,7 @@ function spawn(at, up, color, spread) {
 
 // ---------------------------------------------------------------- game state & save
 const SAVE_KEY = 'moonletRally.v1';
-const G = { gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [] };
+const G = { up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [] };
 const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -738,6 +818,7 @@ const mult = () => 1 + 0.25 * G.sprink;
 const paintRadius = () => 0.6 * (1 + 0.18 * G.tires);
 const gemRate = () => planet ? gardenItems().reduce((a, it) => a + prodOf(it), 0) : 0;
 function save() {
+  if (resetting) return;
   const q = new Uint8Array(planet.N); for (let i = 0; i < planet.N; i++) q[i] = planet.life[i] * 255;
   store.set({ ...G, life: b64(q), t: Date.now(), rate: gemRate() });
 }
@@ -749,7 +830,7 @@ const fmt = (n) => n < 1000 ? Math.floor(n).toString() : n < 1e6 ? (n / 1e3).toF
 let toastTimer = 0;
 function toast(msg, secs = 2.5) { $('toast').innerHTML = msg; $('toast').style.opacity = 1; toastTimer = secs; }
 const costT = () => Math.round(50 * Math.pow(1.7, G.tires)), costS = () => Math.round(75 * Math.pow(1.8, G.sprink));
-$('upT').onclick = () => { if (G.tires < 8 && G.gems >= costT()) { G.gems -= costT(); G.tires++; toast('Wider tires!'); } };
+$('upT').onclick = () => openGarage('upg');
 function updateUI() {
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
@@ -758,9 +839,9 @@ function updateUI() {
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
   $('rate').innerHTML = `garden grows ${gemRate().toFixed(1)} ${GEM}/s`;
-  $('upT').innerHTML = G.tires >= 8 ? 'Tires maxed' : `Wider tires · ${costT()} ${GEM}`;
-  $('upT').disabled = G.tires >= 8 || G.gems < costT();
-  $('gardenBtn').innerHTML = `Gem Garden (H) · ${fmt(gardenReady())} ${GEM}`;
+  const nUp = UPG.filter(u => upLvl(u.id) < u.max && G.gems >= upCost(u)).length;
+  $('upT').innerHTML = nUp ? `Upgrades · ${nUp} ready` : 'Upgrades';
+  $('gardenBtn').innerHTML = `Gem Garden (${kn('garden')}) · ${fmt(gardenReady())} ${GEM}`;
   $('nitrofill').style.width = (G.nitro * 100).toFixed(0) + '%';
   $('combo').textContent = combo > 1 ? `x${combo} FRESH GROUND` : '';
   $('combo').style.opacity = combo > 1 ? 1 : 0;
@@ -807,8 +888,37 @@ addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
 let garageOpen = false;
 const GARAGE_ROWS = [['body', 'g-body'], ['paint', 'g-paint'], ['wheels', 'g-wheels'], ['topper', 'g-topper']];
 function owns(kind, id) { return CAR_OPTS[kind].find(o => o.id === id).cost === 0 || G.owned.includes(`${kind}:${id}`); }
+const UPG = [
+  { id: 'tires', name: 'Wider tires', note: '+18% track width per level', max: 8, base: 50, k: 1.7 },
+  { id: 'engine', name: 'Engine tune', note: '+5% acceleration, +4% top speed', max: 6, base: 90, k: 1.75 },
+  { id: 'grip', name: 'Sticky tread', note: '+6% grip, +10% on ice', max: 5, base: 70, k: 1.7 },
+  { id: 'tank', name: 'Nitro tank', note: '+15% nitro charge, boosts last longer', max: 6, base: 80, k: 1.75 },
+  { id: 'springs', name: 'Springs', note: '+12% jump and bounce power', max: 5, base: 100, k: 1.8 },
+  { id: 'wax', name: 'Trick wax', note: '+8% flip and spin speed, +10% trick gems', max: 5, base: 120, k: 1.8 },
+  { id: 'magnet', name: 'Gem magnet', note: '+20% pickup range for gems and pods', max: 5, base: 90, k: 1.75 },
+  { id: 'bumper', name: 'Bull bar', note: 'smash rocks at 8% less speed', max: 5, base: 70, k: 1.7 },
+  { id: 'polish', name: 'Gem polish', note: '+10% bonus gems from everything', max: 8, base: 150, k: 1.85 },
+  { id: 'combo', name: 'Combo keeper', note: 'fresh-ground combo survives longer gaps', max: 4, base: 110, k: 1.9 },
+];
+const upLvl = (id) => id === 'tires' ? G.tires : (G.up[id] || 0);
+const upCost = (u) => Math.round(u.base * Math.pow(u.k, upLvl(u.id)));
+let garageTab = 'parts';
+function renderUpgrades() {
+  const L = $('gUpg'); L.innerHTML = '';
+  for (const u of UPG) {
+    const l = upLvl(u.id), maxed = l >= u.max, c = upCost(u);
+    const row = document.createElement('div'); row.className = 'uprow';
+    row.innerHTML = `<div><b>${u.name}</b><span class="pips">${'<i class="on"></i>'.repeat(l)}${'<i></i>'.repeat(u.max - l)}</span><small>${u.note}</small></div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = maxed ? 'Maxed' : `${fmt(c)} ${GEM}`; b.disabled = maxed || G.gems < c;
+    b.onclick = () => { if (maxed || G.gems < c) return; G.gems -= c; if (u.id === 'tires') G.tires++; else G.up[u.id] = l + 1; computeStats(); renderGarage(); save(); };
+    row.appendChild(b); L.appendChild(row);
+  }
+}
 function renderGarage() {
   $('ggems').innerHTML = fmt(G.gems) + ' ' + GEM;
+  $('tabParts').classList.toggle('on', garageTab === 'parts'); $('tabUpg').classList.toggle('on', garageTab === 'upg');
+  $('gParts').hidden = garageTab !== 'parts'; $('gUpg').hidden = garageTab !== 'upg';
+  renderUpgrades();
   $('gad').hidden = !Platform.hasAds;
   for (const [kind, el] of GARAGE_ROWS) {
     const row = $(el); row.innerHTML = '';
@@ -829,13 +939,15 @@ function renderGarage() {
     }
   }
 }
-function openGarage() { if (S.mode !== 'drive' || Platform.adBusy || gardenOpen) return; Platform.gameplayStop(); garageOpen = true; $('garage').hidden = false; document.body.classList.add('in-garage'); garageSpin = 0; renderGarage(); }
+function openGarage(tab) { if (typeof tab === 'string') garageTab = tab; if (S.mode !== 'drive' || Platform.adBusy || gardenOpen || paused) return; Platform.gameplayStop(); garageOpen = true; $('garage').hidden = false; document.body.classList.add('in-garage'); garageSpin = 0; renderGarage(); }
 function closeGarage() { $('garage').hidden = true; document.body.classList.remove('in-garage'); Platform.commercialBreak().then(() => { garageOpen = false; Platform.gameplayStart(); }); }
 let garageSpin = 0;
-$('garageBtn').onclick = openGarage;
+$('garageBtn').onclick = () => openGarage('parts');
+$('tabParts').onclick = () => { garageTab = 'parts'; renderGarage(); };
+$('tabUpg').onclick = () => { garageTab = 'upg'; renderGarage(); };
 $('gclose').onclick = closeGarage;
 $('gad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { const g = 40 * (1 + G.planetIdx); G.gems += g; toast(`+${g} ${GEM} thanks for watching!`, 2); renderGarage(); save(); } });
-addEventListener('keydown', (e) => { if (e.code === 'KeyG' && started) garageOpen ? closeGarage() : openGarage(); if (e.code === 'Escape' && garageOpen) closeGarage(); });
+addEventListener('keydown', (e) => { if (isAct('garage', e.code) && started && !paused) garageOpen ? closeGarage() : openGarage(); if (e.code === 'Escape' && garageOpen) closeGarage(); });
 
 // ---------------------------------------------------------------- gem garden (idle area)
 const SILO_HOURS = 2;
@@ -906,14 +1018,14 @@ function renderGarden() {
     list.appendChild(row);
   }
 }
-function openGarden() { if (S.mode !== 'drive' || Platform.adBusy || garageOpen) return; Platform.gameplayStop(); gardenOpen = true; $('gardenUI').hidden = false; document.body.classList.add('in-garden'); buildGarden(); renderGarden(); }
+function openGarden() { if (S.mode !== 'drive' || Platform.adBusy || garageOpen || paused) return; Platform.gameplayStop(); gardenOpen = true; $('gardenUI').hidden = false; document.body.classList.add('in-garden'); buildGarden(); renderGarden(); }
 function closeGarden() { $('gardenUI').hidden = true; document.body.classList.remove('in-garden'); Platform.commercialBreak().then(() => { gardenOpen = false; Platform.gameplayStart(); }); }
 $('gardenBtn').onclick = openGarden;
 $('gdclose').onclick = closeGarden;
 $('gdall').onclick = () => { gardenItems().forEach(it => harvest(it.idx)); };
 $('gS').onclick = () => { if (G.gems >= costS()) { G.gems -= costS(); G.sprink++; renderGarden(); save(); } };
 $('gdad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { tickGarden(1800); renderGarden(); save(); } });
-addEventListener('keydown', (e) => { if (e.code === 'KeyH' && started) gardenOpen ? closeGarden() : openGarden(); if (e.code === 'Escape' && gardenOpen) closeGarden(); });
+addEventListener('keydown', (e) => { if (isAct('garden', e.code) && started && !paused) gardenOpen ? closeGarden() : openGarden(); if (e.code === 'Escape' && gardenOpen) closeGarden(); });
 let gardenUiAcc = 0;
 function renderGardenScene(dt) {
   GD.t += dt; GD.sun.rotation.y += dt * 0.3;
@@ -934,10 +1046,128 @@ function renderGardenScene(dt) {
 // ---------------------------------------------------------------- input
 const keys = {};
 const touch = { L: false, R: false, D: false, B: false, J: false, active: false };
-addEventListener('keydown', (e) => { if (Platform.adBusy) { e.preventDefault(); return; } keys[e.code] = true; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
+// rebindable keys: two slots per action, saved per device
+const ACTIONS = [
+  ['up', 'Drive / flip forward', ['KeyW', 'ArrowUp']], ['down', 'Reverse / flip back', ['KeyS', 'ArrowDown']],
+  ['left', 'Steer / spin left', ['KeyA', 'ArrowLeft']], ['right', 'Steer / spin right', ['KeyD', 'ArrowRight']],
+  ['drift', 'Drift', ['ShiftLeft', 'ShiftRight']], ['boost', 'Nitro boost', ['KeyE', 'KeyQ']],
+  ['jump', 'Jump (hold for higher)', ['Space', null]], ['precise', 'Precision driving', ['KeyC', 'ControlLeft']],
+  ['garage', 'Garage', ['KeyG', null]], ['garden', 'Gem Garden', ['KeyH', null]], ['pause', 'Pause', ['KeyP', null]],
+];
+const BIND_KEY = 'moonletRally.keys';
+const defaultBinds = () => Object.fromEntries(ACTIONS.map(([a, , d]) => [a, [...d]]));
+let binds = defaultBinds();
+try { const b = JSON.parse(localStorage.getItem(BIND_KEY)); if (b) for (const [a] of ACTIONS) if (Array.isArray(b[a]) && b[a].length === 2) binds[a] = b[a].map(c => typeof c === 'string' && c !== 'Escape' ? c : null); } catch {}
+let BOUND = new Set();
+const rebuildBound = () => { BOUND = new Set(Object.values(binds).flat().filter(Boolean)); };
+rebuildBound();
+const saveBinds = () => { rebuildBound(); try { localStorage.setItem(BIND_KEY, JSON.stringify(binds)); } catch {} };
+const act = (a) => binds[a].some(c => c && keys[c]);
+const isAct = (a, code) => binds[a].includes(code);
+const KN = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', ShiftLeft: 'L Shift', ShiftRight: 'R Shift', ControlLeft: 'L Ctrl', ControlRight: 'R Ctrl', AltLeft: 'L Alt', AltRight: 'R Alt', MetaLeft: 'L Meta', MetaRight: 'R Meta', Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', CapsLock: 'Caps' };
+const keyName = (c) => !c ? '-' : KN[c] || c.replace(/^Key|^Digit/, '').replace(/^Numpad/, 'Num ');
+const kn = (a) => keyName(binds[a][0] || binds[a][1]);
+let rebinding = null;
+const K_HINT = 'Click a slot, then press a key. Backspace clears it, Esc cancels.';
+addEventListener('keydown', (e) => {
+  if (!rebinding) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const { a, i } = rebinding; rebinding = null;
+  if (e.code === 'Escape') { renderControls(); return; }
+  let msg = K_HINT;
+  if (e.code === 'Backspace' || e.code === 'Delete') binds[a][i] = null;
+  else {
+    for (const [b, label] of ACTIONS) for (let j = 0; j < 2; j++) if (binds[b][j] === e.code && !(b === a && j === i)) { binds[b][j] = null; msg = `${keyName(e.code)} was taken off "${label}".`; }
+    binds[a][i] = e.code;
+  }
+  $('kHint').textContent = msg; saveBinds(); renderControls(); updateLabels();
+}, true);
+function renderControls() {
+  const L = $('kList'); L.innerHTML = '';
+  for (const [a, label] of ACTIONS) {
+    const row = document.createElement('div'); row.className = 'kbrow'; row.innerHTML = `<span>${label}</span>`;
+    for (let i = 0; i < 2; i++) {
+      const b = document.createElement('button'), c = binds[a][i], wait = rebinding && rebinding.a === a && rebinding.i === i;
+      b.className = 'kb' + (c ? '' : ' empty') + (wait ? ' wait' : ''); b.textContent = wait ? 'press a key' : keyName(c);
+      b.onclick = () => { rebinding = { a, i }; renderControls(); };
+      row.appendChild(b);
+    }
+    L.appendChild(row);
+  }
+}
+function updateLabels() {
+  $('hint').innerHTML = touchActive() ? 'Steer with ◀ ▶, tap JUMP, hold DRIFT and BOOST<br>Grab seed pods, smash rocks, flip off mushrooms'
+    : `${kn('up')} ${kn('left')} ${kn('down')} ${kn('right')} drive · ${kn('drift')} drift · ${kn('boost')} boost · ${kn('jump')} jump · ${kn('precise')} precision<br>In the air: ${kn('up')} ${kn('down')} flip, ${kn('left')} ${kn('right')} spin · ${kn('garage')} garage · ${kn('garden')} Gem Garden · ${kn('pause')} pause`;
+  $('garageBtn').innerHTML = `Garage (${kn('garage')})`;
+}
+addEventListener('keydown', (e) => { if (Platform.adBusy) { e.preventDefault(); return; } keys[e.code] = true; if (BOUND.has(e.code) || ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-if (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window) { $('touch').style.display = 'block'; touch.active = true; }
+const touchDetected = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+const touchActive = () => SET.touch === 'on' || (SET.touch === 'auto' && touchDetected);
+// settings screen
+const SET_UI = [
+  ['quality', 'Graphics', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']]],
+  ['outlines', 'Ink outlines', [[true, 'On'], [false, 'Off']]],
+  ['shake', 'Camera shake', [[true, 'On'], [false, 'Off']]],
+  ['speedfx', 'Speed zoom', [[true, 'On'], [false, 'Off']]],
+  ['cam', 'Camera distance', [['close', 'Close'], ['normal', 'Normal'], ['far', 'Far']]],
+  ['guide', 'Guide arrow', [[true, 'On'], [false, 'Off']]],
+  ['touch', 'Touch buttons', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']]],
+  ['fps', 'Show FPS', [[true, 'On'], [false, 'Off']]],
+];
+const CAMK = { close: 0.8, normal: 1, far: 1.25 };
+function applySettings() {
+  const dpr = devicePixelRatio || 1;
+  renderer.setPixelRatio(SET.quality === 'low' ? Math.min(dpr, 1) * 0.75 : SET.quality === 'medium' ? Math.min(dpr, 1.25) : Math.min(dpr, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  for (const c of [camera, GD.cam]) SET.outlines ? c.layers.enable(1) : c.layers.disable(1);
+  touch.active = touchActive(); $('touch').style.display = touch.active ? 'block' : 'none';
+  $('fps').hidden = !SET.fps;
+  updateLabels();
+}
+function renderSettings() {
+  const L = $('sList'); L.innerHTML = '';
+  for (const [k, label, opts] of SET_UI) {
+    const row = document.createElement('div'); row.className = 'srow'; row.innerHTML = `<label>${label}</label><div class="seg"></div>`;
+    for (const [v, t] of opts) {
+      const b = document.createElement('button'); b.className = 'chip' + (SET[k] === v ? ' on' : ''); b.textContent = t;
+      b.onclick = () => { SET[k] = v; saveSettings(); applySettings(); renderSettings(); };
+      row.lastChild.appendChild(b);
+    }
+    L.appendChild(row);
+  }
+}
+let resetArm = 0;
+$('sReset').onclick = () => {
+  if (Date.now() - resetArm < 3000) { resetting = true; try { localStorage.removeItem(SAVE_KEY); } catch {} location.reload(); return; }
+  resetArm = Date.now(); $('sReset').textContent = 'Tap again to erase all progress';
+  setTimeout(() => { $('sReset').textContent = 'Reset progress'; }, 3000);
+};
+// menus: pause, settings, controls
+let paused = false, modal = null, menuReady = false;
+function openModal(id) { if (modal) closeModal(); modal = id; $(id).hidden = false; if (id === 'settings') renderSettings(); else { $('kHint').textContent = K_HINT; renderControls(); } }
+function closeModal() { if (!modal) return; $(modal).hidden = true; modal = null; rebinding = null; updateLabels(); }
+const canPause = () => started && !paused && !garageOpen && !gardenOpen && S.mode === 'drive' && !Platform.adBusy;
+function pause() { if (!canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); $('pause').hidden = false; save(); }
+function resume() { if (!paused) return; closeModal(); paused = false; $('pause').hidden = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart(); }
+function showMenu() {
+  $('loadView').hidden = true; $('menuView').hidden = false; $('title').hidden = false;
+  $('playBtn').textContent = (started || G.planetIdx > 0 || G.gems > 0) ? 'CONTINUE' : 'PLAY';
+  updateLabels(); menuReady = true;
+}
+$('pauseBtn').onclick = pause;
+$('pResume').onclick = resume;
+$('pMenu').onclick = () => { $('pause').hidden = true; showMenu(); };
+for (const [b, id] of [['pSettings', 'settings'], ['mSettings', 'settings'], ['pControls', 'controls'], ['mControls', 'controls']]) $(b).onclick = () => openModal(id);
+$('sClose').onclick = closeModal; $('kClose').onclick = closeModal;
+$('kReset').onclick = () => { binds = defaultBinds(); saveBinds(); $('kHint').textContent = 'Keys are back to the defaults.'; renderControls(); updateLabels(); };
+addEventListener('keydown', (e) => {
+  if (e.code === 'Escape') { if (modal) closeModal(); else if (paused && $('title').hidden) resume(); else if (canPause()) pause(); return; }
+  if (isAct('pause', e.code) && !modal) { if (paused && $('title').hidden) resume(); else pause(); }
+});
+// clicked buttons drop focus so Space and Enter keep driving the car
+addEventListener('pointerup', () => { const a = document.activeElement; if (a && a.tagName === 'BUTTON') a.blur(); });
 for (const [id, k] of [['tL', 'L'], ['tR', 'R'], ['tD', 'D'], ['tB', 'B'], ['tJ', 'J']]) {
   const el = $(id);
   const on = (e) => { e.preventDefault(); touch[k] = true; el.classList.add('on'); };
@@ -946,11 +1176,11 @@ for (const [id, k] of [['tL', 'L'], ['tR', 'R'], ['tD', 'D'], ['tB', 'B'], ['tJ'
 }
 function readInput() {
   let thr = 0, steer = 0;
-  if (keys.ArrowUp || keys.KeyW) thr += 1;
-  if (keys.ArrowDown || keys.KeyS) thr -= 1;
-  if (keys.ArrowLeft || keys.KeyA) steer += 1;
-  if (keys.ArrowRight || keys.KeyD) steer -= 1;
-  let drift = !!(keys.ShiftLeft || keys.ShiftRight), boost = !!(keys.KeyE || keys.KeyQ), jump = !!keys.Space, precise = !!(keys.KeyC || keys.ControlLeft || keys.ControlRight);
+  if (act('up')) thr += 1;
+  if (act('down')) thr -= 1;
+  if (act('left')) steer += 1;
+  if (act('right')) steer -= 1;
+  let drift = act('drift'), boost = act('boost'), jump = act('jump'), precise = act('precise');
   if (touch.active) {
     if (touch.L) steer += 1; if (touch.R) steer -= 1; if (touch.D) drift = true; if (touch.B) boost = true; if (touch.J) jump = true;
     if (thr === 0) thr = 1; // auto-throttle on touch
@@ -987,8 +1217,8 @@ const TAU = Math.PI * 2;
 let trickChain = 0, lastTrickAt = -10;
 function trickKeys() {
   return {
-    fl: !!(keys.ArrowUp || keys.KeyW || touch.J), bk: !!(keys.ArrowDown || keys.KeyS),
-    l: !!(keys.ArrowLeft || keys.KeyA || touch.L), r: !!(keys.ArrowRight || keys.KeyD || touch.R),
+    fl: act('up') || (touch.J && S.air > 0.25), bk: act('down'),
+    l: act('left') || touch.L, r: act('right') || touch.R,
   };
 }
 function takeoff() {
@@ -1002,8 +1232,8 @@ function airTricks(dt) {
   for (const n in k) if (!k[n]) S.arm[n] = true;
   const f = (k.fl && S.arm.fl ? 1 : 0) - (k.bk && S.arm.bk ? 1 : 0), y = (k.l && S.arm.l ? 1 : 0) - (k.r && S.arm.r ? 1 : 0);
   const snap = (a) => { const t = Math.round(a / TAU) * TAU, d = t - a; return Math.abs(d) < 0.9 ? Math.sign(d) * Math.min(Math.abs(d), 4 * dt) : 0; };
-  S.tr.pitch += f ? f * 9.5 * dt : snap(S.tr.pitch);
-  S.tr.yaw += y ? y * 10 * dt : snap(S.tr.yaw);
+  S.tr.pitch += f ? f * 9.5 * CS.spin * dt : snap(S.tr.pitch);
+  S.tr.yaw += y ? y * 10 * CS.spin * dt : snap(S.tr.yaw);
 }
 function land() {
   const air = S.air; S.air = 0;
@@ -1022,7 +1252,7 @@ function land() {
   if (points) {
     const now = performance.now() / 1000;
     trickChain = now - lastTrickAt < 4 ? trickChain + 1 : 1; lastTrickAt = now;
-    const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * (1 + planet.index) * mult() * CS.bonus);
+    const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * (1 + planet.index) * mult() * CS.bonus * CS.trick);
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins));
     paintAt(S.p, 2.2 + (flips + spins) * 1.2, 1);
     burst(at, S.p, new THREE.Color(planet.def.flowers[0]), 25, 9); burst(at, S.p, new THREE.Color(planet.def.leaf), 25, 7);
@@ -1036,14 +1266,14 @@ function land() {
   G.gems += gems; bonusText(`AIR ${air.toFixed(1)}s +${gems} ${GEM}`);
   burst(at, S.p, new THREE.Color(planet.def.leaf), 30, 8);
   shake = Math.max(shake, Math.min(0.8, air * 0.4));
-  if (!hints.trick) { hints.trick = true; toast(touch.active ? 'In the air: hold JUMP to flip, ◀ ▶ to spin' : 'In the air: press ↑ ↓ to flip, ← → to spin', 3); }
+  if (!hints.trick) { hints.trick = true; toast(touch.active ? 'In the air: hold JUMP to flip, ◀ ▶ to spin' : `In the air: press ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin`, 3); }
 }
 function updateGemArcs(dt) {
   const R = planet.R, cp = carPos.copy(S.p).multiplyScalar(R + S.alt + 0.5);
   for (const arc of planet.gemArcs) {
     if (arc.left === 0) { arc.wait -= dt; if (arc.wait <= 0) { arc.left = arc.gems.length; arc.gems.forEach(g => { g.got = false; g.mesh.visible = true; }); } continue; }
     for (const g of arc.gems) {
-      if (g.got || g.mesh.position.distanceTo(cp) > 1.4) continue;
+      if (g.got || g.mesh.position.distanceTo(cp) > 1.4 * CS.magnet) continue;
       g.got = true; g.mesh.visible = false; arc.left--;
       const v = Math.round(2 * (1 + planet.index) * mult() * CS.bonus); G.gems += v; G.nitro = Math.min(1, G.nitro + 0.04);
       burst(g.mesh.position, S.p, new THREE.Color(0x7fe3ff), 8, 5);
@@ -1271,7 +1501,7 @@ function step(dt) {
     const fwd = S.v.dot(S.f), spd = S.v.length();
     const boosting = inp.boost && G.nitro > 0.02 && inp.thr >= 0;
     S.boosting = boosting;
-    if (boosting) { G.nitro = Math.max(0, G.nitro - 0.4 * dt); }
+    if (boosting) { G.nitro = Math.max(0, G.nitro - 0.4 * CS.drain * dt); }
     const airK = S.grounded ? 1 : (CS.airCtl > 1 ? 0.3 : 0);
     const onIce = planet.def.twist === 'ice' && S.grounded && planet.lifeAt(S.p) < 0.5, traction = onIce ? 0.7 : 1;
     S.onIce = onIce;
@@ -1320,12 +1550,13 @@ function step(dt) {
       }
     }
 
-    // charged jump: hold to crouch, release to hop
-    if (S.grounded && inp.jump) S.charge = Math.min(1, (S.charge || 0) + dt * 1.8);
-    else if (S.grounded && S.charge > 0) {
-      takeoff(); S.valt = (8.5 + S.charge * 7) * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.12; S.charge = 0;
-      if (!hints.jump) { hints.jump = true; toast(touch.active ? 'In the air: hold JUMP to flip, ◀ ▶ to spin' : 'In the air: ↑ ↓ to flip, ← → to spin. Land upright!', 3.5); }
+    // jump: off the ground the instant it's pressed; keep holding for a higher hop
+    if (S.grounded && inp.jump && !S.jumpHeld) {
+      takeoff(); S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3;
+      if (!hints.jump) { hints.jump = true; toast(touch.active ? 'In the air: hold JUMP to flip, ◀ ▶ to spin' : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
     }
+    S.jumpHeld = inp.jump;
+    if (!S.grounded && S.jumpBoost > 0) { if (inp.jump) { S.valt += 26 * Math.sqrt(CS.air) * dt; S.jumpBoost -= dt; } else S.jumpBoost = 0; }
     if (!S.grounded) airTricks(dt);
 
     // vertical: follow the ground, fly off crests, bounce off shrooms
@@ -1384,7 +1615,7 @@ function step(dt) {
     }
 
     // fresh-ground combo: keep painting new ground to build a multiplier
-    if (freshFrame > 0) { freshTimer = 0.7; comboTime += dt; }
+    if (freshFrame > 0) { freshTimer = CS.comboHold; comboTime += dt; }
     else { freshTimer -= dt; if (freshTimer <= 0) comboTime = 0; }
     combo = 1 + Math.min(4, Math.floor(comboTime / 2.5));
     G.gems += freshFrame * 0.006 * combo * (1 + planet.index) * mult() * CS.fresh * (rush.on ? 3 : 1);
@@ -1450,7 +1681,7 @@ function step(dt) {
   let target = null, label = '';
   if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
   else if (planet.hoops.length && planet.hoopIdx < planet.hoops.length) { target = planet.hoops[planet.hoopIdx].d; label = 'HOOP'; }
-  if (target && S.mode === 'drive') {
+  if (target && S.mode === 'drive' && SET.guide) {
     const to = tmp2.copy(target).addScaledVector(S.p, -target.dot(S.p)); const m = Math.round(S.p.angleTo(target) * planet.R);
     const a = Math.atan2(-to.dot(left.crossVectors(S.p, S.f)), to.dot(S.f));
     $('guide').hidden = m < 3; $('guide').querySelector('i').style.transform = `rotate(${a.toFixed(2)}rad)`; $('guide').querySelector('span').textContent = `${label} ${m}m`;
@@ -1485,7 +1716,7 @@ function render(dt) {
     if (S.tr.pitch || S.tr.yaw) { car.translateY(0.5); car.rotateY(S.tr.yaw); car.rotateX(S.tr.pitch); car.translateY(-0.5); }
     else car.rotateX(clamp(-S.valt * 0.03, -0.4, 0.4));
   }
-  car.scale.set(1 + 0.08 * S.charge, 1 - 0.18 * S.charge, 1 + 0.08 * S.charge);
+  const st = !S.grounded && S.jumpBoost > 0 ? 0.12 * S.jumpBoost / 0.3 : 0; car.scale.set(1 - st * 0.5, 1 + st, 1 - st * 0.5);
   S.wheelSpin += S.v.dot(S.f) * dt / 0.28;
   for (const w of car.userData.wheels) w.rotation.x = S.wheelSpin;
   const tNow = performance.now() / 1000, spdNow = S.v.length();
@@ -1511,7 +1742,7 @@ function render(dt) {
   camF.lerp(vdir, 1 - Math.exp(-3.5 * dt)); camF.addScaledVector(camUp, -camF.dot(camUp)).normalize();
   const spd = S.v.length();
   if (S.mode === 'drive' || S.mode === 'land') {
-    const back = S.precise ? 6 : 7.5 + spd * 0.15, upOff = S.precise ? 5.2 : 4.2 + spd * 0.05;
+    const ck = CAMK[SET.cam] || 1, back = (S.precise ? 6 : 7.5 + spd * 0.15) * ck, upOff = (S.precise ? 5.2 : 4.2 + spd * 0.05) * ck;
     look.copy(car.position).addScaledVector(camUp, 0.8).addScaledVector(camF, 3);
     camPos.copy(car.position).addScaledVector(camUp, upOff).addScaledVector(camF, -back);
     camSmooth.lerp(camPos, 1 - Math.exp(-8 * dt));
@@ -1519,8 +1750,8 @@ function render(dt) {
     look.copy(car.position);
   }
   camera.position.copy(camSmooth);
-  if (shake > 0) { shake = Math.max(0, shake - dt * 2); const k = shake * shake * 0.8; camera.position.x += (Math.random() - .5) * k; camera.position.y += (Math.random() - .5) * k; camera.position.z += (Math.random() - .5) * k; }
-  const fov = S.boosting ? 74 : 60 + Math.min(6, spd * 0.3);
+  if (shake > 0) { shake = Math.max(0, shake - dt * 2); const k = SET.shake ? shake * shake * 0.8 : 0; camera.position.x += (Math.random() - .5) * k; camera.position.y += (Math.random() - .5) * k; camera.position.z += (Math.random() - .5) * k; }
+  const fov = !SET.speedfx ? 62 : S.boosting ? 74 : 60 + Math.min(6, spd * 0.3);
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * (1 - Math.exp(-5 * dt)); camera.updateProjectionMatrix(); }
   if (garageOpen) {
     garageSpin += dt * 0.45;
@@ -1545,9 +1776,10 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 } });
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {} });
 }
 applyCar();
+await loadStep(0.65, 'Waking the moonlet');
 planet = buildPlanet(G.planetIdx);
 if (saved && saved.life) {
   try { const q = unb64(saved.life); if (q.length === planet.N) for (let i = 0; i < planet.N; i++) planet.life[i] = q[i] / 255; } catch {}
@@ -1557,26 +1789,28 @@ if (saved && saved.life) {
 setSky();
 S.alt = groundH(S.p);
 startPlanet();
+await loadStep(0.85, 'Warming up the engine');
 camera.position.set(0, R0() + 8, -10); camSmooth.copy(camera.position);
 function R0() { return planet.R; }
 
-let started = false, offlineMsg = '';
+let offlineMsg = '';
 if (saved && saved.t) {
   const before = gardenReady(); tickGarden(Math.min((Date.now() - saved.t) / 1000, 8 * 3600));
   const grew = gardenReady() - before;
   if (grew >= 1) offlineMsg = `Welcome back! Your Gem Garden grew +${fmt(grew)} ${GEM}<br><span style="font-size:16px">Press H to harvest</span>`;
 }
-$('title').addEventListener('pointerdown', start);
-addEventListener('keydown', (e) => { if (!started && ['Enter', 'Space'].includes(e.code)) start(); });
+$('playBtn').onclick = start;
+addEventListener('keydown', (e) => { if (menuReady && !$('title').hidden && !modal && ['Enter', 'Space'].includes(e.code)) { e.preventDefault(); start(); } });
 function start() {
-  if (started) return; started = true; $('title').style.display = 'none'; Platform.gameplayStart();
+  if (started) return resume(); started = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart();
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Drive to bring the moonlet back to life!<br><span style="font-size:16px">Grab the glowing seed pods</span>'), 3.5);
 }
 
-let last = performance.now(), saveAcc = 0, uiAcc = 0;
+let last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (started) {
+  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
+  fpsN++; fpsT += raw; if (fpsT >= 0.5) { if (SET.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
+  if (started && !paused) {
     tickGarden(dt);
     if (!garageOpen && !gardenOpen) step(dt);
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
@@ -1587,7 +1821,11 @@ function frame(now) {
   if (gardenOpen) renderGardenScene(dt); else render(dt);
   requestAnimationFrame(frame);
 }
-addEventListener('visibilitychange', () => { if (document.hidden && started) save(); });
+addEventListener('visibilitychange', () => { if (document.hidden && started) { pause(); save(); } });
+applySettings();
+try { renderer.compile(scene, camera); } catch {}
+await loadStep(1, 'Ready!');
+showMenu();
 Platform.loadingFinished();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
