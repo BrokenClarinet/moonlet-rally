@@ -23,6 +23,7 @@ All keys can be changed in Controls (main menu or pause menu). Defaults:
 - In the air: Up/Down to flip, Left/Right to spin
 - G: garage (car bodies, paint, wheels, toppers; some unlock with gems)
 - H: Gem Garden (idle area to harvest and upgrade gem silos)
+- M: Moonlets map (fly back to any moonlet you've unlocked)
 - P or Esc: pause (Esc also closes menus)
 - Phones and tablets: the car drives itself forward. Drag the left thumb stick to steer, pull it back to brake or reverse; in the air push it up/down to flip and sideways to spin. Right side: JUMP, BOOST, DRIFT and SLOW (precision).
 
@@ -44,6 +45,7 @@ All keys can be changed in Controls (main menu or pause menu). Defaults:
   - Hoop Moon: drive through chains of golden hoops.
   - Starfall Moon: catch falling star-seeds for big blooms.
   - After seven moonlets the loop repeats with bigger, richer moonlets.
+- Moonlets map: fly back to any unlocked moonlet. Each moonlet's grass is kept (localStorage `moonletRally.life.<n>`, 4 bits per point), and restoring more of an old moonlet raises its Gem Garden output.
 - Gem Garden: every restored moonlet becomes a silo that grows gems (also while you're away, up to 8 hours, each silo holds 2 hours). Harvest, upgrade silos and buy sprinklers there.
 - Garage Upgrades tab: ten levelled upgrades bought with gems (wider tires, engine, tread, nitro tank, springs, trick wax, gem magnet, bull bar, gem polish, combo keeper).
 - Garage parts change how the car plays (bodies, wheels and toppers each have a perk; paint is cosmetic).
