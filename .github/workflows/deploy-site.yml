@@ -1,7 +1,8 @@
-# Uploads the password-protected website to your web host over FTPS.
+# Uploads the password-protected website to your web host (FTP with TLS when available, or SFTP).
 # Runs only when you start it (Actions tab > Deploy website > Run workflow).
 # Repository secrets needed: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, SITE_PASSWORD
-# Optional repository variable: FTP_DIR (folder on the host, default "./")
+# Optional repository variables: FTP_DIR (folder on the host, default the login folder)
+#   and FTP_PROTOCOL (ftp or sftp, default ftp)
 name: Deploy website
 on:
   workflow_dispatch:
@@ -25,11 +26,17 @@ jobs:
         env:
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
       - name: Upload
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          local-dir: ./dist/site/
-          server-dir: ${{ vars.FTP_DIR || './' }}
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL || 'ftp' }}
+          FTP_DIR: ${{ vars.FTP_DIR || '.' }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp >/dev/null
+          host="${FTP_SERVER#*://}"
+          # ftp: uses TLS when the server offers it, plain FTP otherwise. sftp: SSH file transfer.
+          export LFTP_PASSWORD="$FTP_PASSWORD"
+          lftp -c "set ftp:ssl-allow yes; set ftp:ssl-force no; set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20;
+            open -u \"$FTP_USERNAME\" --env-password $FTP_PROTOCOL://$host;
+            mirror --reverse --verbose --no-perms ./dist/site/ '$FTP_DIR'"
