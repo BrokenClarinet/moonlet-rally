@@ -81,3 +81,14 @@ All visuals are generated in code from basic shapes (toon shading, ink outlines,
 - Stats page in the pause menu (time, gems earned, best trick, longest air and more).
 - Settings > Save code copies your progress as a short code you can load on another device or browser.
 - Garage > Upgrades has a button that buys the cheapest upgrades you can afford.
+
+## Saves, idle gems and ads
+
+- Saves live in localStorage. On Poki the game waits for the SDK to finish loading (which restores a logged-in player's cloud save) before reading anything, and grass is run-length packed, so a full save is a few KB (Poki's cloud-save limit is 1MB gzipped).
+- Gem Garden silos start at 30 minutes of growth and upgrade (Bigger silos) up to 12 hours. Full silos stop growing, so players have a reason to come back.
+- Welcome-back card: collect what grew while you were away, or watch a rewarded ad to double it. After any harvest, a rewarded ad can double it too.
+- Ads: commercial breaks before gameplay resumes (leaving the garage, garden, pause menu or main menu, and between moonlets); Poki decides whether one actually plays. Rewarded ads are always optional and labelled. `MR_PLATFORM = 'demo'` (used by the private website build) shows stand-in ad cards instead of real ads.
+
+## Moon critters
+
+Fluffy critters move onto the grass you grow; more appear as a moonlet fills up. Bumping one costs gems and breaks your combos. Whizzing past one at speed without touching it pays a small bonus.
