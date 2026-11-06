@@ -1839,7 +1839,8 @@ function step(dt) {
     // launch ramp
     if (planet.restored / planet.N >= planet.def.goal) {
       if (!planet.pad.visible) { planet.pad.visible = true; toast('Launch ramp open!<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
-      if (S.p.angleTo(planet.padDir) * R < 2.3 && fwd > 3 && S.grounded) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); }
+      // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
+      if (S.p.angleTo(planet.padDir) * R < 2.5 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); }
     }
   } else if (S.mode === 'launch') {
     S.t += dt; S.alt += S.valt * dt; S.valt += 10 * dt;
