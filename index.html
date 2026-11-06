@@ -170,7 +170,7 @@
 <div id="fade" class="hud"></div>
 <div id="garage" hidden>
   <div class="gpanel">
-    <div class="ghead"><b>Garage</b><span id="ggems"></span><button class="btn alt" id="gad" hidden>Watch ad for gems</button><button class="btn" id="gclose">Drive!</button></div>
+    <div class="ghead"><b>Garage</b><span id="ggems"></span><button class="btn alt" id="gad" hidden>Watch ad: free gems</button><button class="btn" id="gclose">Drive!</button></div>
     <div class="gtabs"><button class="chip" id="tabParts">Parts</button><button class="chip" id="tabUpg">Upgrades</button></div>
     <div id="gParts">
     <div class="grow"><label>Body</label><div class="chips" id="g-body"></div></div>
@@ -186,8 +186,8 @@
   <div id="gLabels"></div>
   <div class="gpanel" id="gardenPanel">
     <div class="ghead"><b>Gem Garden</b><span id="gdgems"></span><button class="btn" id="gdclose">Drive!</button></div>
-    <p class="gdhint">Restored moonlets grow gems here, even while you're away. Each silo holds 2 hours of growth.</p>
-    <div class="gdtop"><button class="btn alt" id="gdall">Harvest all</button><button class="btn" id="gS">Sprinklers</button><button class="btn alt" id="gdad" hidden>Watch ad: +30 min of growth</button></div>
+    <p class="gdhint" id="gdhint"></p>
+    <div class="gdtop"><button class="btn alt" id="gdall">Harvest all</button><button class="btn" id="gS">Sprinklers</button><button class="btn" id="gSilo">Bigger silos</button><button class="btn alt" id="gdx" hidden>Watch ad: double it</button><button class="btn alt" id="gdad" hidden>Watch ad: +30 min of growth</button></div>
     <div id="gdlist"></div>
   </div>
 </div>
@@ -220,6 +220,13 @@
   </div>
   <div class="srow"><label>Progress</label><div><button class="btn" id="sReset" style="background:var(--coral);color:var(--paper)">Reset progress</button></div></div>
 </div></div>
+<div id="welcome" class="modal" hidden><div class="gpanel menu" style="max-width:420px">
+  <div class="ghead"><b>Welcome back!</b></div>
+  <p id="wText" style="margin:0;font-weight:700;text-align:center"></p>
+  <p id="wCap" class="gdhint" style="text-align:center"></p>
+  <button class="btn alt" id="wAd" hidden></button>
+  <button class="btn" id="wTake"></button>
+</div></div>
 <div id="stats" class="modal" hidden><div class="gpanel">
   <div class="ghead"><b>Stats</b><button class="btn" id="stClose" style="margin-left:auto">Done</button></div>
   <div id="stList" class="statgrid"></div>
@@ -236,6 +243,7 @@
   <p class="gdhint">Phones and tablets use the on-screen buttons. Esc always pauses or goes back.</p>
 </div></div>
 
+<div id="adfake" hidden style="position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,14,50,.92);color:#fff6ea;font:800 18px system-ui,sans-serif;text-align:center"><div><b></b><br><small style="font-weight:600;opacity:.75">A real ad plays here on Poki</small></div></div>
 <div id="errbar" hidden style="position:fixed;left:8px;bottom:8px;z-index:30;max-width:min(560px,90vw);background:#3a2758;border:2.5px solid #2a1838;border-radius:12px;padding:6px 10px;font:600 12px system-ui,sans-serif;color:#fff6ea"></div>
 <script>
 // show errors on screen so testers can report them (the game keeps running)
@@ -246,7 +254,16 @@
   addEventListener('unhandledrejection', (e) => { const r = e.reason; if (r && !/fetch|network/i.test(String(r.message || r))) show(r.message || r); });
 })();
 </script>
-<script>window.MR_PLATFORM = 'poki'; // set to 'none' for other portals</script>
+<script>window.MR_PLATFORM = 'poki'; // 'poki' = Poki SDK, 'demo' = pretend ads for private testing, 'none' = no ads
+// Poki injects the player's cloud save into localStorage around init, so the SDK starts first and the game waits for it before reading any save
+window.MR_SDK_READY = new Promise((resolve) => {
+  if (window.MR_PLATFORM !== 'poki') return resolve(false);
+  const s = document.createElement('script'); s.src = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
+  s.onload = () => { try { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); window.PokiSDK.init().then(() => resolve(true)).catch(() => resolve(true)); } catch (e) { resolve(false); } };
+  s.onerror = () => resolve(false);
+  document.head.appendChild(s);
+});
+</script>
 <script type="module">
 import * as THREE from './vendor/three.module.min.js';
 
@@ -259,6 +276,9 @@ const V = () => new THREE.Vector3();
 // loading screen: update the bar and let the browser paint between heavy steps
 const loadStep = async (f, txt) => { document.getElementById('loadfill').style.width = (f * 100).toFixed(0) + '%'; document.getElementById('loadtxt').textContent = txt; await new Promise((r) => setTimeout(r, 0)); };
 
+// wait for the portal SDK (and its cloud save) before touching storage; never hang the game on it
+await loadStep(0.05, 'Loading your save');
+await Promise.race([window.MR_SDK_READY || Promise.resolve(false), new Promise((r) => setTimeout(() => r(false), 8000))]);
 // ---------------------------------------------------------------- settings (saved per device; Poki syncs these too)
 const SET_KEY = 'moonletRally.settings';
 const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false };
@@ -1082,7 +1102,7 @@ function spawn(at, up, color, spread) {
 
 // ---------------------------------------------------------------- game state & save
 const SAVE_KEY = 'moonletRally.v1';
-const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {} };
+const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {}, siloLvl: 0, lifeV: 2 };
 const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -1091,8 +1111,7 @@ const paintRadius = () => 0.6 * (1 + 0.18 * G.tires);
 const gemRate = () => planet ? gardenItems().reduce((a, it) => a + prodOf(it), 0) : 0;
 function save() {
   if (resetting) return;
-  const q = new Uint8Array(planet.N); for (let i = 0; i < planet.N; i++) q[i] = planet.life[i] * 255;
-  store.set({ ...G, life: b64(q), t: Date.now(), rate: gemRate() });
+  store.set({ ...G, life: packLife(planet.life), t: Date.now(), rate: gemRate() });
 }
 
 // ---------------------------------------------------------------- UI
@@ -1115,7 +1134,8 @@ function updateUI() {
   $('rate').innerHTML = `garden grows ${fmtR(gemRate())} ${GEM}/s`;
   const nUp = UPG.filter(u => upLvl(u.id) < u.max && G.gems >= upCost(u)).length;
   $('upT').innerHTML = nUp ? `Upgrades · ${nUp} ready` : 'Upgrades';
-  $('gardenBtn').innerHTML = `Gem Garden${touch.active ? '' : ` (${kn('garden')})`} · ${fmt(gardenReady())} ${GEM}`;
+  const anyFull = gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1 && capOf(it) > 20);
+  $('gardenBtn').innerHTML = `Gem Garden${touch.active ? '' : ` (${kn('garden')})`} · ${anyFull ? 'FULL · ' : ''}${fmt(gardenReady())} ${GEM}`;
   $('nitrofill').style.width = (G.nitro * 100).toFixed(0) + '%';
   $('mapBtn').hidden = G.planetIdx < 1;
   $('combo').textContent = combo > 1 ? `x${combo} FRESH GROUND` : '';
@@ -1127,29 +1147,34 @@ function updateUI() {
 const Platform = (() => {
   const sdk = () => (window.PokiSDK && window.MR_PLATFORM === 'poki') ? window.PokiSDK : null;
   let inGameplay = false, adBusy = false;
-  const ready = new Promise((resolve) => {
-    if (window.MR_PLATFORM !== 'poki') return resolve(false);
-    const s = document.createElement('script'); s.src = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
-    s.onload = () => { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); window.PokiSDK.init().then(() => resolve(true)).catch(() => resolve(true)); };
-    s.onerror = () => resolve(false);
-    document.head.appendChild(s);
-  });
+  const ready = window.MR_SDK_READY || Promise.resolve(false);
+  const demo = window.MR_PLATFORM === 'demo';
+  // demo builds (private website, test link) show a stand-in card where a real ad would play
+  const fakeAd = (text, ms) => new Promise((res) => { const el = $('adfake'); el.querySelector('b').textContent = text; el.hidden = false; setTimeout(() => { el.hidden = true; res(); }, ms); });
+  let demoLastBreak = performance.now();
   const api = {
-    ready, get hasAds() { return !!sdk(); }, get adBusy() { return adBusy; },
+    ready, get hasAds() { return !!sdk() || demo; }, get adBusy() { return adBusy; },
     loadingFinished() { ready.then(() => sdk()?.gameLoadingFinished()); },
-    gameplayStart() { if (!inGameplay) { inGameplay = true; sdk()?.gameplayStart(); } },
-    gameplayStop() { if (inGameplay) { inGameplay = false; sdk()?.gameplayStop(); } },
+    gameplayStart() { if (!inGameplay && !adBusy) { inGameplay = true; sdk()?.gameplayStart(); } },
+    gameplayStop() { if (inGameplay && !adBusy) { inGameplay = false; sdk()?.gameplayStop(); } },
     // natural break (between moonlets, leaving the garage); resolves when play may continue
     commercialBreak() {
-      const s = sdk(); if (!s) return Promise.resolve();
+      const s = sdk();
+      if (!s) { // demo: Poki decides real ad frequency; here, at most one stand-in break every 3 minutes
+        if (!demo || adBusy || performance.now() - demoLastBreak < 180000) return Promise.resolve();
+        demoLastBreak = performance.now(); api.gameplayStop(); adBusy = true; clearKeys();
+        return fakeAd('Ad break', 1500).then(() => { adBusy = false; clearKeys(); });
+      }
+      if (adBusy) return Promise.resolve();
       api.gameplayStop(); adBusy = true; clearKeys();
       return s.commercialBreak(() => { adBusy = true; }).catch(() => {}).then(() => { adBusy = false; clearKeys(); });
     },
     // opt-in reward ad; resolves true when the reward should be given
     rewardedBreak() {
-      const s = sdk(); if (!s) return Promise.resolve(false);
+      const s = sdk(); if (adBusy || (!s && !demo)) return Promise.resolve(false);
       const was = inGameplay; api.gameplayStop(); adBusy = true; clearKeys();
-      return s.rewardedBreak().catch(() => false).then((ok) => { adBusy = false; clearKeys(); if (was) api.gameplayStart(); return !!ok; });
+      const run = s ? s.rewardedBreak().catch(() => false) : fakeAd('Rewarded ad', 1800).then(() => true);
+      return run.then((ok) => { adBusy = false; clearKeys(); if (was) api.gameplayStart(); return !!ok; });
     },
     getUser() { const s = sdk(); return s && s.getUser ? s.getUser().catch(() => null) : Promise.resolve(null); },
     login() { const s = sdk(); return s && s.login ? s.login().catch(() => {}) : Promise.resolve(); },
@@ -1235,11 +1260,14 @@ $('garageBtn').onclick = () => openGarage('parts');
 $('tabParts').onclick = () => { garageTab = 'parts'; renderGarage(); };
 $('tabUpg').onclick = () => { garageTab = 'upg'; renderGarage(); };
 $('gclose').onclick = closeGarage;
-$('gad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { const g = 40 * (1 + G.planetIdx); G.gems += g; toast(`+${g} ${GEM} thanks for watching!`, 2); renderGarage(); save(); } });
+$('gad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { const g = Math.round(Math.max(40 * (1 + G.planetIdx), gemRate() * 600)); G.gems += g; toast(`+${g} ${GEM} thanks for watching!`, 2); renderGarage(); save(); } });
 addEventListener('keydown', (e) => { if (isAct('garage', e.code) && started && !paused) garageOpen ? closeGarage() : openGarage(); if (e.code === 'Escape' && garageOpen) closeGarage(); });
 
 // ---------------------------------------------------------------- gem garden (idle area)
-const SILO_HOURS = 2;
+const SILO_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12]; // hours of growth a silo can hold, per Silo upgrade level
+const siloHours = () => SILO_STEPS[Math.min(SILO_STEPS.length - 1, G.siloLvl || 0)];
+const siloCost = () => Math.round(150 * Math.pow(2.8, G.siloLvl || 0));
+const hrs = (h) => h < 1 ? `${Math.round(h * 60)} min` : `${h} hour${h === 1 ? '' : 's'}`;
 const atIdx = () => G.at ?? G.planetIdx;
 function gardenItems() {
   const here = atIdx(), live = planet.restored / planet.N;
@@ -1248,18 +1276,44 @@ function gardenItems() {
   items.push({ d: G.cur, name: fd.name, title: fd.title, rate: fd.rate, frac: here === G.planetIdx ? live : (G.curFrac || 0), color: fd.alive[0], dead: fd.dead[0], idx: G.done.length, current: here === G.planetIdx });
   return items;
 }
-// each moonlet's grass is kept (4 bits per point) so you can fly back to it
+// each moonlet's grass is kept so you can fly back to it. It is run-length packed at 16 levels,
+// so a moonlet costs a few KB and the whole save stays far below Poki's 1MB cloud-save limit
 const LIFE_KEY = (i) => `moonletRally.life.${i}`;
+function packLife(life) {
+  const out = []; let i = 0; const N = life.length, lv = (k) => Math.min(15, Math.round(life[k] * 15));
+  while (i < N) { const v = lv(i); let n = 1; while (n < 255 && i + n < N && lv(i + n) === v) n++; out.push(v, n); i += n; }
+  return 'R' + b64(Uint8Array.from(out));
+}
+function unpackLife(str, N, into) {
+  if (typeof str !== 'string' || !str) return false;
+  if (str[0] === 'R') {
+    const r = unb64(str.slice(1)); let k = 0;
+    for (let i = 0; i + 1 < r.length && k <= N; i += 2) for (let n = 0; n < r[i + 1] && k < N; n++) into[k++] = r[i] / 15;
+    return k === N;
+  }
+  const q = unb64(str); // older formats: 8 bits or 4 bits per point
+  if (q.length === N) { for (let i = 0; i < N; i++) into[i] = q[i] / 255; return true; }
+  if (q.length === (N + 1) >> 1) { for (let i = 0; i < N; i++) into[i] = ((q[i >> 1] >> ((i & 1) * 4)) & 15) / 15; return true; }
+  return false;
+}
+// keep our share of storage modest: if it ever grows large, forget the grass of the oldest moonlets (they grow back as a restored cap)
+function pruneLife() {
+  try {
+    let total = 0; const keys = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || !k.startsWith('moonletRally.')) continue; total += k.length + (localStorage.getItem(k) || '').length; if (k.startsWith('moonletRally.life.')) keys.push(k); }
+    keys.sort((a, b) => +a.split('.').pop() - +b.split('.').pop());
+    while (total > 700000 && keys.length > 1) { const k = keys.shift(); if (+k.split('.').pop() === atIdx()) continue; total -= (localStorage.getItem(k) || '').length; localStorage.removeItem(k); }
+  } catch {}
+}
 function stashLife() {
-  const N = planet.N, q = new Uint8Array((N + 1) >> 1);
-  for (let i = 0; i < N; i++) q[i >> 1] |= Math.min(15, Math.round(planet.life[i] * 15)) << ((i & 1) * 4);
-  try { localStorage.setItem(LIFE_KEY(atIdx()), b64(q)); } catch {}
+  try { localStorage.setItem(LIFE_KEY(atIdx()), packLife(planet.life)); } catch {}
+  pruneLife();
   const here = atIdx(), frac = planet.restored / planet.N;
   if (here < G.done.length) G.done[here].frac = Math.max(G.done[here].frac, frac); else G.curFrac = frac;
 }
 function restoreLife(idx) {
   let ok = false;
-  try { const v = localStorage.getItem(LIFE_KEY(idx)); if (v) { const q = unb64(v); if (q.length === (planet.N + 1) >> 1) { for (let i = 0; i < planet.N; i++) planet.life[i] = ((q[i >> 1] >> ((i & 1) * 4)) & 15) / 15; ok = true; } } } catch {}
+  try { ok = unpackLife(localStorage.getItem(LIFE_KEY(idx)), planet.N, planet.life); } catch {}
   if (!ok && idx < G.done.length) { // older saves: grow back a restored cap of the right size
     const ax = new THREE.Vector3(0.3, 1, 0.2).normalize(), d = planet.dirs, order = [...Array(planet.N).keys()];
     const dot = (i) => d[i * 3] * ax.x + d[i * 3 + 1] * ax.y + d[i * 3 + 2] * ax.z;
@@ -1270,7 +1324,7 @@ function restoreLife(idx) {
   if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
 }
 const prodOf = (it) => it.rate * it.frac * mult() * (1 + 0.5 * (it.d.lvl || 0));
-const capOf = (it) => Math.max(20, prodOf(it) * 3600 * SILO_HOURS);
+const capOf = (it) => Math.max(20, prodOf(it) * 3600 * siloHours());
 function tickGarden(dt) { for (const it of gardenItems()) it.d.silo = Math.min(capOf(it), (it.d.silo || 0) + prodOf(it) * dt); }
 const gardenReady = () => gardenItems().reduce((a, it) => a + (it.d.silo || 0), 0);
 const lvlCost = (it) => Math.round(30 * (1 + it.idx) * Math.pow(1.8, it.d.lvl || 0));
@@ -1306,24 +1360,30 @@ function buildGarden() {
   const z = innerHeight <= 500 ? 1.3 : 1;
   GD.cam.position.set(0, far * 1.05 * z, far * 1.55 * z); GD.cam.lookAt(0, -far * 0.1, 0);
 }
-function harvest(idx) {
-  const it = gardenItems()[idx]; const v = Math.floor(it.d.silo || 0); if (v < 1) return;
+let doubleOffer = 0; // the last harvest, which a rewarded ad can double
+function harvest(idx, batch) {
+  const it = gardenItems()[idx]; const v = Math.floor(it.d.silo || 0); if (v < 1) return 0;
+  doubleOffer = batch ? doubleOffer + v : v;
   G.gems += v; it.d.silo -= v;
   const b = GD.bodies[idx]; if (b) { const pop = document.createElement('div'); pop.className = 'gpop'; pop.innerHTML = `+${fmt(v)} ${GEM}`; b.label.appendChild(pop); setTimeout(() => pop.remove(), 900); }
-  renderGarden(); save();
+  renderGarden(); save(); return v;
 }
 function renderGarden() {
   const items = gardenItems();
   $('gdgems').innerHTML = fmt(G.gems) + ' ' + GEM;
   $('gdall').innerHTML = `Harvest all · ${fmt(gardenReady())} ${GEM}`;
   $('gdad').hidden = !Platform.hasAds;
-  $('gS').innerHTML = `Sprinklers: all gardens +25% · ${costS()} ${GEM}`; $('gS').disabled = G.gems < costS();
+  $('gS').innerHTML = `Sprinklers: all gardens +25% · ${fmt(costS())} ${GEM}`; $('gS').disabled = G.gems < costS();
+  const maxSilo = (G.siloLvl || 0) >= SILO_STEPS.length - 1;
+  $('gSilo').innerHTML = maxSilo ? `Silos: ${hrs(siloHours())} (max)` : `Bigger silos: hold ${hrs(SILO_STEPS[(G.siloLvl || 0) + 1])} · ${fmt(siloCost())} ${GEM}`; $('gSilo').disabled = maxSilo || G.gems < siloCost();
+  $('gdhint').textContent = `Restored moonlets grow gems here, even while you're away. Silos hold ${hrs(siloHours())} of growth, then stop. Come back to harvest, or build bigger silos.`;
+  $('gdx').hidden = !(Platform.hasAds && doubleOffer >= 1); $('gdx').innerHTML = `Watch ad: double it (+${fmt(doubleOffer)} ${GEM})`;
   const list = $('gdlist'); list.innerHTML = '';
   for (const it of items) {
     const row = document.createElement('div'); row.className = 'gdrow';
-    const fill = Math.min(100, (it.d.silo || 0) / capOf(it) * 100);
+    const fill = Math.min(100, (it.d.silo || 0) / capOf(it) * 100), full = fill >= 99.5;
     row.innerHTML = `<div class="gdname"><b>${it.name}</b> ${it.title}${it.current ? ' <i>(here now)</i>' : ''}<small>${(it.frac * 100).toFixed(0)}% restored · ${fmtR(prodOf(it))} ${GEM}/s · level ${it.d.lvl || 0}</small></div>
-      <div class="gdsilo"><div style="width:${fill.toFixed(0)}%"></div><span>${fmt(it.d.silo || 0)} ${GEM}</span></div>`;
+      <div class="gdsilo"><div style="width:${fill.toFixed(0)}%"></div><span>${full ? 'FULL · ' : ''}${fmt(it.d.silo || 0)} ${GEM}</span></div>`;
     const up = document.createElement('button'); up.className = 'btn'; up.innerHTML = `+50% · ${fmt(lvlCost(it))} ${GEM}`; up.disabled = G.gems < lvlCost(it);
     up.onclick = () => { if (G.gems >= lvlCost(it)) { G.gems -= lvlCost(it); it.d.lvl = (it.d.lvl || 0) + 1; renderGarden(); save(); } };
     const hv = document.createElement('button'); hv.className = 'btn alt'; hv.textContent = 'Harvest'; hv.disabled = (it.d.silo || 0) < 1; hv.onclick = () => harvest(it.idx);
@@ -1332,11 +1392,13 @@ function renderGarden() {
   }
 }
 function openGarden() { if (S.mode !== 'drive' || Platform.adBusy || garageOpen || paused) return; Platform.gameplayStop(); gardenOpen = true; $('gardenUI').hidden = false; document.body.classList.add('in-garden'); buildGarden(); renderGarden(); }
-function closeGarden() { $('gardenUI').hidden = true; document.body.classList.remove('in-garden'); Platform.commercialBreak().then(() => { gardenOpen = false; Platform.gameplayStart(); }); }
+function closeGarden() { doubleOffer = 0; $('gardenUI').hidden = true; document.body.classList.remove('in-garden'); Platform.commercialBreak().then(() => { gardenOpen = false; Platform.gameplayStart(); }); }
 $('gardenBtn').onclick = openGarden;
 $('gdclose').onclick = closeGarden;
-$('gdall').onclick = () => { gardenItems().forEach(it => harvest(it.idx)); };
+$('gdall').onclick = () => { doubleOffer = 0; gardenItems().forEach(it => harvest(it.idx, true)); };
+$('gdx').onclick = () => { const v = doubleOffer; if (v < 1) return; Platform.rewardedBreak().then((ok) => { if (ok) { G.gems += v; stat('adDoubles', 1); doubleOffer = 0; toast(`Doubled! +${fmt(v)} ${GEM}`, 2); renderGarden(); save(); } }); };
 $('gS').onclick = () => { if (G.gems >= costS()) { G.gems -= costS(); G.sprink++; renderGarden(); save(); } };
+$('gSilo').onclick = () => { if ((G.siloLvl || 0) < SILO_STEPS.length - 1 && G.gems >= siloCost()) { G.gems -= siloCost(); G.siloLvl = (G.siloLvl || 0) + 1; renderGarden(); save(); toast(`Silos now hold ${hrs(siloHours())}!`, 2); } };
 $('gdad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { tickGarden(1800); renderGarden(); save(); } });
 addEventListener('keydown', (e) => { if (isAct('garden', e.code) && started && !paused) gardenOpen ? closeGarden() : openGarden(); if (e.code === 'Escape' && gardenOpen) closeGarden(); });
 let gardenUiAcc = 0;
@@ -1490,7 +1552,11 @@ $('mapClose').onclick = closeModal;
 $('pMap').onclick = () => { if (G.planetIdx < 1) return; $('pause').hidden = true; openModal('map'); };
 const canPause = () => started && !paused && !garageOpen && !gardenOpen && S.mode === 'drive' && !Platform.adBusy;
 function pause() { if (!canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); $('pause').hidden = false; save(); }
-function resume() { if (!paused) return; closeModal(); paused = false; $('pause').hidden = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart(); }
+function resume() {
+  if (!paused || resuming) return; closeModal(); $('pause').hidden = true; $('title').hidden = true; resuming = true;
+  Platform.commercialBreak().then(() => { resuming = false; paused = false; S.jumpHeld = true; Platform.gameplayStart(); });
+}
+let resuming = false;
 function showMenu() {
   $('loadView').hidden = true; $('menuView').hidden = false; $('title').hidden = false;
   $('playBtn').textContent = (started || G.planetIdx > 0 || G.gems > 0) ? 'CONTINUE' : 'PLAY';
@@ -1517,7 +1583,6 @@ function renderStats() {
 // grass is stored run-length encoded at 16 levels, so the code stays short
 const encodeSave = () => {
   save(); let o = {}; try { o = JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch {}
-  if (o.life) { const q = unb64(o.life), out = []; for (let i = 0; i < q.length;) { const v = q[i] >> 4; let n = 1; while (n < 255 && i + n < q.length && (q[i + n] >> 4) === v) n++; out.push(v, n); i += n; } o.lifeR = b64(Uint8Array.from(out)); delete o.life; }
   delete o.rate; return 'MR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
 };
 const decodeSave = (code) => { const m = String(code).trim().match(/^MR1\.([A-Za-z0-9+/=\s]+)$/); if (!m) return null; try { const o = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/\s/g, ''))))); if (!o || typeof o.gems !== 'number' || typeof o.planetIdx !== 'number') return null;
@@ -2132,12 +2197,12 @@ function step(dt) {
     $('fade').style.opacity = smooth(0.9, 1.6, S.t);
     if (S.t > 1.7) {
       const from = atIdx(), to = S.travel ?? from + 1; S.travel = null;
+      stashLife(); // before the moonlet count changes, so the grass is filed under the moonlet it belongs to
       if (from === G.planetIdx && to === from + 1) {
         G.done.push({ name: planet.def.name, title: planet.def.title, rate: planet.def.rate, frac: planet.restored / planet.N, color: planet.def.alive[0], deadColor: planet.def.dead[0], silo: G.cur.silo, lvl: G.cur.lvl });
         G.cur = { silo: 0, lvl: 0 }; G.curFrac = 0;
         G.planetIdx++;
       }
-      stashLife();
       G.at = to === G.planetIdx ? null : to;
       disposePlanet(planet); planet = buildPlanet(to); restoreLife(to);
       S.p.set(0, 1, 0); S.f.set(0, 0, 1); S.v.set(0, 0, 0); lastWheel[0].set(0,0,0); lastWheel[1].set(0,0,0); S.alt = 14; S.valt = 0; S.mode = 'adwait'; S.t = 0; S.grounded = false; S.air = 0; startPlanet();
@@ -2298,14 +2363,16 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {} });
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0) }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
+  // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
+  if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
 }
 applyCar();
 await loadStep(0.65, 'Waking the moonlet');
 planet = buildPlanet(atIdx());
 if (saved && saved.life) {
-  try { const q = unb64(saved.life); if (q.length === planet.N) for (let i = 0; i < planet.N; i++) planet.life[i] = q[i] / 255; } catch {}
+  try { if (!unpackLife(saved.life, planet.N, planet.life)) planet.life.fill(0); } catch { planet.life.fill(0); }
   recount(planet);
   if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
 }
@@ -2316,15 +2383,27 @@ await loadStep(0.85, 'Warming up the engine');
 camera.position.set(0, R0() + 8, -10); camSmooth.copy(camera.position);
 function R0() { return planet.R; }
 
-let offlineMsg = '';
+let offlineMsg = '', welcome = null;
 if (saved && saved.t) {
-  const before = gardenReady(); tickGarden(Math.min((Date.now() - saved.t) / 1000, 8 * 3600));
-  const grew = gardenReady() - before;
-  if (grew >= 1) offlineMsg = `Welcome back! Your Gem Garden grew +${fmt(grew)} ${GEM}<br><span style="font-size:16px">Press H to harvest</span>`;
+  const away = Math.max(0, (Date.now() - saved.t) / 1000), before = gardenReady(); tickGarden(Math.min(away, siloHours() * 3600));
+  const grew = Math.floor(gardenReady() - before);
+  if (grew >= 1) welcome = { grew, away, capped: away > siloHours() * 3600 && gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1) };
 }
 $('playBtn').onclick = start;
 addEventListener('keydown', (e) => { if (menuReady && !$('title').hidden && !modal && ['Enter', 'Space'].includes(e.code)) { e.preventDefault(); start(); } });
+function showWelcome() {
+  if (!welcome) return; const w = welcome;
+  const h = w.away / 3600, awayTxt = h >= 1 ? `${Math.floor(h)}h ${Math.round((h % 1) * 60)}m` : `${Math.max(1, Math.round(w.away / 60))} min`;
+  $('wText').innerHTML = `You were away ${awayTxt}. Your Gem Garden grew <b>+${fmt(w.grew)} ${GEM}</b>`;
+  $('wCap').textContent = w.capped ? `Your silos filled up after ${hrs(siloHours())}. Build bigger silos in the Gem Garden to earn for longer.` : '';
+  $('wTake').innerHTML = `Collect +${fmt(w.grew)} ${GEM}`; $('wAd').hidden = !Platform.hasAds; $('wAd').innerHTML = `Watch ad: get +${fmt(w.grew * 2)} ${GEM}`;
+  openModal('welcome');
+}
+const collectWelcome = (k) => { if (!welcome) return; gardenItems().forEach(it => { const v = Math.floor(it.d.silo || 0); G.gems += v; it.d.silo -= v; }); G.gems += welcome.grew * (k - 1); toast(`+${fmt(welcome.grew * k)} ${GEM}${k > 1 ? ' doubled!' : ''}`, 2); welcome = null; closeModal(); save(); };
+$('wTake').onclick = () => collectWelcome(1);
+$('wAd').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { stat('adDoubles', 1); collectWelcome(2); } });
 function start() {
+  if (modal === 'welcome') return;
   if (started) return resume(); started = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart();
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Drive to bring the moonlet back to life!<br><span style="font-size:16px">Grab the glowing seed pods</span>'), 3.5);
 }
@@ -2346,11 +2425,13 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 addEventListener('visibilitychange', () => { if (document.hidden && started) { pause(); save(); } });
+addEventListener('pagehide', () => { if (started) save(); });
 applySettings();
 try { renderer.compile(scene, camera); } catch {}
 await loadStep(1, 'Ready!');
 showMenu();
 Platform.loadingFinished();
+showWelcome();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
