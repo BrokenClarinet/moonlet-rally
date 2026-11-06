@@ -25,4 +25,4 @@ python3 -m http.server 8000
 - Rocks bounce you off at low speed and smash at high speed or while boosting.
 - Purple mushrooms launch you into the air. Long jumps bloom where you land.
 - Restored ground grows gems over time, also while you're away (50%, capped at 2 hours).
-- At 80% restored, a launch ramp opens and flies you to the next moonlet.
+- Restore enough of a moonlet (50% on the first, then 65% and 75%) and a launch ramp opens to fly you to the next one.

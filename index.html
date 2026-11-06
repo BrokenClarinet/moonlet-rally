@@ -65,9 +65,9 @@ const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t
 const V = () => new THREE.Vector3();
 
 const PLANET_DEFS = [
-  { name: 'Moonlet I',   R: 12, seed: 7,  rate: 4,  dead: [0x8d8698, 0x6c6678], alive: [0x7ad65a, 0x45a843], leaf: 0x3fae4a, flowers: [0xffd84a, 0xff7aa8, 0x8fd8ff], sky: [0x0b0820, 0x1d3b6e] },
-  { name: 'Moonlet II',  R: 14, seed: 21, rate: 12, dead: [0x9a7d6a, 0x765a4c], alive: [0x48c29a, 0x1f8a74], leaf: 0x2fb08a, flowers: [0xffe066, 0xff8c5a, 0xd9a6ff], sky: [0x120a1c, 0x3a2a6e] },
-  { name: 'Moonlet III', R: 16, seed: 55, rate: 30, dead: [0x7b8796, 0x5a6575], alive: [0x9ad04b, 0x5a9c2f], leaf: 0x7cc23a, flowers: [0xff5d73, 0xfff1a8, 0x7ad7ff], sky: [0x060d18, 0x1c5a6a] },
+  { name: 'Moonlet I',   R: 8,  goal: 0.5,  seed: 7,  rate: 4,  dead: [0x8d8698, 0x6c6678], alive: [0x7ad65a, 0x45a843], leaf: 0x3fae4a, flowers: [0xffd84a, 0xff7aa8, 0x8fd8ff], sky: [0x0b0820, 0x1d3b6e] },
+  { name: 'Moonlet II',  R: 12, goal: 0.65, seed: 21, rate: 12, dead: [0x9a7d6a, 0x765a4c], alive: [0x48c29a, 0x1f8a74], leaf: 0x2fb08a, flowers: [0xffe066, 0xff8c5a, 0xd9a6ff], sky: [0x120a1c, 0x3a2a6e] },
+  { name: 'Moonlet III', R: 15, goal: 0.75, seed: 55, rate: 30, dead: [0x7b8796, 0x5a6575], alive: [0x9ad04b, 0x5a9c2f], leaf: 0x7cc23a, flowers: [0xff5d73, 0xfff1a8, 0x7ad7ff], sky: [0x060d18, 0x1c5a6a] },
 ];
 const planetDef = (i) => {
   const d = PLANET_DEFS[i % PLANET_DEFS.length];
@@ -166,7 +166,7 @@ function buildPlanet(index) {
 
   // rocks (obstacles)
   const rockGeo = new THREE.DodecahedronGeometry(1, 0), rockMat = new THREE.MeshStandardMaterial({ color: 0x5d566b, roughness: 1, flatShading: true });
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0, nRocks = Math.round(R * 0.75); i < nRocks; i++) {
     const d = randDir(rng); if (d.dot(start) > 0.93) { i--; continue; }
     const s = 0.7 + rng() * 0.9, m = new THREE.Mesh(rockGeo, rockMat);
     m.position.copy(d).multiplyScalar(R + height(d.x, d.y, d.z) + s * 0.25); m.scale.set(s, s * 0.8, s * 1.1);
@@ -230,7 +230,7 @@ function buildPlanet(index) {
   const shrooms = [];
   const capGeo = new THREE.SphereGeometry(1, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2), stemGeo = new THREE.CylinderGeometry(0.28, 0.38, 0.7, 10);
   const capMat = new THREE.MeshStandardMaterial({ color: 0xc46bff, emissive: 0x3d0f5c, roughness: 0.5 }), stemMat = new THREE.MeshStandardMaterial({ color: 0xfff0d8, roughness: 0.8 });
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0, nShrooms = R < 10 ? 4 : 6; i < nShrooms; i++) {
     const d = randDir(rng);
     if (d.dot(start) > 0.95 || !awayFromRocks(d) || d.angleTo(padDir) * R < 4) { i--; continue; }
     const m = new THREE.Group(), stem = new THREE.Mesh(stemGeo, stemMat), cap = new THREE.Mesh(capGeo, capMat);
@@ -312,7 +312,7 @@ const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY));
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const mult = () => 1 + 0.25 * G.sprink;
-const paintRadius = () => 0.42 * (1 + 0.18 * G.tires);
+const paintRadius = () => 0.6 * (1 + 0.18 * G.tires);
 const gemRate = () => {
   let r = G.done.reduce((a, d) => a + d.rate * d.frac, 0);
   if (planet) r += planet.def.rate * (planet.restored / planet.N);
@@ -334,8 +334,9 @@ $('upS').onclick = () => { if (G.gems >= costS()) { G.gems -= costS(); G.sprink+
 function updateUI() {
   const frac = planet.restored / planet.N;
   $('pname').textContent = planet.def.name;
-  $('barfill').style.width = (frac * 100).toFixed(1) + '%';
-  $('pct').textContent = frac >= 0.8 ? `${(frac * 100).toFixed(0)}% restored · ramp open!` : `${(frac * 100).toFixed(0)}% restored`;
+  const goal = planet.def.goal;
+  $('pct').textContent = frac >= goal ? `${(frac * 100).toFixed(0)}% restored · ramp open!` : `${(frac * 100).toFixed(0)}% of ${(goal * 100).toFixed(0)}% to open the ramp`;
+  $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').textContent = fmt(G.gems) + ' 💎';
   $('rate').textContent = gemRate().toFixed(1) + ' / sec';
   $('upT').textContent = G.tires >= 8 ? 'Tires maxed' : `Wider tires · ${costT()} 💎`;
@@ -425,7 +426,7 @@ function placePod(pod) {
 
 function collectPod(pod) {
   pod.active = false; pod.mesh.visible = false; pod.wait = 3 + Math.random() * 3;
-  paintAt(pod.d, 3.6, 1);
+  paintAt(pod.d, 4.5, 1);
   const at = V().copy(pod.d).multiplyScalar(planet.R + groundH(pod.d) + 0.6);
   burst(at, pod.d, new THREE.Color(0xd8ff7a), 30, 8);
   burst(at, pod.d, new THREE.Color(planet.def.flowers[1]), 15, 6);
@@ -576,7 +577,7 @@ function step(dt) {
     freshFrame = 0;
 
     // launch ramp
-    if (planet.restored / planet.N >= 0.8) {
+    if (planet.restored / planet.N >= planet.def.goal) {
       if (!planet.pad.visible) { planet.pad.visible = true; toast('Launch ramp open! 🚀<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
       if (S.p.angleTo(planet.padDir) * R < 1.6 && fwd > 4 && S.grounded) { S.mode = 'launch'; S.t = 0; S.valt = 18; }
     }
@@ -695,7 +696,7 @@ planet = buildPlanet(G.planetIdx);
 if (saved && saved.life) {
   try { const q = unb64(saved.life); if (q.length === planet.N) for (let i = 0; i < planet.N; i++) planet.life[i] = q[i] / 255; } catch {}
   recount(planet);
-  if (planet.restored / planet.N >= 0.8) planet.pad.visible = true;
+  if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
 }
 setSky();
 S.alt = groundH(S.p);
