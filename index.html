@@ -218,6 +218,16 @@
   <p class="gdhint">Phones and tablets use the on-screen buttons. Esc always pauses or goes back.</p>
 </div></div>
 
+<div id="errbar" hidden style="position:fixed;left:8px;bottom:8px;z-index:30;max-width:min(560px,90vw);background:#3a2758;border:2.5px solid #2a1838;border-radius:12px;padding:6px 10px;font:600 12px system-ui,sans-serif;color:#fff6ea"></div>
+<script>
+// show errors on screen so testers can report them (the game keeps running)
+(function () {
+  let n = 0;
+  const show = (msg) => { const el = document.getElementById('errbar'); if (!el || n++ > 4) return; el.hidden = false; el.textContent = 'Something went wrong: ' + String(msg).slice(0, 200) + ' (please include this in your bug report)'; };
+  addEventListener('error', (e) => { if (e.message) show(e.message); });
+  addEventListener('unhandledrejection', (e) => { const r = e.reason; if (r && !/fetch|network/i.test(String(r.message || r))) show(r.message || r); });
+})();
+</script>
 <script>window.MR_PLATFORM = 'poki'; // set to 'none' for other portals</script>
 <script type="module">
 import * as THREE from './vendor/three.module.min.js';
@@ -377,6 +387,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'hi
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 document.body.prepend(renderer.domElement);
+// if the browser drops the 3D context (GPU reset, low memory), save and reload instead of staying black
+renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); try { if (started) save(); } catch {} const el = document.getElementById('errbar'); el.hidden = false; el.textContent = 'The 3D view was reset by the browser. Reloading...'; setTimeout(() => location.reload(), 1200); });
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
@@ -1729,7 +1741,7 @@ function step(dt) {
     // steer assist: nudge the nose toward the open ramp when close and not steering
     if (planet.pad.visible && S.grounded && !inp.steer) {
       const dist = S.p.angleTo(planet.padDir) * R;
-      if (dist < 9) { const to = tmp2.copy(planet.padDir).addScaledVector(S.p, -planet.padDir.dot(S.p)).normalize(); const side = to.dot(left), ahead = to.dot(S.f); if (ahead > 0.3) S.f.applyAxisAngle(S.p, clamp(side, -1, 1) * 1.4 * dt); }
+      if (dist < 9) { const to = tmp2.copy(planet.padDir).addScaledVector(S.p, -planet.padDir.dot(S.p)); if (to.lengthSq() > 1e-6) to.normalize(); const side = to.dot(left), ahead = to.dot(S.f); if (ahead > 0.3 && Number.isFinite(side)) S.f.applyAxisAngle(S.p, clamp(side, -1, 1) * 1.4 * dt); }
     }
 
     // launch ramp
@@ -1803,7 +1815,19 @@ const camUp = new THREE.Vector3(0, 1, 0), camF = new THREE.Vector3(0, 0, 1), cam
 const basis = new THREE.Matrix4(), qCar = new THREE.Quaternion();
 const skyCols = { top: new THREE.Color(), hor: new THREE.Color(), top2: new THREE.Color(), hor2: new THREE.Color() };
 function setSky() { for (const k in skyCols) skyCols[k].set(planet.def.sky[k]); }
+// safety net: if any motion value ever goes bad (NaN), put the car and camera back on solid ground
+const finite3 = (v) => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+function sanitize() {
+  if (finite3(S.p) && finite3(S.f) && finite3(S.v) && Number.isFinite(S.alt) && Number.isFinite(S.valt) && finite3(camF) && finite3(camUp) && finite3(camSmooth)) return;
+  console.warn('Moonlet Rally: recovered from invalid car state');
+  if (!finite3(S.p) || S.p.lengthSq() < 0.5) S.p.set(0, 1, 0); else S.p.normalize();
+  S.f.set(0, 0, 1).addScaledVector(S.p, -S.p.z).normalize(); if (!finite3(S.f) || S.f.lengthSq() < 0.5) S.f.set(1, 0, 0).addScaledVector(S.p, -S.p.x).normalize();
+  S.v.set(0, 0, 0); S.alt = groundH(S.p); S.valt = 0; S.grounded = true; S.air = 0; S.tr = { pitch: 0, yaw: 0 };
+  if (S.mode !== 'launch' && S.mode !== 'adwait' && S.mode !== 'land') S.mode = 'drive';
+  camUp.copy(S.p); camF.copy(S.f); camSmooth.copy(S.p).multiplyScalar(planet.R + 6);
+}
 function render(dt) {
+  if (!finite3(camF) || !finite3(camUp) || !finite3(camSmooth)) sanitize();
   const R = planet.R;
   // smoothed terrain normal for the car body
   const e = 0.03;
@@ -1923,7 +1947,7 @@ function frame(now) {
   fpsN++; fpsT += raw; if (fpsT >= 0.5) { if (SET.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
   if (started && !paused) {
     tickGarden(dt);
-    if (!garageOpen && !gardenOpen) step(dt);
+    if (!garageOpen && !gardenOpen) { step(dt); sanitize(); }
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) $('toast').style.opacity = 0; }
     if (driftShown > 0) { driftShown -= dt; $('drift').style.opacity = 1; } else $('drift').style.opacity = 0;
