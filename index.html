@@ -10,6 +10,7 @@
           --font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; }
   html,body { margin:0; height:100%; overflow:hidden; background:#1c1650; font-family:var(--font); color:var(--paper); user-select:none; -webkit-user-select:none; touch-action:none; }
   canvas { display:block; }
+  [hidden] { display:none !important; }
   .hud { position:fixed; pointer-events:none; }
   .sticker, #left, #right { background:var(--panel); border:2.5px solid var(--ink); border-radius:16px; box-shadow:3px 4px 0 var(--ink); }
   #left { top:12px; left:12px; padding:9px 14px 10px; min-width:200px; }
@@ -64,8 +65,10 @@
   .chip.swatch.on { outline:3px solid var(--paper); outline-offset:1px; }
   .chip.nope { animation:nope .35s; }
   @keyframes nope { 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
+  body.in-garage #left, body.in-garage #right, body.in-garage #toast,
   body.in-garage #nitro, body.in-garage #combo, body.in-garage #touch, body.in-garage #drift { display:none !important; }
-  @media (max-height:500px) { #left,#right { transform:scale(.82); transform-origin:top left; } #right { transform-origin:top right; } .gpanel { max-height:58vh; padding:8px 10px; gap:5px; } .ghead { font-size:15px; } }
+  @media (max-height:500px) { #left,#right { transform:scale(.82); transform-origin:top left; } #right { transform-origin:top right; }
+    #garage { inset:0 0 0 auto; padding:8px; align-items:stretch; } .gpanel { width:min(460px,58vw); max-height:none; padding:8px 10px; gap:5px; } .ghead { font-size:15px; } .grow { grid-template-columns:1fr; gap:3px; } }
   @media (prefers-reduced-motion: reduce) { #title .go { animation:none; } }
 </style>
 </head>
@@ -1185,8 +1188,11 @@ function render(dt) {
     garageSpin += dt * 0.45;
     const dir = tmp.copy(camF).applyAxisAngle(camUp, garageSpin + 2.5);
     camera.position.copy(car.position).addScaledVector(camUp, 1.5).addScaledVector(dir, 4.4);
-    look.copy(car.position).addScaledVector(camUp, -0.35);
-  }
+    look.copy(car.position).addScaledVector(camUp, 0.3);
+    // frame the car beside the garage panel (right side on short screens, above it otherwise)
+    const W = innerWidth, H = innerHeight;
+    if (H <= 500) camera.setViewOffset(W, H, W * 0.26, 0, W, H); else camera.setViewOffset(W, H, 0, H * 0.2, W, H);
+  } else if (camera.view && camera.view.enabled) camera.clearViewOffset();
   camera.up.copy(camUp); camera.lookAt(look);
   // keep it daytime wherever the car is
   sun.position.copy(camUp).multiplyScalar(60).addScaledVector(camF, 25).addScaledVector(left.crossVectors(camUp, camF), 30);
