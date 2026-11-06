@@ -281,7 +281,7 @@ await loadStep(0.05, 'Loading your save');
 await Promise.race([window.MR_SDK_READY || Promise.resolve(false), new Promise((r) => setTimeout(() => r(false), 8000))]);
 // ---------------------------------------------------------------- settings (saved per device; Poki syncs these too)
 const SET_KEY = 'moonletRally.settings';
-const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false };
+const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false, sound: true, vol: 'med' };
 let SET = { ...SET_DEF };
 try { Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch {}
 const saveSettings = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch {} };
@@ -1144,6 +1144,92 @@ function updateUI() {
 
 // ---------------------------------------------------------------- platform: Poki SDK when present, otherwise no-ops
 // Poki syncs localStorage to the cloud automatically for logged-in players, so our normal save() covers them.
+// ---------------------------------------------------------------- sound (all synthesized at runtime: zero bytes of audio files)
+function audioMute(m) { SFX.adMute(m); }
+const SFX = (() => {
+  let ctx = null, master = null, sfxBus = null, noiseBuf = null, eng = null, drift = null, adMuted = false, lastGem = 0;
+  const VOL = { low: 0.35, med: 0.6, high: 0.9 };
+  const level = () => (SET.sound ? (VOL[SET.vol] ?? 0.6) : 0);
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended' && !adMuted) ctx.resume().catch(() => {}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { ctx = new AC(); } catch { return; }
+    master = ctx.createGain(); master.gain.value = level(); master.connect(ctx.destination);
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 6; comp.connect(master);
+    sfxBus = ctx.createGain(); sfxBus.connect(comp);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    // engine: two detuned oscillators through a lowpass, pitch follows speed
+    const eg = ctx.createGain(); eg.gain.value = 0; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500; lp.Q.value = 3;
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(); o1.type = 'sawtooth'; o2.type = 'square'; o1.frequency.value = 50; o2.frequency.value = 50.7;
+    const g2 = ctx.createGain(); g2.gain.value = 0.4; o1.connect(lp); o2.connect(g2).connect(lp); lp.connect(eg).connect(comp); o1.start(); o2.start();
+    eng = { g: eg, lp, o1, o2 };
+    // drift/boost hiss: looping noise through a bandpass
+    const ns = ctx.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = 2;
+    const dg = ctx.createGain(); dg.gain.value = 0; ns.connect(bp).connect(dg).connect(comp); ns.start();
+    drift = { g: dg, bp };
+  }
+  const now = () => ctx.currentTime;
+  function tone(f, dur, { type = 'sine', vol = 0.3, to = null, at = 0, attack = 0.005 } = {}) {
+    if (!ctx || !level()) return; const t = now() + at, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(Math.max(20, to), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(sfxBus); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(dur, { vol = 0.3, f = 1200, q = 1, type = 'bandpass', to = null, at = 0 } = {}) {
+    if (!ctx || !level()) return; const t = now() + at, src = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = noiseBuf; fl.type = type; fl.frequency.setValueAtTime(f, t); if (to) fl.frequency.exponentialRampToValueAtTime(to, t + dur); fl.Q.value = q;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(fl).connect(g).connect(sfxBus); src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
+  }
+  const notes = (list, step, opts) => list.forEach((f, i) => tone(f, opts.dur || 0.18, { ...opts, at: i * step }));
+  const api = {
+    init,
+    adMute(m) { adMuted = m; if (!ctx) return; if (m || document.hidden) ctx.suspend().catch(() => {}); else ctx.resume().catch(() => {}); },
+    hidden(h) { if (!ctx) return; if (h) ctx.suspend().catch(() => {}); else if (!adMuted) ctx.resume().catch(() => {}); },
+    setLevel() { if (master) master.gain.setTargetAtTime(level(), now(), 0.05); },
+    // continuous sounds, updated every frame
+    update(on, spd, grounded, boosting, slip) {
+      if (!ctx || !eng) return;
+      const t = now(), lv = on ? 1 : 0, sp = Math.min(1, spd / 24);
+      eng.g.gain.setTargetAtTime(lv * (0.05 + sp * 0.07) * (grounded ? 1 : 0.6), t, 0.08);
+      const base = 42 + sp * 70 + (boosting ? 22 : 0) + (grounded ? 0 : 18);
+      eng.o1.frequency.setTargetAtTime(base, t, 0.1); eng.o2.frequency.setTargetAtTime(base * 1.013, t, 0.1);
+      eng.lp.frequency.setTargetAtTime(380 + sp * 900 + (boosting ? 500 : 0), t, 0.1);
+      const hiss = on ? Math.max(boosting ? 0.07 : 0, grounded && slip > 2.2 && spd > 5 ? Math.min(0.09, (slip - 2.2) * 0.03) : 0) : 0;
+      drift.g.gain.setTargetAtTime(hiss, t, 0.06); drift.bp.frequency.setTargetAtTime(boosting ? 900 : 2400, t, 0.1);
+    },
+    // one-shots
+    click() { tone(660, 0.06, { type: 'triangle', vol: 0.12 }); },
+    buy() { notes([523, 659, 784, 1047], 0.06, { type: 'triangle', vol: 0.16, dur: 0.16 }); },
+    gem() { const t = performance.now(); if (t - lastGem < 45) return; lastGem = t; tone(1200 + Math.random() * 500, 0.12, { type: 'sine', vol: 0.13 }); },
+    bigGems() { notes([784, 988, 1175, 1568], 0.05, { type: 'sine', vol: 0.16, dur: 0.2 }); },
+    pod() { tone(440, 0.25, { type: 'sine', vol: 0.2, to: 1320 }); tone(880, 0.3, { type: 'triangle', vol: 0.08, to: 1760, at: 0.05 }); },
+    jump() { tone(220, 0.16, { type: 'square', vol: 0.08, to: 520 }); noise(0.12, { vol: 0.08, f: 900, q: 0.8 }); },
+    land(h) { noise(0.16, { vol: 0.1 + Math.min(0.2, h * 0.08), f: 260, q: 0.7, type: 'lowpass' }); tone(90, 0.14, { type: 'sine', vol: 0.15, to: 55 }); },
+    trick(n) { const sc = [523, 659, 784, 1047, 1319, 1568, 2093]; notes(sc.slice(0, Math.min(sc.length, 2 + n)), 0.055, { type: 'triangle', vol: 0.15, dur: 0.2 }); },
+    crash() { noise(0.45, { vol: 0.35, f: 400, q: 0.6, type: 'lowpass', to: 120 }); tone(140, 0.35, { type: 'sawtooth', vol: 0.12, to: 50 }); },
+    sloppy() { tone(330, 0.2, { type: 'triangle', vol: 0.1, to: 220 }); },
+    smash() { noise(0.3, { vol: 0.32, f: 700, q: 0.5, to: 200 }); tone(110, 0.2, { type: 'square', vol: 0.08, to: 60 }); },
+    pop() { tone(900, 0.1, { type: 'sine', vol: 0.2, to: 250 }); noise(0.08, { vol: 0.12, f: 3000, q: 2 }); },
+    hoop(n, total) { tone(660 * Math.pow(1.122, n), 0.22, { type: 'triangle', vol: 0.16 }); if (n === total) notes([784, 988, 1175, 1568], 0.07, { type: 'triangle', vol: 0.15, dur: 0.3, at: 0.1 }); },
+    whoosh() { noise(0.5, { vol: 0.22, f: 300, q: 1.2, to: 2400 }); },
+    zap() { tone(300, 0.25, { type: 'sawtooth', vol: 0.09, to: 1400 }); noise(0.2, { vol: 0.1, f: 1800, q: 1.5, to: 4000 }); },
+    warp() { tone(1400, 0.45, { type: 'sine', vol: 0.15, to: 180 }); tone(180, 0.45, { type: 'sine', vol: 0.12, to: 1400, at: 0.12 }); },
+    meteorWarn() { tone(880, 0.12, { type: 'square', vol: 0.06 }); tone(660, 0.12, { type: 'square', vol: 0.06, at: 0.16 }); },
+    boom(near) { noise(0.8, { vol: near ? 0.45 : 0.22, f: 500, q: 0.5, type: 'lowpass', to: 60 }); tone(70, 0.6, { type: 'sine', vol: near ? 0.3 : 0.15, to: 35 }); },
+    star() { notes([1047, 1319, 1568, 2093], 0.045, { type: 'sine', vol: 0.15, dur: 0.25 }); },
+    boing() { tone(160, 0.35, { type: 'sine', vol: 0.22, to: 480 }); },
+    bonk() { tone(520, 0.12, { type: 'square', vol: 0.12, to: 900 }); tone(700, 0.35, { type: 'triangle', vol: 0.12, to: 260, at: 0.12 }); noise(0.15, { vol: 0.15, f: 500, q: 0.7 }); },
+    shave() { noise(0.3, { vol: 0.16, f: 1500, q: 1.5, to: 600 }); tone(1568, 0.12, { type: 'sine', vol: 0.08, at: 0.12 }); },
+    launch() { tone(200, 1.2, { type: 'sawtooth', vol: 0.08, to: 900 }); noise(1.2, { vol: 0.14, f: 300, q: 0.8, to: 2500 }); },
+    arrive() { notes([392, 523, 659, 784], 0.09, { type: 'triangle', vol: 0.14, dur: 0.35 }); },
+    rush() { notes([659, 784, 988, 1319, 988, 1319], 0.07, { type: 'square', vol: 0.06, dur: 0.14 }); },
+    ramp() { notes([523, 784, 1047], 0.1, { type: 'triangle', vol: 0.15, dur: 0.3 }); },
+    harvest() { notes([1047, 1319, 1568, 2093, 2637], 0.04, { type: 'sine', vol: 0.12, dur: 0.22 }); },
+  };
+  return api;
+})();
+
 const Platform = (() => {
   const sdk = () => (window.PokiSDK && window.MR_PLATFORM === 'poki') ? window.PokiSDK : null;
   let inGameplay = false, adBusy = false;
@@ -1162,19 +1248,19 @@ const Platform = (() => {
       const s = sdk();
       if (!s) { // demo: Poki decides real ad frequency; here, at most one stand-in break every 3 minutes
         if (!demo || adBusy || performance.now() - demoLastBreak < 180000) return Promise.resolve();
-        demoLastBreak = performance.now(); api.gameplayStop(); adBusy = true; clearKeys();
-        return fakeAd('Ad break', 1500).then(() => { adBusy = false; clearKeys(); });
+        demoLastBreak = performance.now(); api.gameplayStop(); adBusy = true; audioMute(true); clearKeys();
+        return fakeAd('Ad break', 1500).then(() => { adBusy = false; audioMute(false); clearKeys(); });
       }
       if (adBusy) return Promise.resolve();
-      api.gameplayStop(); adBusy = true; clearKeys();
-      return s.commercialBreak(() => { adBusy = true; }).catch(() => {}).then(() => { adBusy = false; clearKeys(); });
+      api.gameplayStop(); adBusy = true; audioMute(true); clearKeys();
+      return s.commercialBreak(() => { adBusy = true; }).catch(() => {}).then(() => { adBusy = false; audioMute(false); clearKeys(); });
     },
     // opt-in reward ad; resolves true when the reward should be given
     rewardedBreak() {
       const s = sdk(); if (adBusy || (!s && !demo)) return Promise.resolve(false);
-      const was = inGameplay; api.gameplayStop(); adBusy = true; clearKeys();
+      const was = inGameplay; api.gameplayStop(); adBusy = true; audioMute(true); clearKeys();
       const run = s ? s.rewardedBreak().catch(() => false) : fakeAd('Rewarded ad', 1800).then(() => true);
-      return run.then((ok) => { adBusy = false; clearKeys(); if (was) api.gameplayStart(); return !!ok; });
+      return run.then((ok) => { adBusy = false; audioMute(false); clearKeys(); if (was) api.gameplayStart(); return !!ok; });
     },
     getUser() { const s = sdk(); return s && s.getUser ? s.getUser().catch(() => null) : Promise.resolve(null); },
     login() { const s = sdk(); return s && s.login ? s.login().catch(() => {}) : Promise.resolve(); },
@@ -1362,7 +1448,7 @@ function buildGarden() {
 }
 let doubleOffer = 0; // the last harvest, which a rewarded ad can double
 function harvest(idx, batch) {
-  const it = gardenItems()[idx]; const v = Math.floor(it.d.silo || 0); if (v < 1) return 0;
+  const it = gardenItems()[idx]; const v = Math.floor(it.d.silo || 0); if (v < 1) return 0; SFX.harvest();
   doubleOffer = batch ? doubleOffer + v : v;
   G.gems += v; it.d.silo -= v;
   const b = GD.bodies[idx]; if (b) { const pop = document.createElement('div'); pop.className = 'gpop'; pop.innerHTML = `+${fmt(v)} ${GEM}`; b.label.appendChild(pop); setTimeout(() => pop.remove(), 900); }
@@ -1490,6 +1576,8 @@ const SET_UI = [
   ['cam', 'Camera distance', [['close', 'Close'], ['normal', 'Normal'], ['far', 'Far']]],
   ['guide', 'Guide arrow', [[true, 'On'], [false, 'Off']]],
   ['touch', 'Touch buttons', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']]],
+  ['sound', 'Sound', [[true, 'On'], [false, 'Off']]],
+  ['vol', 'Volume', [['low', 'Low'], ['med', 'Medium'], ['high', 'High']]],
   ['fps', 'Show FPS', [[true, 'On'], [false, 'Off']]],
 ];
 const CAMK = { close: 0.8, normal: 1, far: 1.25 };
@@ -1500,6 +1588,7 @@ function applySettings() {
   for (const c of [camera, GD.cam]) SET.outlines ? c.layers.enable(1) : c.layers.disable(1);
   touch.active = touchActive(); $('touch').style.display = touch.active ? 'block' : 'none'; document.body.classList.toggle('touch', touch.active);
   $('fps').hidden = !SET.fps;
+  SFX.setLevel();
   updateLabels();
 }
 function renderSettings() {
@@ -1546,7 +1635,7 @@ function renderMap() {
 const TWIST_TAG = { meadow: 'Meadow', ice: 'Ice', geysers: 'Geysers', wisps: 'Wisps', wind: 'Wind', hoops: 'Hoops', stars: 'Stars', bouncy: 'Bouncy', pads: 'Speed pads', portals: 'Portals', meteors: 'Meteors' };
 const twistTags = (def) => `<span class="tags">${(def.twists || [def.twist]).map(t => `<i>${TWIST_TAG[t] || t}</i>`).join('')}${def.grav && def.grav < 1 ? '<i>Low gravity</i>' : ''}${def.R <= 8 ? '<i>Tiny</i>' : def.R >= 15 ? '<i>Big</i>' : ''}</span>`;
 function openMap() { if (G.planetIdx < 1 || !canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); openModal('map'); }
-function startTravel(i) { if (S.mode !== 'drive' || i === atIdx()) return; S.travel = i; S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); }
+function startTravel(i) { if (S.mode !== 'drive' || i === atIdx()) return; S.travel = i; S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); }
 $('mapBtn').onclick = openMap;
 $('mapClose').onclick = closeModal;
 $('pMap').onclick = () => { if (G.planetIdx < 1) return; $('pause').hidden = true; openModal('map'); };
@@ -1672,7 +1761,7 @@ function bonusText(msg) { $('drift').innerHTML = msg; driftShown = 1.3; }
 function burst(at, up, color, n, spread) { for (let i = 0; i < n; i++) spawn(at, up, color, spread); }
 
 function smashRock(rk) {
-  rk.smashed = true; rk.mesh.visible = false;
+  rk.smashed = true; rk.mesh.visible = false; SFX.smash();
   const at = V().copy(rk.d).multiplyScalar(planet.R + groundH(rk.d) + 0.5);
   burst(at, rk.d, ROCK_DUST, 40, 9);
   burst(at, rk.d, new THREE.Color(planet.def.flowers[0]), 15, 7);
@@ -1715,9 +1804,9 @@ function land() {
   const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 0.2);
   if (pr > 0.8) { // landed on the roof
     S.v.multiplyScalar(0.25); G.nitro = Math.max(0, G.nitro - 0.2); trickChain = 0; shake = 0.9;
-    burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); bonusText('CRASH!'); stat('crashes', 1); return;
+    burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); SFX.crash(); bonusText('CRASH!'); stat('crashes', 1); return;
   }
-  if (yr > 0.7) { S.v.multiplyScalar(0.55); trickChain = 0; shake = 0.5; bonusText('SLOPPY LANDING'); return; }
+  if (yr > 0.7) { S.v.multiplyScalar(0.55); trickChain = 0; shake = 0.5; SFX.sloppy(); bonusText('SLOPPY LANDING'); return; }
   const flips = Math.round(Math.abs(P) / TAU), spins = Math.round(Math.abs(Y) / TAU), names = [];
   const MULTI = ['', '', 'DOUBLE ', 'TRIPLE ', 'QUAD '], multi = (n) => MULTI[n] ?? `${n}x `;
   if (flips) names.push(multi(flips) + (P > 0 ? 'FRONTFLIP' : 'BACKFLIP'));
@@ -1728,7 +1817,7 @@ function land() {
     const now = performance.now() / 1000;
     trickChain = now - lastTrickAt < 4 ? trickChain + 1 : 1; lastTrickAt = now;
     const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * (1 + planet.index) * mult() * CS.bonus * CS.trick);
-    G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins));
+    G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
     stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
     if (gems > (G.stats.bestTrick || 0)) { G.stats.bestTrick = gems; G.stats.bestTrickName = names.join(' + '); }
     paintAt(S.p, 2.2 + (flips + spins) * 1.2, 1);
@@ -1737,6 +1826,7 @@ function land() {
     if (!hints.trick2) { hints.trick2 = true; toast('Land tricks back to back for a combo!', 2.5); }
     shake = Math.max(shake, 0.4); return;
   }
+  if (air > 0.25) SFX.land(air);
   if (air < 0.45) return;
   paintAt(S.p, 1.4 + Math.min(air, 2) * 1.6, 1);
   const gems = Math.round(air * air * 4 * (1 + planet.index) * mult() * CS.bonus) + 1;
@@ -1751,10 +1841,10 @@ function updateGemArcs(dt) {
     if (arc.left === 0) { arc.wait -= dt; if (arc.wait <= 0) { arc.left = arc.gems.length; arc.gems.forEach(g => { g.got = false; g.mesh.visible = true; }); } continue; }
     for (const g of arc.gems) {
       if (g.got || g.mesh.position.distanceTo(cp) > 1.4 * CS.magnet) continue;
-      g.got = true; g.mesh.visible = false; arc.left--;
+      g.got = true; g.mesh.visible = false; arc.left--; SFX.gem();
       const v = Math.round(2 * (1 + planet.index) * mult() * CS.bonus); G.gems += v; G.nitro = Math.min(1, G.nitro + 0.04);
       burst(g.mesh.position, S.p, new THREE.Color(0x7fe3ff), 8, 5);
-      if (arc.left === 0) { arc.wait = 15; const b = v * 5; G.gems += b; bonusText(`GEM TRAIL +${b} ${GEM}`); }
+      if (arc.left === 0) { arc.wait = 15; const b = v * 5; G.gems += b; SFX.bigGems(); bonusText(`GEM TRAIL +${b} ${GEM}`); }
     }
   }
 }
@@ -1775,7 +1865,7 @@ function placePod(pod) {
 }
 
 function collectPod(pod) {
-  pod.active = false; pod.mesh.visible = false; pod.wait = 3 + Math.random() * 3;
+  SFX.pod(); pod.active = false; pod.mesh.visible = false; pod.wait = 3 + Math.random() * 3;
   paintAt(pod.d, 4.5, 1);
   const at = V().copy(pod.d).multiplyScalar(planet.R + groundH(pod.d) + 0.6);
   burst(at, pod.d, new THREE.Color(0xd8ff7a), 30, 8);
@@ -1845,7 +1935,7 @@ function updateWisps(dt) {
       burst(at, w.d, new THREE.Color(0x8a6fd0), 30, 9); burst(at, w.d, new THREE.Color(0xfff3b0), 12, 6);
       paintAt(w.d, 3.2, 1);
       const gems = Math.round(8 * (1 + planet.index) * mult() * CS.bonus);
-      G.gems += gems; bonusText(`POP! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
+      G.gems += gems; SFX.pop(); bonusText(`POP! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
       if (!hints.wisp) { hints.wisp = true; toast('Pop wisps before they eat your grass!', 3); }
     }
   }
@@ -1877,7 +1967,7 @@ function updateHoops(dt) {
     burst(at, hp.d, new THREE.Color(0xffc43d), 25, 8);
     planet.hoopIdx++;
     const n = planet.hoopIdx, gems = Math.round(3 * n * (1 + planet.index) * mult() * CS.bonus);
-    G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.12);
+    G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.12); SFX.hoop(n, hoops.length);
     if (n === hoops.length) {
       paintAt(hp.d, 6, 1); bonusText(`HOOP RUN! +${gems} ${GEM}`); shake = Math.max(shake, 0.6); planet.hoopWait = 1.5;
     } else bonusText(`HOOP ${n}/${hoops.length} +${gems} ${GEM}`);
@@ -1898,7 +1988,7 @@ function updateGeysers(dt) {
     if (erupt && Math.random() < 0.6) spawn(V().copy(gz.d).multiplyScalar(R + groundH(gz.d) + 0.5 + Math.random() * 4), gz.d, new THREE.Color(0xffffff), 3);
     if (warn && Math.random() < 0.2) spawn(V().copy(gz.d).multiplyScalar(R + groundH(gz.d) + 0.4), gz.d, new THREE.Color(0xd8d0e8), 1.5);
     if (erupt && k > 0.3 && S.p.angleTo(gz.d) * R < 1.5 && S.alt - groundH(gz.d) < 2) {
-      takeoff(); S.valt = 21 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.3; shake = Math.max(shake, 0.4);
+      takeoff(); S.valt = 21 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.3; shake = Math.max(shake, 0.4); SFX.whoosh();
       if (!hints.geyser) { hints.geyser = true; toast('Geyser launch! Time to flip!', 2.5); }
     }
   }
@@ -1943,7 +2033,7 @@ function catchStar(st, caught) {
   burst(at, st.d, new THREE.Color(0xffd84a), caught ? 40 : 15, 10);
   if (caught) {
     const gems = Math.round(15 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.3);
-    bonusText(`STAR CATCH! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
+    SFX.star(); bonusText(`STAR CATCH! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
   }
 }
 
@@ -1957,7 +2047,7 @@ function updatePads(dt) {
     S.v.copy(S.f).multiplyScalar(Math.max(spd, 0) + 13); if (S.v.length() > MAXV_BOOST * 1.5) S.v.setLength(MAXV_BOOST * 1.5);
     G.nitro = Math.min(1, G.nitro + 0.12); paintAt(pd.d, 2.4, 1); shake = Math.max(shake, 0.35);
     burst(V().copy(pd.d).multiplyScalar(R + groundH(pd.d) + 0.4), pd.d, new THREE.Color(0x7fe3ff), 22, 9);
-    bonusText('ZOOM!');
+    SFX.zap(); bonusText('ZOOM!');
     if (!hints.pad) { hints.pad = true; toast('Speed pads launch you forward. Chain them!', 2.5); }
   }
 }
@@ -1976,7 +2066,7 @@ function updatePortals(dt) {
     portalCd = 1.2; paintAt(pt.to.d, 3.2, 1); shake = Math.max(shake, 0.4);
     const gems = Math.round(4 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems;
     burst(V().copy(pt.to.d).multiplyScalar(R + groundH(pt.to.d) + 1.6), pt.to.d, new THREE.Color(pt.color), 35, 10);
-    bonusText(`WARP! +${gems} ${GEM}`);
+    SFX.warp(); bonusText(`WARP! +${gems} ${GEM}`);
     if (!hints.portal) { hints.portal = true; toast('Portals come in matching pairs. Use them to reach bare ground fast!', 3); }
     return;
   }
@@ -1989,6 +2079,7 @@ function updateMeteors(dt) {
       let d, n = 0; do d = randDir(Math.random); while (n++ < 50 && (d.angleTo(S.p) * R > 18 || d.angleTo(S.p) * R < 5));
       m.d.copy(d); m.h = 32; m.state = 'fall'; m.rock.visible = m.mark.visible = true;
       m.mark.position.copy(d).multiplyScalar(R + groundH(d) + 0.06); m.mark.quaternion.setFromUnitVectors(Y_AXIS, d);
+      if (m.d.angleTo(S.p) * R < 12) SFX.meteorWarn();
       if (!hints.meteor) { hints.meteor = true; toast('Meteor incoming! Get out of the red ring!', 2.5); }
     } else if (m.state === 'fall') {
       m.h -= dt * 9;
@@ -2001,7 +2092,7 @@ function updateMeteors(dt) {
       const at = V().copy(m.d).multiplyScalar(R + groundH(m.d) + 0.5);
       burst(at, m.d, new THREE.Color(0x8a5a3a), 35, 11); burst(at, m.d, new THREE.Color(0xffc43d), 20, 9);
       const dist = S.p.angleTo(m.d) * R;
-      shake = Math.max(shake, dist < 10 ? 0.7 : 0.3);
+      shake = Math.max(shake, dist < 10 ? 0.7 : 0.3); SFX.boom(dist < 12);
       if (dist < 2.6 && S.alt - groundH(m.d) < 2.5) {
         S.v.multiplyScalar(0.3); G.nitro = Math.max(0, G.nitro - 0.15); bonusText('BONK!');
         if (S.grounded) { takeoff(); S.grounded = false; S.valt = 7; S.alt += 0.2; }
@@ -2013,7 +2104,7 @@ function updateMeteors(dt) {
       if (S.p.angleTo(m.d) * R < 1.7 * CS.reach && S.alt - groundH(m.d) < 2.5) {
         const gems = Math.round(12 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.2);
         paintAt(m.d, 4, 1); burst(V().copy(m.d).multiplyScalar(R + groundH(m.d) + 0.8), m.d, new THREE.Color(0x7fe3ff), 30, 9);
-        bonusText(`SPACE CRYSTAL +${gems} ${GEM}`); m.shardT = 0;
+        SFX.star(); bonusText(`SPACE CRYSTAL +${gems} ${GEM}`); m.shardT = 0;
       }
       if (m.shardT <= 0) { m.shard.visible = false; m.state = 'wait'; m.wait = 2 + Math.random() * 3; }
     }
@@ -2077,7 +2168,7 @@ function updateCritters(dt) {
     if (dist < 1.3 && low && spd > 4 && bonkGrace <= 0) { // slow driving (precision mode) just nudges past them
       // a bump stings (it scales with how rich you are) but is capped at 10% of what you carry, so it never wrecks a run
       const pen = Math.floor(Math.min(G.gems * 0.1, Math.max(15 * (1 + planet.index) * mult(), G.gems * 0.05, gemRate() * 20)));
-      bonkGrace = 4; // no second bump straight after the first
+      bonkGrace = 4; bonkFrame = true; SFX.bonk(); // no second bump straight after the first
       G.gems -= pen; S.v.multiplyScalar(0.3); S.f.applyAxisAngle(S.p, (Math.random() < 0.5 ? -1 : 1) * 0.8);
       trickChain = 0; comboTime = 0; driftCombo = 0; shake = Math.max(shake, 0.7); stat('bonks', 1);
       const at = V().copy(c.d).multiplyScalar(R + groundH(c.d) + 0.8);
@@ -2088,7 +2179,7 @@ function updateCritters(dt) {
       c.h.copy(V().copy(c.d).sub(S.p)).addScaledVector(c.d, -V().copy(c.d).sub(S.p).dot(c.d)); if (c.h.lengthSq() < 1e-8) c.h.copy(S.f); c.h.normalize();
     } else if (dist < 2.7 && low && spd > 9 && c.shaveCd <= 0) {
       c.shaveCd = 3; const gems = Math.round(3 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; stat('shaves', 1);
-      bonusText(`CLOSE SHAVE +${gems} ${GEM}`);
+      SFX.shave(); bonusText(`CLOSE SHAVE +${gems} ${GEM}`);
     }
   });
 }
@@ -2099,7 +2190,7 @@ function updateRush(dt) {
   rush.t -= dt;
   if (rush.t <= 0) {
     rush.on = !rush.on; rush.t = rush.on ? 15 : 55 + Math.random() * 20;
-    if (rush.on) { toast('BLOOM RUSH! New ground pays x3 for 15 seconds', 2.5); for (const pod of planet.pods) if (!pod.active) pod.wait = Math.min(pod.wait, 0.5); }
+    if (rush.on) { SFX.rush(); toast('BLOOM RUSH! New ground pays x3 for 15 seconds', 2.5); for (const pod of planet.pods) if (!pod.active) pod.wait = Math.min(pod.wait, 0.5); }
   }
   $('rush').hidden = !rush.on; if (rush.on) $('rush').textContent = `BLOOM RUSH ${Math.ceil(rush.t)}s`;
 }
@@ -2175,7 +2266,7 @@ function step(dt) {
 
     // jump: off the ground the instant it's pressed; keep holding for a higher hop
     if (S.grounded && inp.jump && !S.jumpHeld) {
-      takeoff(); S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3;
+      takeoff(); S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3; SFX.jump();
       if (!hints.jump) { hints.jump = true; toast(touch.active ? 'In the air: push the stick up or down to flip, sideways to spin. Land upright!' : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
     }
     S.jumpHeld = inp.jump;
@@ -2188,7 +2279,7 @@ function step(dt) {
     const nextAlt = S.alt + S.valt * dt;
     if (hasTwist(planet.def, 'bouncy') && !S.grounded && nextAlt <= g && S.valt < -7) {
       land(); S.grounded = true; takeoff();
-      S.valt = Math.min(22, -S.valt * 0.68); S.alt = g + 0.05; S.grounded = false; S.air = 0.01;
+      S.valt = Math.min(22, -S.valt * 0.68); S.alt = g + 0.05; S.grounded = false; S.air = 0.01; SFX.boing();
       paintAt(S.p, 1.6, 1); shake = Math.max(shake, 0.25);
       if (!hints.boing) { hints.boing = true; toast('BOING! Flip between bounces for combos', 2.5); }
     } else if (nextAlt <= g || (S.grounded && nextAlt < g + 0.12)) {
@@ -2261,9 +2352,9 @@ function step(dt) {
 
     // launch ramp
     if (planet.restored / planet.N >= planet.def.goal) {
-      if (!planet.pad.visible) { planet.pad.visible = true; toast('Launch ramp open!<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
+      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); toast('Launch ramp open!<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
-      if (S.p.angleTo(planet.padDir) * R < 2.5 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); }
+      if (S.p.angleTo(planet.padDir) * R < 2.5 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); }
     }
   } else if (S.mode === 'launch') {
     S.t += dt; S.alt += S.valt * dt; S.valt += 10 * dt;
@@ -2287,7 +2378,7 @@ function step(dt) {
     S.t += dt; S.valt -= 22 * dt; S.alt += S.valt * dt;
     $('fade').style.opacity = 1 - smooth(0, 0.8, S.t);
     const g = groundH(S.p);
-    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; toast(planet.index < G.planetIdx && planet.restored / planet.N >= planet.def.goal ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); }
+    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); toast(planet.index < G.planetIdx && planet.restored / planet.N >= planet.def.goal ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); }
   }
 
   grow(dt);
@@ -2464,6 +2555,8 @@ if (saved && saved.t) {
   if (grew >= 1) welcome = { grew, away, capped: away > siloHours() * 3600 && gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1) };
 }
 $('playBtn').onclick = start;
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => SFX.init(), { capture: true });
+addEventListener('click', (e) => { if (e.target instanceof Element && e.target.closest('.btn, .chip, .go')) SFX.click(); }, { capture: true });
 addEventListener('keydown', (e) => { if (menuReady && !$('title').hidden && !modal && ['Enter', 'Space'].includes(e.code)) { e.preventDefault(); start(); } });
 function showWelcome() {
   if (!welcome) return; const w = welcome;
@@ -2482,23 +2575,24 @@ function start() {
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Drive to bring the moonlet back to life!<br><span style="font-size:16px">Grab the glowing seed pods</span>'), 3.5);
 }
 
-let lastGems = G.gems, last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
+let bonkFrame = false, lastGems = G.gems, last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
 function frame(now) {
   const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
   fpsN++; fpsT += raw; if (fpsT >= 0.5) { if (SET.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
   if (started && !paused) {
     tickGarden(dt);
     if (!garageOpen && !gardenOpen) { step(dt); sanitize(); stat('time', dt); }
-    if (G.gems > lastGems) stat('earned', G.gems - lastGems); lastGems = G.gems;
+    if (G.gems > lastGems) stat('earned', G.gems - lastGems); else if (G.gems < lastGems - 0.5 && !bonkFrame) SFX.buy(); lastGems = G.gems; bonkFrame = false;
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) $('toast').style.opacity = 0; }
     if (driftShown > 0) { driftShown -= dt; $('drift').style.opacity = 1; } else $('drift').style.opacity = 0;
   }
+  SFX.update(started && !paused && !garageOpen && !gardenOpen && !Platform.adBusy && S.mode === 'drive' && !document.hidden, S.v.length(), S.grounded, !!S.boosting, S.drift || 0);
   uiAcc += dt; if (uiAcc > 0.15) { uiAcc = 0; updateUI(); }
   if (gardenOpen) renderGardenScene(dt); else render(dt);
   requestAnimationFrame(frame);
 }
-addEventListener('visibilitychange', () => { if (document.hidden && started) { pause(); save(); } });
+addEventListener('visibilitychange', () => { SFX.hidden(document.hidden); if (document.hidden && started) { pause(); save(); } });
 addEventListener('pagehide', () => { if (started) save(); });
 applySettings();
 try { renderer.compile(scene, camera); } catch {}
@@ -2509,7 +2603,7 @@ showWelcome();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
-window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters };
+window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX };
 requestAnimationFrame(frame);
 </script>
 </body>
