@@ -1,0 +1,25 @@
+# Uploads the password-protected website to your web host over FTPS.
+# Runs only when you start it (Actions tab > Deploy website > Run workflow).
+# Repository secrets needed: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, SITE_PASSWORD
+# Optional repository variable: FTP_DIR (folder on the host, default "./")
+name: Deploy website
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build site
+        run: python3 tools/build_site.py
+        env:
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+      - name: Upload
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./dist/site/
+          server-dir: ${{ vars.FTP_DIR || './' }}

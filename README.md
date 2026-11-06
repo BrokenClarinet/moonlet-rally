@@ -52,6 +52,15 @@ All keys can be changed in Controls (main menu or pause menu). Defaults:
 
 A loading bar runs while the moonlet is built, then the main menu offers Play/Continue, Settings and Controls. Settings (graphics quality, ink outlines, camera shake, speed zoom, camera distance, guide arrow, touch buttons, FPS counter, reset progress) are saved under `moonletRally.settings` and key bindings under `moonletRally.keys`. The game pauses itself when the tab is hidden.
 
+## Website (password-protected test build)
+
+`site/` is a small PHP website: a public info page (`index.php`) with a password box, and the game behind it (`play.php`). The game file is stored in `private/` and only loads after login, so the password can't be read from the page source.
+
+- Build: `python3 tools/build_site.py` creates `dist/site/` and `dist/moonlet-rally-site.zip`.
+- Manual upload: unzip onto any host with PHP 7.4+ (Apache hosts such as IONOS also honor the included `.htaccess` files). Edit `secret.php` on the server and put your password between the quotes. Optionally set `$contact` in `index.php` to show a support email.
+- GitHub deploy: add repository secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` and `SITE_PASSWORD` (optionally variable `FTP_DIR`), then run **Actions > Deploy website**. It builds from the repo and uploads over FTPS, writing `secret.php` from `SITE_PASSWORD`.
+- The site build turns the Poki SDK off (`MR_PLATFORM = 'none'`) and has no ads.
+
 ## Platform (Poki)
 
 Add `?pokidebug` to the URL to turn on Poki debug mode. `window.MR_PLATFORM` in `index.html` is `'poki'` for the Poki build and `'none'` elsewhere. With Poki, the game loads the Poki SDK and calls `gameLoadingFinished`, `gameplayStart`/`gameplayStop`, a `commercialBreak` between moonlets and when leaving the garage or Gem Garden, and opt-in `rewardedBreak`s in the garage (gems) and Gem Garden (+30 min of growth). Progress is saved to `localStorage` (key `moonletRally.v1`, well under Poki's 1 MB limit), which Poki syncs to the cloud automatically for logged-in players. The title screen offers a Poki login button to players who aren't logged in. Without the SDK every call is a no-op.

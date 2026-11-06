@@ -52,7 +52,7 @@
   #tL { left:18px; } #tR { left:108px; } #tD { right:18px; width:92px; height:92px; font-size:15px; } #tB { right:122px; font-size:14px; } #tJ { right:30px; bottom:124px; font-size:14px; }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
-  .gpanel { pointer-events:auto; width:min(640px,100%); max-height:52vh; overflow:auto; background:var(--panel); border:3px solid var(--ink); border-radius:18px; box-shadow:4px 5px 0 var(--ink); padding:10px 14px 12px; box-sizing:border-box; display:flex; flex-direction:column; gap:8px; }
+  .gpanel { touch-action:pan-y; overscroll-behavior:contain; pointer-events:auto; width:min(640px,100%); max-height:52vh; overflow:auto; background:var(--panel); border:3px solid var(--ink); border-radius:18px; box-shadow:4px 5px 0 var(--ink); padding:10px 14px 12px; box-sizing:border-box; display:flex; flex-direction:column; gap:8px; }
   .ghead { display:flex; align-items:center; gap:12px; font-size:18px; }
   .ghead b { font-weight:900; font-size:20px; color:var(--sun); text-shadow:2px 2px 0 var(--ink); }
   .ghead span { margin-left:auto; font-weight:800; color:var(--gem); }
@@ -882,7 +882,8 @@ const Platform = (() => {
   return api;
 })();
 function clearKeys() { for (const k in keys) keys[k] = false; }
-addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+// stop the page (or portal iframe) from scrolling, but let menu panels scroll with the wheel
+addEventListener('wheel', (e) => { if (!(e.target instanceof Element && e.target.closest('.gpanel'))) e.preventDefault(); }, { passive: false });
 
 // ---------------------------------------------------------------- garage
 let garageOpen = false;

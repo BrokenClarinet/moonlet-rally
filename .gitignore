@@ -1,2 +1,5 @@
 *.png
 !assets/**/*.png
+dist/
+site/secret.php
+!site/assets/*.png
