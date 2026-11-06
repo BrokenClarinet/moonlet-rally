@@ -45,7 +45,8 @@ All keys can be changed in Controls (main menu or pause menu). Defaults:
   - Hoop Moon: drive through chains of golden hoops.
   - Starfall Moon: catch falling star-seeds for big blooms.
   - Moonlets VIII to XIII add Jelly Moon (bouncy ground: flip between bounces), Teacup, Blizzard (ice + wind), Ember (geysers + wisps), Comet (stars + hoops) and Trampoline Moon.
-  - After that, moonlets are generated forever: each gets its own name, colors, size, gravity and a mix of one or two twists, and pays more gems than the last.
+  - Moonlets XIV to XX bring three new twists: speed pads (Zoom Moon), warp portals (Warp Moon) and meteor showers that leave space crystals (Meteor Moon), then mix them in Rally, Haunted, Crater and Neon Moon.
+  - After that, moonlets are generated forever (later ones can mix three twists): each gets its own name, colors, size, gravity and a mix of one or two twists, and pays more gems than the last.
 - Moonlets map: fly back to any unlocked moonlet. Each moonlet's grass is kept (localStorage `moonletRally.life.<n>`, 4 bits per point), and restoring more of an old moonlet raises its Gem Garden output.
 - Gem Garden: every restored moonlet becomes a silo that grows gems (also while you're away, up to 8 hours, each silo holds 2 hours). Harvest, upgrade silos and buy sprinklers there.
 - Garage Upgrades tab: ten levelled upgrades bought with gems (wider tires, engine, tread, nitro tank, springs, trick wax, gem magnet, bull bar, gem polish, combo keeper).
@@ -72,3 +73,11 @@ Add `?pokidebug` to the URL to turn on Poki debug mode. `window.MR_PLATFORM` in 
 ## Art and licensing
 
 All visuals are generated in code from basic shapes (toon shading, ink outlines, faceted props, gradient sky). The UI icons are our own inline SVG. No third-party models, textures, fonts or icon sets are used. Three.js is MIT-licensed; see `vendor/THREE-LICENSE.txt`.
+
+## Quality of life
+
+- The guide arrow points to the nearest bare ground when you're driving on restored ground.
+- The Moonlets map shows each moonlet's twists and a preview of the next one.
+- Stats page in the pause menu (time, gems earned, best trick, longest air and more).
+- Settings > Save code copies your progress as a short code you can load on another device or browser.
+- Garage > Upgrades has a button that buys the cheapest upgrades you can afford.

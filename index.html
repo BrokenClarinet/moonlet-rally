@@ -37,6 +37,11 @@
   #nitro span { position:absolute; inset:0; font-size:10px; font-weight:900; letter-spacing:2px; text-align:center; line-height:16px; color:var(--paper); text-shadow:1px 1px 0 var(--ink); }
   #rush { top:96px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
   #precise { bottom:44px; left:calc(50% + 140px); font-size:11px; font-weight:900; letter-spacing:2px; color:var(--ink); background:var(--gem); border:2px solid var(--ink); border-radius:8px; padding:2px 7px; }
+  .statgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+  .statgrid div { background:var(--panel2); border:2.5px solid var(--ink); border-radius:12px; padding:8px 10px; }
+  .statgrid small { display:block; font-size:11px; opacity:.75; } .statgrid b { font-size:18px; }
+  .maprow.locked { opacity:.7; } .maprow .tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+  .maprow .tags i { font-style:normal; font-size:10px; font-weight:800; padding:1px 7px; border-radius:8px; background:var(--panel2); border:1.5px solid var(--ink); }
   #guide { bottom:96px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; font-weight:900; text-shadow:1px 1px 0 var(--ink); }
   #guide i { width:34px; height:34px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M17 3 30 28 17 21 4 28z' fill='%23ffc43d' stroke='%232a1838' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; }
   #fade { inset:0; background:#fff6ea; opacity:0; }
@@ -202,12 +207,22 @@
 </div>
 <div id="pause" class="modal" hidden><div class="gpanel menu">
   <div class="ghead"><b>Paused</b></div>
-  <button class="btn" id="pResume">Resume</button><button class="btn alt" id="pSettings">Settings</button><button class="btn alt" id="pControls">Controls</button><button class="btn alt" id="pMap">Moonlets</button><button class="btn alt2" id="pMenu">Main menu</button>
+  <button class="btn" id="pResume">Resume</button><button class="btn alt" id="pSettings">Settings</button><button class="btn alt" id="pControls">Controls</button><button class="btn alt" id="pMap">Moonlets</button><button class="btn alt" id="pStats">Stats</button><button class="btn alt2" id="pMenu">Main menu</button>
 </div></div>
 <div id="settings" class="modal" hidden><div class="gpanel">
   <div class="ghead"><b>Settings</b><button class="btn" id="sClose" style="margin-left:auto">Done</button></div>
   <div id="sList" style="display:flex;flex-direction:column;gap:7px"></div>
+  <div class="srow"><label>Save code</label><div class="seg"><button class="chip" id="sCopy">Copy my save</button><button class="chip" id="sLoad">Load a save</button></div></div>
+  <div id="sCodeBox" hidden style="display:flex;flex-direction:column;gap:6px">
+    <p class="gdhint" id="sCodeHint"></p>
+    <textarea id="sCode" rows="3" spellcheck="false" style="width:100%;font:11px/1.3 monospace;border-radius:10px;border:2.5px solid var(--ink);padding:6px;resize:vertical;background:var(--paper);color:var(--ink)"></textarea>
+    <div><button class="btn" id="sCodeGo" hidden>Load this save</button></div>
+  </div>
   <div class="srow"><label>Progress</label><div><button class="btn" id="sReset" style="background:var(--coral);color:var(--paper)">Reset progress</button></div></div>
+</div></div>
+<div id="stats" class="modal" hidden><div class="gpanel">
+  <div class="ghead"><b>Stats</b><button class="btn" id="stClose" style="margin-left:auto">Done</button></div>
+  <div id="stList" class="statgrid"></div>
 </div></div>
 <div id="map" class="modal" hidden><div class="gpanel">
   <div class="ghead"><b>Moonlets</b><button class="btn" id="mapClose" style="margin-left:auto">Close</button></div>
@@ -386,31 +401,66 @@ const PLANET_DEFS = [
     flowers: [0xff7fa8, 0xffcf4a, 0x8fe3ff], rock: [0xe0d4ee, 0xa898c0, 0x6a5a8a],
     sky: { top: 0x1a1048, hor: 0xffa0a0, top2: 0x2a3aa0, hor2: 0xffe0b0 },
     twists: ['bouncy', 'geysers'], title: 'Trampoline Moon', intro: 'Trampoline Moon: bouncy ground and geysers. Go big!' },
+  { name: 'Moonlet XIV', R: 13, goal: 0.64, seed: 1409, rate: 8000,
+    dead: [0x9aa0b8, 0x767c98], alive: [0x6ae0d0, 0x2aa8a0], pollen: 0xfff3a0, leaf: 0x3ac0b0, trunk: 0x3a4a6a,
+    flowers: [0xffc43d, 0xff6b4a, 0xffffff], rock: [0xd0d4e4, 0x9aa0b8, 0x5a607a],
+    sky: { top: 0x0a1a3a, hor: 0x5ae0d0, top2: 0x1a4a8a, hor2: 0xc0fff0 },
+    twists: ['pads'], title: 'Zoom Moon', intro: 'Zoom Moon: speed pads everywhere. Hit them to fly!' },
+  { name: 'Moonlet XV', R: 14, goal: 0.64, seed: 1511, rate: 12500,
+    dead: [0x7a6a9a, 0x5a4c7a], alive: [0xc08aff, 0x8a5ad8], pollen: 0xfff3a0, leaf: 0xa070f0, trunk: 0x4a3a6a,
+    flowers: [0x7fe3ff, 0xff8fc7, 0xfff3a0], rock: [0xc8b8e8, 0x8a7ab0, 0x564a78],
+    sky: { top: 0x0c0624, hor: 0xb07aff, top2: 0x2a1a6a, hor2: 0xe8d0ff },
+    twists: ['portals'], title: 'Warp Moon', intro: 'Warp Moon: drive into a portal to pop out on the far side!' },
+  { name: 'Moonlet XVI', R: 13, goal: 0.64, seed: 1613, rate: 19000,
+    dead: [0x8a6a5a, 0x6a4e42], alive: [0xa8e05a, 0x6aa83a], pollen: 0xffd06b, leaf: 0x7ac04a, trunk: 0x5a3a2a,
+    flowers: [0xffc43d, 0xff7f6a, 0xfff3a0], rock: [0xc8a898, 0x8a6a5a, 0x5a4034],
+    sky: { top: 0x1a0a10, hor: 0xff7a3a, top2: 0x4a1a2a, hor2: 0xffc08a },
+    twists: ['meteors'], title: 'Meteor Moon', intro: 'Meteor Moon: dodge the falling rocks, then grab the space crystals they leave!' },
+  { name: 'Moonlet XVII', R: 14, goal: 0.66, seed: 1717, rate: 29000,
+    dead: [0xc8b090, 0xa08a6c], alive: [0x8ae06a, 0x4aa84a], pollen: 0xffffff, leaf: 0x5ac05a, trunk: 0x6a4a2a,
+    flowers: [0xff5d73, 0xffc43d, 0x5bb6ff], rock: [0xf0dcc0, 0xc0a888, 0x806a50],
+    sky: { top: 0x10204a, hor: 0xffb06a, top2: 0x2a5aa0, hor2: 0xffe8c0 },
+    twists: ['pads', 'hoops'], title: 'Rally Moon', intro: 'Rally Moon: speed pads AND hoop runs. Race the course!' },
+  { name: 'Moonlet XVIII', R: 14, goal: 0.66, seed: 1801, rate: 44000, grav: 0.7,
+    dead: [0x5a5470, 0x423c56], alive: [0x7affb0, 0x3ac080], pollen: 0xe0fff0, leaf: 0x4ae090, trunk: 0x3a3450,
+    flowers: [0xb48cff, 0x7fe3ff, 0xfff3a0], rock: [0x9a94b0, 0x6a6488, 0x403a58],
+    sky: { top: 0x04040e, hor: 0x3a6a5a, top2: 0x0a2a3a, hor2: 0x9ae0c0 },
+    twists: ['portals', 'wisps'], title: 'Haunted Moon', intro: 'Haunted Moon: wisps and warp portals in the dark. Chase them down!' },
+  { name: 'Moonlet XIX', R: 13, goal: 0.66, seed: 1907, rate: 66000,
+    dead: [0xb8a0a0, 0x948080], alive: [0xffb06a, 0xe07a3a], pollen: 0xfff3a0, leaf: 0xf0904a, trunk: 0x6a3a3a,
+    flowers: [0xfff3a0, 0xff5d73, 0x9fe8ff], rock: [0xe8d0d0, 0xb89a9a, 0x7a5c5c],
+    sky: { top: 0x200a1a, hor: 0xff9a7a, top2: 0x5a1a4a, hor2: 0xffd0c0 },
+    twists: ['meteors', 'bouncy'], title: 'Crater Moon', intro: 'Crater Moon: bouncy ground under a meteor shower. Boing out of the way!' },
+  { name: 'Moonlet XX', R: 15, goal: 0.68, seed: 2003, rate: 100000,
+    dead: [0x3a3a5a, 0x2a2a44], alive: [0x5affe0, 0x2ac0c0], pollen: 0xff8fc7, leaf: 0x3ae0d0, trunk: 0x2a2a4a,
+    flowers: [0xff5df0, 0xffe066, 0x7fe3ff], rock: [0x7a7aa8, 0x50507a, 0x30304e],
+    sky: { top: 0x02020a, hor: 0xff4ad0, top2: 0x10104a, hor2: 0x7ae0ff },
+    twists: ['pads', 'portals', 'stars'], title: 'Neon Moon', intro: 'Neon Moon: speed pads, portals and falling stars. The big one!' },
 ];
 // moonlets can have one twist or a mix of several
 const hasTwist = (def, t) => def.twists ? def.twists.includes(t) : def.twist === t;
 const roman = (n) => { let r = ''; for (const [v, s] of [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]) while (n >= v) { r += s; n -= v; } return r; };
 // after the hand-made moonlets, every further moonlet is generated from its number: own name, colors, size and twist mix
-const TWIST_POOL = ['ice', 'geysers', 'wisps', 'wind', 'hoops', 'stars', 'bouncy'];
-const TWIST_TEXT = { ice: 'slippery ice', geysers: 'geysers', wisps: 'grass-eating wisps', wind: 'wind gusts', hoops: 'hoop runs', stars: 'falling stars', bouncy: 'bouncy ground' };
+const TWIST_POOL = ['ice', 'geysers', 'wisps', 'wind', 'hoops', 'stars', 'bouncy', 'pads', 'portals', 'meteors'];
+const TWIST_TEXT = { ice: 'slippery ice', geysers: 'geysers', wisps: 'grass-eating wisps', wind: 'wind gusts', hoops: 'hoop runs', stars: 'falling stars', bouncy: 'bouncy ground', pads: 'speed pads', portals: 'warp portals', meteors: 'meteor showers' };
 const NAME_A = ['Vel', 'Mor', 'Tess', 'Quill', 'Bram', 'Lum', 'Pip', 'Zor', 'Nim', 'Cal', 'Fen', 'Oro', 'Sol', 'Ash', 'Wren', 'Kip', 'Tam', 'Rue', 'Juni', 'Bix', 'Lark', 'Ivo', 'Moss', 'Dov'];
 const NAME_B = ['a', 'ix', 'ora', 'en', 'u', 'ette', 'ar', 'is', 'o', 'ina', 'el', 'wick', 'by', 'ara', 'on', 'ie'];
 function genDef(i) {
   const rng = rngFrom(i * 7919 + 17), pick = (a) => a[Math.floor(rng() * a.length)];
   const h = rng(), hsl = (hh, ss, ll) => new THREE.Color().setHSL(((hh % 1) + 1) % 1, ss, ll).getHex();
-  const nT = rng() < 0.55 ? 1 : 2, pool = [...TWIST_POOL], twists = [];
+  const extra0 = i - PLANET_DEFS.length, r3 = rng(), nT = r3 < 0.4 ? 1 : (r3 < 0.85 || extra0 < 8) ? 2 : 3, pool = [...TWIST_POOL], twists = [];
   for (let k = 0; k < nT; k++) twists.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
-  const title = pick(NAME_A) + pick(NAME_B) + ' Moon', extra = i - PLANET_DEFS.length;
+  const title = pick(NAME_A) + pick(NAME_B) + ' Moon', extra = extra0;
   const deadH = h + 0.45 + rng() * 0.2;
   return {
     name: `Moonlet ${roman(i + 1)}`, R: Math.round(10 + rng() * 4 + Math.min(4, extra * 0.15)), goal: Math.min(0.75, 0.66 + extra * 0.004), seed: 2000 + i * 37,
-    rate: Math.round(5000 * Math.pow(1.6, extra + 1)), grav: twists.includes('wisps') || rng() < 0.2 ? 0.6 + rng() * 0.25 : 1,
+    rate: Math.round(PLANET_DEFS[PLANET_DEFS.length - 1].rate * Math.pow(1.55, extra + 1)), grav: twists.includes('wisps') || rng() < 0.2 ? 0.6 + rng() * 0.25 : 1,
     dead: [hsl(deadH, 0.18, 0.66), hsl(deadH, 0.18, 0.52)], alive: [hsl(h, 0.6, 0.62), hsl(h + 0.03, 0.55, 0.45)],
     pollen: hsl(h + 0.15, 0.9, 0.82), leaf: hsl(h, 0.55, 0.52), trunk: hsl(h + 0.55, 0.3, 0.3),
     flowers: [hsl(h + 0.33, 0.85, 0.66), hsl(h + 0.6, 0.8, 0.7), hsl(h + 0.85, 0.75, 0.72)],
     rock: [hsl(deadH, 0.2, 0.84), hsl(deadH, 0.18, 0.6), hsl(deadH, 0.2, 0.38)],
     sky: { top: hsl(h + 0.6, 0.55, 0.1), hor: hsl(h + 0.05, 0.75, 0.72), top2: hsl(h + 0.6, 0.5, 0.3), hor2: hsl(h + 0.1, 0.8, 0.86) },
-    twists, title, intro: `${title}: ${twists.map(t => TWIST_TEXT[t]).join(' and ')}!`,
+    twists, title, intro: `${title}: ${twists.map(t => TWIST_TEXT[t]).join(twists.length > 2 ? ', ' : ' and ').replace(/, ([^,]*)$/, ' and $1')}!`,
   };
 }
 const planetDef = (i) => i < PLANET_DEFS.length ? PLANET_DEFS[i] : genDef(i);
@@ -743,9 +793,53 @@ function buildPlanet(index) {
     }
   }
 
+  // speed pads, warp portals and meteors
+  const tangentQ = (d, h) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(V().crossVectors(d, h), d, h));
+  const randTangent = (d) => randDir(rng).addScaledVector(d, -1).cross(d).normalize();
+  const speedPads = [], portals = [], meteors = [];
+  if (hasTwist(def, 'pads')) {
+    const chev = (z) => new THREE.ConeGeometry(0.62, 0.8, 3).rotateX(Math.PI / 2).scale(1, 0.3, 1).translate(0, 0.2, z);
+    const padGeo = facet([[new THREE.CylinderGeometry(1.35, 1.5, 0.2, 8).translate(0, 0.08, 0), 0x3a2758], [chev(-0.45), 0x7fe3ff], [chev(0.4), 0x7fe3ff]]);
+    const padMat = toon({ vertexColors: true, emissive: 0x0a4a5a });
+    for (let i = 0; i < 9; i++) {
+      const d = randDir(rng); if (d.dot(start) > 0.95 || !awayFromRocks(d)) { i--; continue; }
+      const h = randTangent(d), m = inked(padGeo, padMat, 0.04);
+      m.position.copy(d).multiplyScalar(R + height(d.x, d.y, d.z) - 0.04); m.quaternion.copy(tangentQ(d, h));
+      group.add(m); speedPads.push({ d, h, mesh: m, cd: 0 });
+    }
+  }
+  if (hasTwist(def, 'portals')) {
+    const ringGeo = new THREE.TorusGeometry(1.5, 0.2, 6, 20), discGeo = new THREE.CircleGeometry(1.35, 20);
+    for (const [k, color] of [[0, 0x7fe3ff], [1, 0xff8fc7]]) {
+      const ringMat = toon({ color, emissive: new THREE.Color(color).multiplyScalar(0.35) });
+      const discMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+      let a, b; do { a = randDir(rng); b = randDir(rng); } while (a.angleTo(b) < 1.7 || a.dot(start) > 0.9 || b.dot(start) > 0.9 || !awayFromRocks(a) || !awayFromRocks(b) || portals.some(p => p.d.angleTo(a) * R < 6 || p.d.angleTo(b) * R < 6));
+      const pair = [];
+      for (const d of [a, b]) {
+        const h = randTangent(d), m = new THREE.Group(), ring = inked(ringGeo, ringMat, 0.04), disc = new THREE.Mesh(discGeo, discMat);
+        ring.position.y = disc.position.y = 1.6; m.add(ring, disc);
+        m.position.copy(d).multiplyScalar(R + height(d.x, d.y, d.z) - 0.1); m.quaternion.copy(tangentQ(d, h));
+        group.add(m); const pt = { d, h, mesh: m, disc, color, pair: k }; portals.push(pt); pair.push(pt);
+      }
+      pair[0].to = pair[1]; pair[1].to = pair[0];
+    }
+  }
+  if (hasTwist(def, 'meteors')) {
+    const rockGeo = facet([[lumpy(new THREE.IcosahedronGeometry(0.9, 0), 0.22, 9), 0x6a4a3a], [lumpy(new THREE.IcosahedronGeometry(0.5, 0), 0.15, 3).translate(0.4, 0.35, 0.2), 0x8a5a3a]]);
+    const rockMat = toon({ vertexColors: true, emissive: 0x5a1a00 });
+    const markGeo = new THREE.RingGeometry(2.1, 2.5, 24).rotateX(-Math.PI / 2), markMat = new THREE.MeshBasicMaterial({ color: 0xff6b4a, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide });
+    const shardGeo = facet([[new THREE.OctahedronGeometry(0.5, 0).scale(0.7, 1.4, 0.7).translate(0, 0.7, 0), 0x7fe3ff], [new THREE.OctahedronGeometry(0.35, 0).scale(0.7, 1.3, 0.7).rotateZ(0.5).translate(0.4, 0.45, 0), 0xb48cff], [new THREE.OctahedronGeometry(0.3, 0).scale(0.7, 1.3, 0.7).rotateZ(-0.6).translate(-0.35, 0.4, 0.1), 0x7fe3ff]]);
+    const shardMat = toon({ vertexColors: true, emissive: 0x1a4a6a });
+    for (let i = 0; i < 3; i++) {
+      const rock = inked(rockGeo, rockMat, 0.05), mark = new THREE.Mesh(markGeo, markMat), shard = inked(shardGeo, shardMat, 0.04);
+      rock.visible = mark.visible = shard.visible = false; group.add(rock, mark, shard);
+      meteors.push({ d: V(), rock, mark, shard, h: 0, state: 'wait', wait: 3 + i * 2.5, shardT: 0 });
+    }
+  }
+
   scene.add(group);
   const lifeAt = (d) => life[nearest(d)];
-  return { def, R, N, dirs, life, col, colAttr, paint, height, rocks, decos, setDeco, group, atmoMat, pad, padDir, beam, shrooms, pods, wisps, hoops, gemArcs, geysers, stars, hoopIdx: 0, hoopWait: 0, lifeAt, restored: 0, index };
+  return { def, R, N, dirs, life, col, colAttr, paint, height, rocks, decos, setDeco, group, atmoMat, pad, padDir, beam, shrooms, pods, wisps, hoops, gemArcs, geysers, stars, speedPads, portals, meteors, hoopIdx: 0, hoopWait: 0, lifeAt, restored: 0, index };
 }
 
 function disposePlanet(p) {
@@ -988,7 +1082,7 @@ function spawn(at, up, color, spread) {
 
 // ---------------------------------------------------------------- game state & save
 const SAVE_KEY = 'moonletRally.v1';
-const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [] };
+const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {} };
 const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -1085,8 +1179,21 @@ const UPG = [
 const upLvl = (id) => id === 'tires' ? G.tires : (G.up[id] || 0);
 const upCost = (u) => Math.round(u.base * Math.pow(u.k, upLvl(u.id)));
 let garageTab = 'parts';
+function buyCheapest() {
+  let n = 0;
+  for (;;) {
+    const opts = UPG.filter(u => upLvl(u.id) < u.max).sort((a, b) => upCost(a) - upCost(b)), u = opts[0];
+    if (!u || G.gems < upCost(u)) break;
+    G.gems -= upCost(u); if (u.id === 'tires') G.tires++; else G.up[u.id] = upLvl(u.id) + 1; n++;
+  }
+  if (n) { computeStats(); save(); toast(`Bought ${n} upgrade${n > 1 ? 's' : ''}!`, 1.8); }
+  renderGarage();
+}
 function renderUpgrades() {
   const L = $('gUpg'); L.innerHTML = '';
+  const cheapest = UPG.filter(u => upLvl(u.id) < u.max).map(upCost).sort((a, b) => a - b)[0];
+  const all = document.createElement('button'); all.className = 'btn alt'; all.style.alignSelf = 'flex-start'; all.textContent = 'Buy cheapest upgrades I can afford';
+  all.disabled = !(cheapest <= G.gems); all.onclick = buyCheapest; L.appendChild(all);
   for (const u of UPG) {
     const l = upLvl(u.id), maxed = l >= u.max, c = upCost(u);
     const row = document.createElement('div'); row.className = 'uprow';
@@ -1353,7 +1460,7 @@ $('sReset').onclick = () => {
 };
 // menus: pause, settings, controls
 let paused = false, modal = null, menuReady = false;
-function openModal(id) { if (modal) closeModal(); modal = id; $(id).hidden = false; if (id === 'settings') renderSettings(); else if (id === 'map') renderMap(); else { $('kHint').textContent = K_HINT; renderControls(); } }
+function openModal(id) { if (modal) closeModal(); modal = id; $(id).hidden = false; if (id === 'settings') renderSettings(); else if (id === 'map') renderMap(); else if (id === 'stats') renderStats(); else { $('kHint').textContent = K_HINT; renderControls(); } }
 function closeModal() {
   if (!modal) return; const was = modal; $(modal).hidden = true; modal = null; rebinding = null; updateLabels();
   if (was === 'map' && paused && $('pause').hidden && $('title').hidden) resume(); // the map was opened straight from play
@@ -1364,12 +1471,18 @@ function renderMap() {
     const def = planetDef(i), frac = items[i].frac, row = document.createElement('div'); row.className = 'maprow';
     const hex = (c) => '#' + c.toString(16).padStart(6, '0'), pct = Math.round(frac * 100);
     row.innerHTML = `<span class="dot" style="background:conic-gradient(${hex(def.alive[0])} ${pct}%, ${hex(def.dead[0])} 0)"></span>
-      <div><b>${def.name} · ${def.title}</b><small>${pct}% restored · ${def.intro.replace(/^[^:]*:\s*/, '')}</small></div>`;
+      <div><b>${def.name} · ${def.title}</b><small>${pct}% restored · ${def.intro.replace(/^[^:]*:\s*/, '')}</small>${twistTags(def)}</div>`;
     if (i === here) row.insertAdjacentHTML('beforeend', '<span class="here">You are here</span>');
     else { const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Fly here'; b.onclick = () => { closeModal(); if (paused) resume(); startTravel(i); }; row.appendChild(b); }
     L.appendChild(row);
   }
+  const nx = planetDef(G.planetIdx + 1), row = document.createElement('div'); row.className = 'maprow locked';
+  row.innerHTML = `<span class="dot" style="background:#3a2758"></span><div><b>${nx.name} · ???</b><small>Restore ${planetDef(G.planetIdx).title} and take its ramp to unlock</small>${twistTags(nx)}</div>`;
+  L.appendChild(row);
+  requestAnimationFrame(() => { const h = L.querySelector('.here'); if (h) h.parentElement.scrollIntoView({ block: 'center' }); });
 }
+const TWIST_TAG = { meadow: 'Meadow', ice: 'Ice', geysers: 'Geysers', wisps: 'Wisps', wind: 'Wind', hoops: 'Hoops', stars: 'Stars', bouncy: 'Bouncy', pads: 'Speed pads', portals: 'Portals', meteors: 'Meteors' };
+const twistTags = (def) => `<span class="tags">${(def.twists || [def.twist]).map(t => `<i>${TWIST_TAG[t] || t}</i>`).join('')}${def.grav && def.grav < 1 ? '<i>Low gravity</i>' : ''}${def.R <= 8 ? '<i>Tiny</i>' : def.R >= 15 ? '<i>Big</i>' : ''}</span>`;
 function openMap() { if (G.planetIdx < 1 || !canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); openModal('map'); }
 function startTravel(i) { if (S.mode !== 'drive' || i === atIdx()) return; S.travel = i; S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); }
 $('mapBtn').onclick = openMap;
@@ -1387,7 +1500,40 @@ $('pauseBtn').onclick = pause;
 $('pResume').onclick = resume;
 $('pMenu').onclick = () => { $('pause').hidden = true; showMenu(); };
 for (const [b, id] of [['pSettings', 'settings'], ['mSettings', 'settings'], ['pControls', 'controls'], ['mControls', 'controls']]) $(b).onclick = () => openModal(id);
-$('sClose').onclick = closeModal; $('kClose').onclick = closeModal;
+$('sClose').onclick = closeModal; $('kClose').onclick = closeModal; $('stClose').onclick = closeModal;
+$('pStats').onclick = () => openModal('stats');
+function renderStats() {
+  const st = G.stats, t = Math.round(st.time || 0), hm = t >= 3600 ? `${Math.floor(t / 3600)}h ${Math.floor(t / 60) % 60}m` : `${Math.floor(t / 60)}m ${t % 60}s`;
+  const restored = G.done.length, best = G.planetIdx + 1;
+  const rows = [
+    ['Time driving', hm], ['Gems earned', `${fmt(st.earned || 0)} ${GEM}`], ['Gems now', `${fmt(G.gems)} ${GEM}`],
+    ['Moonlets restored', restored], ['Furthest moonlet', `${planetDef(G.planetIdx).name.replace('Moonlet ', '')}`], ['Garden growth', `${fmtR(gemRate())} ${GEM}/s`],
+    ['Tricks landed', st.tricks || 0], ['Best trick', st.bestTrick ? `${fmt(st.bestTrick)} ${GEM}<small>${st.bestTrickName || ''}</small>` : '-'],
+    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0],
+  ];
+  $('stList').innerHTML = rows.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('');
+}
+// save code: move progress to another browser or device by copy and paste
+// grass is stored run-length encoded at 16 levels, so the code stays short
+const encodeSave = () => {
+  save(); let o = {}; try { o = JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch {}
+  if (o.life) { const q = unb64(o.life), out = []; for (let i = 0; i < q.length;) { const v = q[i] >> 4; let n = 1; while (n < 255 && i + n < q.length && (q[i + n] >> 4) === v) n++; out.push(v, n); i += n; } o.lifeR = b64(Uint8Array.from(out)); delete o.life; }
+  delete o.rate; return 'MR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+};
+const decodeSave = (code) => { const m = String(code).trim().match(/^MR1\.([A-Za-z0-9+/=\s]+)$/); if (!m) return null; try { const o = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/\s/g, ''))))); if (!o || typeof o.gems !== 'number' || typeof o.planetIdx !== 'number') return null;
+  if (o.lifeR) { const r = unb64(o.lifeR), out = []; for (let i = 0; i + 1 < r.length; i += 2) for (let k = 0; k < r[i + 1]; k++) out.push(r[i] * 17); o.life = b64(Uint8Array.from(out)); delete o.lifeR; }
+  return o; } catch { return null; } };
+$('sCopy').onclick = async () => {
+  const code = encodeSave(), box = $('sCodeBox'); box.hidden = false; $('sCodeGo').hidden = true; $('sCode').value = code; $('sCode').readOnly = true;
+  let ok = false; try { await navigator.clipboard.writeText(code); ok = true; } catch {}
+  if (!ok) { $('sCode').select(); try { ok = document.execCommand('copy'); } catch {} }
+  $('sCodeHint').textContent = ok ? 'Copied! Paste it into "Load a save" on your other device.' : 'Select the code below and copy it, then paste it into "Load a save" on your other device.';
+};
+$('sLoad').onclick = () => { $('sCodeBox').hidden = false; $('sCode').readOnly = false; $('sCode').value = ''; $('sCodeGo').hidden = false; $('sCodeHint').textContent = 'Paste a save code. This replaces the progress on this device.'; $('sCode').focus(); };
+$('sCodeGo').onclick = () => {
+  const o = decodeSave($('sCode').value); if (!o) { $('sCodeHint').textContent = "That code doesn't look right. Copy the whole thing, starting with MR1."; return; }
+  resetting = true; try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch {} location.reload();
+};
 $('kReset').onclick = () => { binds = defaultBinds(); saveBinds(); $('kHint').textContent = 'Keys are back to the defaults.'; renderControls(); updateLabels(); };
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape') { if (modal) closeModal(); else if (paused && $('title').hidden) resume(); else if (canPause()) pause(); return; }
@@ -1496,14 +1642,15 @@ function airTricks(dt) {
   S.tr.pitch += f ? f * 9.5 * CS.spin * dt : snap(S.tr.pitch);
   S.tr.yaw += y ? y * 10 * CS.spin * dt : snap(S.tr.yaw);
 }
+const stat = (k, v, max) => { const st = G.stats; st[k] = max ? Math.max(st[k] || 0, v) : (st[k] || 0) + v; };
 function land() {
-  const air = S.air; S.air = 0;
+  const air = S.air; S.air = 0; stat('bestAir', air, true);
   const { pitch: P, yaw: Y } = S.tr; S.tr = { pitch: 0, yaw: 0 };
   const pr = Math.abs(P - Math.round(P / TAU) * TAU), yr = Math.abs(Y - Math.round(Y / TAU) * TAU);
   const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 0.2);
   if (pr > 0.8) { // landed on the roof
     S.v.multiplyScalar(0.25); G.nitro = Math.max(0, G.nitro - 0.2); trickChain = 0; shake = 0.9;
-    burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); bonusText('CRASH!'); return;
+    burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); bonusText('CRASH!'); stat('crashes', 1); return;
   }
   if (yr > 0.7) { S.v.multiplyScalar(0.55); trickChain = 0; shake = 0.5; bonusText('SLOPPY LANDING'); return; }
   const flips = Math.round(Math.abs(P) / TAU), spins = Math.round(Math.abs(Y) / TAU), names = [];
@@ -1517,6 +1664,8 @@ function land() {
     trickChain = now - lastTrickAt < 4 ? trickChain + 1 : 1; lastTrickAt = now;
     const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * (1 + planet.index) * mult() * CS.bonus * CS.trick);
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins));
+    stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
+    if (gems > (G.stats.bestTrick || 0)) { G.stats.bestTrick = gems; G.stats.bestTrickName = names.join(' + '); }
     paintAt(S.p, 2.2 + (flips + spins) * 1.2, 1);
     burst(at, S.p, new THREE.Color(planet.def.flowers[0]), 25, 9); burst(at, S.p, new THREE.Color(planet.def.leaf), 25, 7);
     bonusText(`${names.join(' + ')}${trickChain > 1 ? ` · COMBO x${trickChain}` : ''} +${gems} ${GEM}`);
@@ -1733,6 +1882,79 @@ function catchStar(st, caught) {
   }
 }
 
+function updatePads(dt) {
+  const R = planet.R;
+  for (const pd of planet.speedPads) {
+    pd.cd -= dt;
+    if (pd.cd > 0 || S.p.angleTo(pd.d) * R > 1.5 || S.alt - groundH(pd.d) > 1.2) continue;
+    pd.cd = 1;
+    const spd = S.v.dot(S.f);
+    S.v.copy(S.f).multiplyScalar(Math.max(spd, 0) + 13); if (S.v.length() > MAXV_BOOST * 1.5) S.v.setLength(MAXV_BOOST * 1.5);
+    G.nitro = Math.min(1, G.nitro + 0.12); paintAt(pd.d, 2.4, 1); shake = Math.max(shake, 0.35);
+    burst(V().copy(pd.d).multiplyScalar(R + groundH(pd.d) + 0.4), pd.d, new THREE.Color(0x7fe3ff), 22, 9);
+    bonusText('ZOOM!');
+    if (!hints.pad) { hints.pad = true; toast('Speed pads launch you forward. Chain them!', 2.5); }
+  }
+}
+let portalCd = 0;
+function updatePortals(dt) {
+  const R = planet.R; portalCd -= dt;
+  for (const pt of planet.portals) pt.disc.rotation.z += dt * 2;
+  if (portalCd > 0) return;
+  for (const pt of planet.portals) {
+    if (S.p.angleTo(pt.d) * R > 1.5 || S.alt - groundH(pt.d) > 3.2) continue;
+    // rotate the whole scene state around the planet centre, so the camera follows without a jump
+    const q = new THREE.Quaternion().setFromUnitVectors(pt.d, pt.to.d);
+    for (const v of [S.p, S.f, S.v, camUp, camF, camSmooth]) v.applyQuaternion(q);
+    S.p.applyAxisAngle(V().crossVectors(S.p, S.f).normalize(), 2.4 / R).normalize();
+    S.f.addScaledVector(S.p, -S.f.dot(S.p)).normalize(); S.v.addScaledVector(S.p, -S.v.dot(S.p));
+    portalCd = 1.2; paintAt(pt.to.d, 3.2, 1); shake = Math.max(shake, 0.4);
+    const gems = Math.round(4 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems;
+    burst(V().copy(pt.to.d).multiplyScalar(R + groundH(pt.to.d) + 1.6), pt.to.d, new THREE.Color(pt.color), 35, 10);
+    bonusText(`WARP! +${gems} ${GEM}`);
+    if (!hints.portal) { hints.portal = true; toast('Portals come in matching pairs. Use them to reach bare ground fast!', 3); }
+    return;
+  }
+}
+function updateMeteors(dt) {
+  const R = planet.R;
+  for (const m of planet.meteors) {
+    if (m.state === 'wait') {
+      m.wait -= dt; if (m.wait > 0) continue;
+      let d, n = 0; do d = randDir(Math.random); while (n++ < 50 && (d.angleTo(S.p) * R > 18 || d.angleTo(S.p) * R < 5));
+      m.d.copy(d); m.h = 32; m.state = 'fall'; m.rock.visible = m.mark.visible = true;
+      m.mark.position.copy(d).multiplyScalar(R + groundH(d) + 0.06); m.mark.quaternion.setFromUnitVectors(Y_AXIS, d);
+      if (!hints.meteor) { hints.meteor = true; toast('Meteor incoming! Get out of the red ring!', 2.5); }
+    } else if (m.state === 'fall') {
+      m.h -= dt * 9;
+      m.rock.position.copy(m.d).multiplyScalar(R + groundH(m.d) + Math.max(0, m.h)); m.rock.rotation.x += dt * 3; m.rock.rotation.y += dt * 2;
+      m.mark.scale.setScalar(1.2 - 0.6 * Math.max(0, m.h) / 32); m.mark.material.opacity = 0.5 + 0.4 * Math.sin(m.h * 2);
+      if (Math.random() < 0.7) spawn(m.rock.position, m.d, new THREE.Color(Math.random() < 0.5 ? 0xff6b4a : 0xffc43d), 1.5);
+      if (m.h > 0) continue;
+      m.rock.visible = m.mark.visible = false; m.state = 'shard'; m.shardT = 9;
+      unpaintAt(m.d, 2.8, 1);
+      const at = V().copy(m.d).multiplyScalar(R + groundH(m.d) + 0.5);
+      burst(at, m.d, new THREE.Color(0x8a5a3a), 35, 11); burst(at, m.d, new THREE.Color(0xffc43d), 20, 9);
+      const dist = S.p.angleTo(m.d) * R;
+      shake = Math.max(shake, dist < 10 ? 0.7 : 0.3);
+      if (dist < 2.6 && S.alt - groundH(m.d) < 2.5) {
+        S.v.multiplyScalar(0.3); G.nitro = Math.max(0, G.nitro - 0.15); bonusText('BONK!');
+        if (S.grounded) { takeoff(); S.grounded = false; S.valt = 7; S.alt += 0.2; }
+      }
+      m.shard.position.copy(m.d).multiplyScalar(R + groundH(m.d) - 0.1); m.shard.quaternion.setFromUnitVectors(Y_AXIS, m.d); m.shard.visible = true;
+    } else {
+      m.shardT -= dt; m.shard.rotateY(dt * 2);
+      if (m.shardT < 2) m.shard.visible = Math.floor(m.shardT * 6) % 2 === 0;
+      if (S.p.angleTo(m.d) * R < 1.7 * CS.reach && S.alt - groundH(m.d) < 2.5) {
+        const gems = Math.round(12 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.2);
+        paintAt(m.d, 4, 1); burst(V().copy(m.d).multiplyScalar(R + groundH(m.d) + 0.8), m.d, new THREE.Color(0x7fe3ff), 30, 9);
+        bonusText(`SPACE CRYSTAL +${gems} ${GEM}`); m.shardT = 0;
+      }
+      if (m.shardT <= 0) { m.shard.visible = false; m.state = 'wait'; m.wait = 2 + Math.random() * 3; }
+    }
+  }
+}
+
 // Bloom Rush: a short event on every moonlet where new ground pays triple
 const rush = { t: 50, on: false };
 function updateRush(dt) {
@@ -1851,6 +2073,9 @@ function step(dt) {
     if (hasTwist(planet.def, 'geysers')) updateGeysers(dt);
     if (hasTwist(planet.def, 'wind')) updateWind(dt);
     if (hasTwist(planet.def, 'stars')) updateStars(dt);
+    if (planet.speedPads.length) updatePads(dt);
+    if (planet.portals.length) updatePortals(dt);
+    if (planet.meteors.length) updateMeteors(dt);
     updateRush(dt);
 
     // seed pods
@@ -1955,11 +2180,21 @@ function step(dt) {
   let target = null, label = '';
   if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
   else if (planet.hoops.length && planet.hoopIdx < planet.hoops.length) { target = planet.hoops[planet.hoopIdx].d; label = 'HOOP'; }
+  else { bareT -= dt; if (bareT <= 0) { bareT = 0.5; bareDir = findBare(); } if (bareDir && S.p.angleTo(bareDir) * planet.R > 9) { target = bareDir; label = 'BARE GROUND'; } }
   if (target && S.mode === 'drive' && SET.guide) {
     const to = tmp2.copy(target).addScaledVector(S.p, -target.dot(S.p)); const m = Math.round(S.p.angleTo(target) * planet.R);
     const a = Math.atan2(-to.dot(left.crossVectors(S.p, S.f)), to.dot(S.f));
     $('guide').hidden = m < 3; $('guide').querySelector('i').style.transform = `rotate(${a.toFixed(2)}rad)`; $('guide').querySelector('span').textContent = `${label} ${m}m`;
   } else $('guide').hidden = true;
+}
+
+// nearest patch of unrestored ground (sampled, so it stays cheap on big moonlets)
+let bareT = 0, bareDir = null;
+function findBare() {
+  const { N, dirs, life } = planet, stepN = Math.max(1, Math.floor(N / 2500)), off = Math.floor(Math.random() * stepN);
+  let best = -2, bi = -1;
+  for (let i = off; i < N; i += stepN) { if (life[i] >= 0.5) continue; const d = dirs[i*3] * S.p.x + dirs[i*3+1] * S.p.y + dirs[i*3+2] * S.p.z; if (d > best) { best = d; bi = i; } }
+  return bi < 0 ? null : new THREE.Vector3(dirs[bi*3], dirs[bi*3+1], dirs[bi*3+2]);
 }
 
 // ---------------------------------------------------------------- visuals: car pose + camera
@@ -2063,7 +2298,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0 });
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {} });
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
 }
 applyCar();
@@ -2094,13 +2329,14 @@ function start() {
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Drive to bring the moonlet back to life!<br><span style="font-size:16px">Grab the glowing seed pods</span>'), 3.5);
 }
 
-let last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
+let lastGems = G.gems, last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
 function frame(now) {
   const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
   fpsN++; fpsT += raw; if (fpsT >= 0.5) { if (SET.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
   if (started && !paused) {
     tickGarden(dt);
-    if (!garageOpen && !gardenOpen) { step(dt); sanitize(); }
+    if (!garageOpen && !gardenOpen) { step(dt); sanitize(); stat('time', dt); }
+    if (G.gems > lastGems) stat('earned', G.gems - lastGems); lastGems = G.gems;
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) $('toast').style.opacity = 0; }
     if (driftShown > 0) { driftShown -= dt; $('drift').style.opacity = 1; } else $('drift').style.opacity = 0;
