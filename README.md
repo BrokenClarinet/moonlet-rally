@@ -26,7 +26,16 @@ python3 -m http.server 8000
 - Rocks bounce you off at low speed and smash at high speed or while boosting.
 - Purple mushrooms launch you into the air. Long jumps bloom where you land.
 - Restored ground grows gems over time, also while you're away (50%, capped at 2 hours).
-- Restore enough of a moonlet (50% on the first, then 65% and 75%) and a launch ramp opens to fly you to the next one.
+- Restore enough of a moonlet and a launch ramp opens to fly you to the next one. Each moonlet has its own twist:
+  - Meadow: the basics.
+  - Frostlet: frozen ground is slippery until it blooms.
+  - Gloom Moon: low gravity, and wisps that eat your grass. Ram them.
+  - Hoop Moon: drive through chains of golden hoops.
+- Garage parts change how the car plays (bodies, wheels and toppers each have a perk; paint is cosmetic).
+
+## Platform (Poki)
+
+`window.MR_PLATFORM` in `index.html` is `'poki'` for the Poki build and `'none'` elsewhere. With Poki, the game loads the Poki SDK and calls `gameLoadingFinished`, `gameplayStart`/`gameplayStop`, a `commercialBreak` between moonlets and when leaving the garage, and an opt-in `rewardedBreak` in the garage for gems. Progress is saved to `localStorage` (key `moonletRally.v1`, well under Poki's 1 MB limit), which Poki syncs to the cloud automatically for logged-in players. The title screen offers a Poki login button to players who aren't logged in. Without the SDK every call is a no-op.
 
 ## Art and licensing
 
