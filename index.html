@@ -692,7 +692,7 @@ const Platform = (() => {
   const ready = new Promise((resolve) => {
     if (window.MR_PLATFORM !== 'poki') return resolve(false);
     const s = document.createElement('script'); s.src = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
-    s.onload = () => window.PokiSDK.init().then(() => resolve(true)).catch(() => resolve(true));
+    s.onload = () => { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); window.PokiSDK.init().then(() => resolve(true)).catch(() => resolve(true)); };
     s.onerror = () => resolve(false);
     document.head.appendChild(s);
   });
@@ -1253,7 +1253,7 @@ Platform.loadingFinished();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
-window.__moonlet = { S, G, get planet() { return planet; }, keys };
+window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform };
 requestAnimationFrame(frame);
 </script>
 </body>
