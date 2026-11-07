@@ -128,3 +128,9 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 
 - Every minute or so a golden comet lands somewhere on the moonlet. The guide arrow points at it; reach it within about 15 to 20 seconds for a jackpot (about 40 seconds of income, at least 60 gem units) and a full nitro tank. There's a mission for it too.
 - Restoring 25, 50, 75, 90 and 98% of a moonlet pays a growing one-time bonus (20 to 150 seconds of income), saved per moonlet in `G.bloom`.
+
+## Bloom trophies and garden tending
+
+- Eight trophy parts can't be bought: each unlocks when a moonlet reaches 90% bloom. They are Sprout (I), Petals trail (II), Nebula paint (III), Star beacon (IV), Aurora trail (V), Peach Bloom paint (VI), Pocket moon (VII) and Stardust trail (VIII). Old saves get trophies for moonlets they already restored to 90%.
+- Once the ramp is open, the HUD shows the next bloom bonus.
+- While the Gem Garden is open, it grows x2, rising to x3 after two minutes. Full silos pay straight into your gems instead of stopping.
