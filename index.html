@@ -1122,7 +1122,11 @@ const fmtR = (n) => n < 100 ? (n || 0).toFixed(1) : fmt(n);
 const fmt = (n) => { if (!(n >= 1000)) return Math.floor(n || 0).toString(); const e = Math.min(FMT_U.length - 1, Math.floor(Math.log10(n) / 3)); const v = n / Math.pow(1000, e); return (e >= FMT_U.length - 1 && v >= 1000 ? n.toExponential(2) : v.toFixed(e === 1 ? 1 : 2) + FMT_U[e]); };
 let toastTimer = 0;
 function toast(msg, secs = 2.5) { $('toast').innerHTML = msg; $('toast').style.opacity = 1; toastTimer = secs; }
-const costT = () => Math.round(50 * Math.pow(1.7, G.tires)), costS = () => Math.round(75 * Math.pow(1.8, G.sprink));
+// prices follow your income: they scale with the earning rate of the furthest moonlet you've reached,
+// so upgrades cost about the same number of minutes of income on Moonlet II as on Moonlet C
+const econ = () => Math.max(1, planetDef(G.planetIdx).rate / 12);
+const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(v) : Math.round(v / Math.pow(10, Math.floor(Math.log10(v)) - 2)) * Math.pow(10, Math.floor(Math.log10(v)) - 2); }; // tidy: 3 significant digits
+const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
 function updateUI() {
   const frac = planet.restored / planet.N;
@@ -1288,7 +1292,7 @@ const UPG = [
   { id: 'combo', name: 'Combo keeper', note: 'fresh-ground combo survives longer gaps', max: 4, base: 110, k: 1.9 },
 ];
 const upLvl = (id) => id === 'tires' ? G.tires : (G.up[id] || 0);
-const upCost = (u) => Math.round(u.base * Math.pow(u.k, upLvl(u.id)));
+const upCost = (u) => price(u.base * Math.pow(u.k, upLvl(u.id)));
 let garageTab = 'parts';
 function buyCheapest() {
   let n = 0;
@@ -1326,12 +1330,12 @@ function renderGarage() {
       const b = document.createElement('button');
       const have = owns(kind, o.id), on = G.car[kind] === o.id;
       b.className = 'chip' + (on ? ' on' : '') + (have ? '' : ' locked') + (kind === 'paint' ? ' swatch' : '');
-      if (kind === 'paint') { b.style.setProperty('--sw', '#' + o.id.toString(16).padStart(6, '0')); b.title = have ? o.name : `${o.name} · ${o.cost} gems`; b.setAttribute('aria-label', b.title); if (!have) b.innerHTML = `<small>${o.cost} ${GEM}</small>`; }
-      else b.innerHTML = `<span>${o.name}${have ? '' : ` <small>${o.cost} ${GEM}</small>`}</span><em>${PART_FX[o.id].note}</em>`;
+      if (kind === 'paint') { b.style.setProperty('--sw', '#' + o.id.toString(16).padStart(6, '0')); b.title = have ? o.name : `${o.name} · ${fmt(price(o.cost))} gems`; b.setAttribute('aria-label', b.title); if (!have) b.innerHTML = `<small>${fmt(price(o.cost))} ${GEM}</small>`; }
+      else b.innerHTML = `<span>${o.name}${have ? '' : ` <small>${fmt(price(o.cost))} ${GEM}</small>`}</span><em>${PART_FX[o.id].note}</em>`;
       b.onclick = () => {
         if (!have) {
-          if (G.gems < o.cost) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); return; }
-          G.gems -= o.cost; G.owned.push(`${kind}:${o.id}`); toast(`Unlocked ${o.name}!`, 1.8);
+          if (G.gems < price(o.cost)) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); return; }
+          G.gems -= price(o.cost); G.owned.push(`${kind}:${o.id}`); toast(`Unlocked ${o.name}!`, 1.8);
         }
         G.car[kind] = o.id; applyCar(); renderGarage(); save();
       };
@@ -1352,7 +1356,7 @@ addEventListener('keydown', (e) => { if (isAct('garage', e.code) && started && !
 // ---------------------------------------------------------------- gem garden (idle area)
 const SILO_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12]; // hours of growth a silo can hold, per Silo upgrade level
 const siloHours = () => SILO_STEPS[Math.min(SILO_STEPS.length - 1, G.siloLvl || 0)];
-const siloCost = () => Math.round(150 * Math.pow(2.8, G.siloLvl || 0));
+const siloCost = () => price(150 * Math.pow(2.8, G.siloLvl || 0));
 const hrs = (h) => h < 1 ? `${Math.round(h * 60)} min` : `${h} hour${h === 1 ? '' : 's'}`;
 const atIdx = () => G.at ?? G.planetIdx;
 function gardenItems() {
@@ -1413,7 +1417,7 @@ const prodOf = (it) => it.rate * it.frac * mult() * (1 + 0.5 * (it.d.lvl || 0));
 const capOf = (it) => Math.max(20, prodOf(it) * 3600 * siloHours());
 function tickGarden(dt) { for (const it of gardenItems()) it.d.silo = Math.min(capOf(it), (it.d.silo || 0) + prodOf(it) * dt); }
 const gardenReady = () => gardenItems().reduce((a, it) => a + (it.d.silo || 0), 0);
-const lvlCost = (it) => Math.round(30 * (1 + it.idx) * Math.pow(1.8, it.d.lvl || 0));
+const lvlCost = (it) => { const v = it.rate * 7.5 * Math.pow(1.8, it.d.lvl || 0); return v < 1000 ? Math.round(v) : Math.round(v / Math.pow(10, Math.floor(Math.log10(v)) - 2)) * Math.pow(10, Math.floor(Math.log10(v)) - 2); }; // tied to that moonlet's own income
 
 const GD = { scene: new THREE.Scene(), cam: new THREE.PerspectiveCamera(45, 1, 0.1, 600), bodies: [], t: 0 };
 GD.scene.background = new THREE.Color(0x1c1650);

@@ -97,3 +97,7 @@ Fluffy critters move onto the grass you grow; more appear as a moonlet fills up.
 ## Sound
 
 Every sound is synthesized at runtime with the Web Audio API (engine, drift and boost hiss, jumps, tricks, gems, critters, twists, menus), so the game ships zero audio files. Audio starts on the first tap or key press, mutes during ads and when the tab is hidden, and has Sound and Volume settings.
+
+## Prices
+
+All prices (upgrades, car parts, sprinklers, silos) scale with the earning rate of the furthest moonlet reached (`econ()`), so they cost roughly the same amount of play time at every stage. Garden level-ups scale with that moonlet's own income.
