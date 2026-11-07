@@ -119,3 +119,7 @@ Checked against developers.poki.com (requirements, SDK, quality and content page
 - The on-screen error bar and the `window.__moonlet` test hook are turned off in the Poki build (`?pokidebug` turns the hook back on).
 - On phones the Poki pill is moved below the pause button (`PokiSDK.movePill(0, 58)`). Touch controls turn on for any touch device, tablets included.
 - Store thumbnails are in `store-assets/` and are uploaded separately on each portal. They are not part of the game zip.
+
+## Upgrade unlocks
+
+Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitro tank and Gem magnet on Moonlet II, Sticky tread on III, Springs on IV, Bull bar on V, Trick wax on VI, Gem polish on VII and Combo keeper on IX. Each one opens 2 levels when it arrives and one more level per moonlet after that. The next locked upgrade shows as a teaser in the garage, and a message pops up when a new one arrives. Level 1 costs about 40 to 70 seconds of your income and each level roughly doubles.

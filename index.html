@@ -150,6 +150,7 @@
   .gtabs { display:flex; gap:6px; }
   .gtabs .chip { flex-direction:row; font-size:13px; }
   .uprow { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; padding:5px 0; border-top:2px solid var(--panel2); }
+  .uprow.locked { opacity:.6; } .pips i.lk { opacity:.25; }
   .uprow b { font-size:13px; } .uprow small { display:block; font-size:11px; opacity:.8; }
   .pips { display:inline-flex; gap:2px; margin-left:6px; vertical-align:middle; }
   .pips i { width:7px; height:7px; border-radius:50%; border:1.5px solid var(--ink); background:var(--panel2); }
@@ -1179,7 +1180,8 @@ function updateUI() {
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
   $('rate').innerHTML = `garden grows ${fmtR(gemRate())} ${GEM}/s`;
-  const nUp = UPG.filter(u => upLvl(u.id) < u.max && G.gems >= upCost(u)).length;
+  const nUp = UPG.filter(u => upOpen(u) && G.gems >= upCost(u)).length;
+  { const nOpen = UPG.filter(u => G.planetIdx >= u.at).length; if (G.upSeen == null) G.upSeen = nOpen; else if (nOpen > G.upSeen && started && S.mode === 'drive') { const nu = UPG.filter(u => G.planetIdx >= u.at).slice(G.upSeen).map(u => u.name).join(', '); G.upSeen = nOpen; toast(`New upgrade in the garage: ${nu}!`, 3); } }
   $('upT').innerHTML = nUp ? `Upgrades · ${nUp} ready` : 'Upgrades';
   const anyFull = gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1 && capOf(it) > 20);
   $('gardenBtn').innerHTML = `Gem Garden${touch.active ? '' : ` (${kn('garden')})`} · ${anyFull ? 'FULL · ' : ''}${fmt(gardenReady())} ${GEM}`;
@@ -1322,25 +1324,31 @@ addEventListener('wheel', (e) => { if (!(e.target instanceof Element && e.target
 let garageOpen = false;
 const GARAGE_ROWS = [['body', 'g-body'], ['paint', 'g-paint'], ['wheels', 'g-wheels'], ['topper', 'g-topper'], ['trail', 'g-trail']];
 function owns(kind, id) { return CAR_OPTS[kind].find(o => o.id === id).cost === 0 || G.owned.includes(`${kind}:${id}`); }
+// upgrades arrive one by one as you reach new moonlets (at = moonlet index, 0 = Moonlet I), and each one opens
+// two levels when it arrives plus one more level per moonlet after that, so you can't max everything at once.
+// Prices still follow your income (price()), but start at 40-60 seconds of it and roughly double per level.
 const UPG = [
-  { id: 'tires', name: 'Wider tires', note: '+18% track width per level', max: 8, base: 50, k: 1.7 },
-  { id: 'engine', name: 'Engine tune', note: '+5% acceleration, +4% top speed', max: 6, base: 90, k: 1.75 },
-  { id: 'grip', name: 'Sticky tread', note: '+6% grip, +10% on ice', max: 5, base: 70, k: 1.7 },
-  { id: 'tank', name: 'Nitro tank', note: '+15% nitro charge, boosts last longer', max: 6, base: 80, k: 1.75 },
-  { id: 'springs', name: 'Springs', note: '+12% jump and bounce power', max: 5, base: 100, k: 1.8 },
-  { id: 'wax', name: 'Trick wax', note: '+8% flip and spin speed, +10% trick gems', max: 5, base: 120, k: 1.8 },
-  { id: 'magnet', name: 'Gem magnet', note: '+20% pickup range for gems and pods', max: 5, base: 90, k: 1.75 },
-  { id: 'bumper', name: 'Bull bar', note: 'smash rocks at 8% less speed', max: 5, base: 70, k: 1.7 },
-  { id: 'polish', name: 'Gem polish', note: '+10% bonus gems from everything', max: 8, base: 150, k: 1.85 },
-  { id: 'combo', name: 'Combo keeper', note: 'fresh-ground combo survives longer gaps', max: 4, base: 110, k: 1.9 },
+  { id: 'tires', name: 'Wider tires', note: '+18% track width per level', max: 8, base: 400, k: 2.05, at: 0 },
+  { id: 'engine', name: 'Engine tune', note: '+5% acceleration, +4% top speed', max: 6, base: 500, k: 2.1, at: 0 },
+  { id: 'tank', name: 'Nitro tank', note: '+15% nitro charge, boosts last longer', max: 6, base: 450, k: 2.1, at: 1 },
+  { id: 'magnet', name: 'Gem magnet', note: '+20% pickup range for gems and pods', max: 5, base: 500, k: 2.1, at: 1 },
+  { id: 'grip', name: 'Sticky tread', note: '+6% grip, +10% on ice', max: 5, base: 450, k: 2.05, at: 2 },
+  { id: 'springs', name: 'Springs', note: '+12% jump and bounce power', max: 5, base: 550, k: 2.15, at: 3 },
+  { id: 'bumper', name: 'Bull bar', note: 'smash rocks at 8% less speed', max: 5, base: 450, k: 2.05, at: 4 },
+  { id: 'wax', name: 'Trick wax', note: '+8% flip and spin speed, +10% trick gems', max: 5, base: 600, k: 2.15, at: 5 },
+  { id: 'polish', name: 'Gem polish', note: '+10% bonus gems from everything', max: 8, base: 700, k: 2.2, at: 6 },
+  { id: 'combo', name: 'Combo keeper', note: 'fresh-ground combo survives longer gaps', max: 4, base: 600, k: 2.25, at: 8 },
 ];
 const upLvl = (id) => id === 'tires' ? G.tires : (G.up[id] || 0);
+const upCap = (u) => G.planetIdx < u.at ? 0 : Math.min(u.max, 2 + G.planetIdx - u.at);
+const upOpen = (u) => upLvl(u.id) < upCap(u);
+const moonName = (i) => `Moonlet ${roman(i + 1)}`;
 const upCost = (u) => price(u.base * Math.pow(u.k, upLvl(u.id)));
 let garageTab = 'parts';
 function buyCheapest() {
   let n = 0;
   for (;;) {
-    const opts = UPG.filter(u => upLvl(u.id) < u.max).sort((a, b) => upCost(a) - upCost(b)), u = opts[0];
+    const opts = UPG.filter(upOpen).sort((a, b) => upCost(a) - upCost(b)), u = opts[0];
     if (!u || G.gems < upCost(u)) break;
     G.gems -= upCost(u); if (u.id === 'tires') G.tires++; else G.up[u.id] = upLvl(u.id) + 1; n++;
   }
@@ -1349,17 +1357,21 @@ function buyCheapest() {
 }
 function renderUpgrades() {
   const L = $('gUpg'); L.innerHTML = '';
-  const cheapest = UPG.filter(u => upLvl(u.id) < u.max).map(upCost).sort((a, b) => a - b)[0];
+  const cheapest = UPG.filter(upOpen).map(upCost).sort((a, b) => a - b)[0];
   const all = document.createElement('button'); all.className = 'btn alt'; all.style.alignSelf = 'flex-start'; all.textContent = 'Buy cheapest upgrades I can afford';
   all.disabled = !(cheapest <= G.gems); all.onclick = buyCheapest; L.appendChild(all);
+  const next = UPG.filter(u => G.planetIdx < u.at).sort((a, b) => a.at - b.at)[0];
   for (const u of UPG) {
-    const l = upLvl(u.id), maxed = l >= u.max, c = upCost(u);
+    if (G.planetIdx < u.at) continue;
+    const l = upLvl(u.id), cap = upCap(u), maxed = l >= u.max, capped = !maxed && l >= cap, c = upCost(u);
     const row = document.createElement('div'); row.className = 'uprow';
-    row.innerHTML = `<div><b>${u.name}</b><span class="pips">${'<i class="on"></i>'.repeat(l)}${'<i></i>'.repeat(u.max - l)}</span><small>${u.note}</small></div>`;
-    const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = maxed ? 'Maxed' : `${fmt(c)} ${GEM}`; b.disabled = maxed || G.gems < c;
-    b.onclick = () => { if (maxed || G.gems < c) return; G.gems -= c; if (u.id === 'tires') G.tires++; else G.up[u.id] = l + 1; computeStats(); renderGarage(); save(); };
+    row.innerHTML = `<div><b>${u.name}</b><span class="pips">${'<i class="on"></i>'.repeat(Math.min(l, u.max))}${'<i></i>'.repeat(Math.max(0, cap - l))}${'<i class="lk"></i>'.repeat(Math.max(0, u.max - Math.max(l, cap)))}</span><small>${u.note}</small></div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = maxed ? 'Maxed' : capped ? `Next level on ${moonName(u.at + l - 1)}` : `${fmt(c)} ${GEM}`; b.disabled = maxed || capped || G.gems < c;
+    if (capped) b.style.fontSize = '10px';
+    b.onclick = () => { if (maxed || capped || G.gems < c) return; G.gems -= c; if (u.id === 'tires') G.tires++; else G.up[u.id] = l + 1; computeStats(); renderGarage(); save(); };
     row.appendChild(b); L.appendChild(row);
   }
+  if (next) { const row = document.createElement('div'); row.className = 'uprow locked'; row.innerHTML = `<div><b>??? New upgrade</b><small>Reach ${moonName(next.at)} to unlock it</small></div>`; L.appendChild(row); }
 }
 function renderGarage() {
   $('ggems').innerHTML = fmt(G.gems) + ' ' + GEM;
@@ -2641,7 +2653,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
