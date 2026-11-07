@@ -100,4 +100,4 @@ Every sound is synthesized at runtime with the Web Audio API (engine, drift and 
 
 ## Prices
 
-All prices (upgrades, car parts, sprinklers, silos) scale with the earning rate of the furthest moonlet reached (`econ()`), so they cost roughly the same amount of play time at every stage. Garden level-ups scale with that moonlet's own income.
+All prices (upgrades, car parts, sprinklers, silos) are a proportion of your total base garden income (`baseIncome()`: each restored moonlet's rate x how much of it you restored, plus the current moonlet at its goal; bought multipliers excluded). Price = base cost x income / 10, so each item costs the same number of seconds of income at every stage. Garden level-ups scale with that moonlet's own income.

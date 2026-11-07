@@ -1122,9 +1122,11 @@ const fmtR = (n) => n < 100 ? (n || 0).toFixed(1) : fmt(n);
 const fmt = (n) => { if (!(n >= 1000)) return Math.floor(n || 0).toString(); const e = Math.min(FMT_U.length - 1, Math.floor(Math.log10(n) / 3)); const v = n / Math.pow(1000, e); return (e >= FMT_U.length - 1 && v >= 1000 ? n.toExponential(2) : v.toFixed(e === 1 ? 1 : 2) + FMT_U[e]); };
 let toastTimer = 0;
 function toast(msg, secs = 2.5) { $('toast').innerHTML = msg; $('toast').style.opacity = 1; toastTimer = secs; }
-// prices follow your income: they scale with the earning rate of the furthest moonlet you've reached,
-// so upgrades cost about the same number of minutes of income on Moonlet II as on Moonlet C
-const econ = () => Math.max(1, planetDef(G.planetIdx).rate / 12);
+// prices follow your total income: the base growth of every moonlet you've restored (at the level you restored it)
+// plus the one you're working on (at its ramp goal). Multipliers you buy (sprinklers, garden levels) are left out,
+// so buying them never makes everything else pricier. A price is that income times a proportion: base / 10 seconds.
+const baseIncome = () => G.done.reduce((a, d) => a + (d.rate || 0) * (d.frac || 0), 0) + planetDef(G.planetIdx).rate * planetDef(G.planetIdx).goal;
+const econ = () => Math.max(1, baseIncome() / 10);
 const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(v) : Math.round(v / Math.pow(10, Math.floor(Math.log10(v)) - 2)) * Math.pow(10, Math.floor(Math.log10(v)) - 2); }; // tidy: 3 significant digits
 const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
