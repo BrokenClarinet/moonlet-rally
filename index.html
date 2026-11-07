@@ -14,6 +14,8 @@
   .hud { position:fixed; pointer-events:none; }
   .sticker, #left, #right { background:var(--panel); border:2.5px solid var(--ink); border-radius:16px; box-shadow:3px 4px 0 var(--ink); }
   #left { top:12px; left:12px; padding:9px 14px 10px; min-width:200px; }
+  #stars { margin-top:6px; } #stars div { display:flex; gap:4px; flex-wrap:wrap; } #stars span { font-size:10px; font-weight:800; padding:1px 6px; border-radius:8px; background:var(--panel2); opacity:.75; }
+  #stars span.on { background:var(--sun); color:var(--ink); opacity:1; } #stars small { display:block; font-size:10px; opacity:.75; margin-top:2px; }
   #missions { margin-top:7px; display:flex; flex-direction:column; gap:4px; }
   #missions:empty { display:none; }
   #missions div { position:relative; font-size:11px; font-weight:800; padding:3px 8px; border-radius:8px; background:var(--panel2); overflow:hidden; display:flex; justify-content:space-between; gap:8px; }
@@ -182,7 +184,7 @@
 </style>
 </head>
 <body>
-<div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div><div id="missions"></div></div>
+<div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div><div id="stars"></div><div id="missions"></div></div>
 <div id="right" class="hud"><div id="gems">0</div><div id="rate">0.0 / sec</div>
   <div id="shop"><button class="btn" id="upT">Upgrades</button><button class="btn alt2" id="gardenBtn">Gem Garden (H)</button><button class="btn alt" id="garageBtn">Garage (G)</button><button class="btn" id="mapBtn" hidden style="background:var(--paper)">Moonlets (M)</button></div></div>
 <div id="toast" class="hud"></div>
@@ -916,14 +918,14 @@ const CAR_OPTS = {
   body: [{ id: 'buggy', name: 'Dune Buggy', cost: 0 }, { id: 'pebble', name: 'Pebble', cost: 150 }, { id: 'scarab', name: 'Scarab', cost: 250 }, { id: 'strider', name: 'Strider 6x6', cost: 400 },
     { id: 'hauler', name: 'Moon Hauler', cost: 600 }, { id: 'comet', name: 'Comet', cost: 900 }],
   paint: [['Coral', 0xff6b4a, 0], ['Sunflower', 0xffc43d, 0], ['Mint', 0x5fd6a4, 0], ['Sky', 0x5bb6ff, 0], ['Lilac', 0xb48cff, 0], ['Bubblegum', 0xff8fc7, 0], ['Cream', 0xfff1d6, 0], ['Midnight', 0x3b2f5c, 0],
-    ['Tangerine', 0xff9a3d, 40], ['Lagoon', 0x2fb3a8, 40], ['Ruby', 0xe8506e, 60], ['Frost', 0xbfe9ff, 60], ['Moss', 0x7a9a3c, 60], ['Gold', 0xe0b23a, 150]].map(([name, hex, cost]) => ({ id: hex, name, cost })).concat([{ id: 0x8a5cff, name: 'Nebula', cost: null, trophy: 2 }, { id: 0xffb38a, name: 'Peach Bloom', cost: null, trophy: 5 }]),
+    ['Tangerine', 0xff9a3d, 40], ['Lagoon', 0x2fb3a8, 40], ['Ruby', 0xe8506e, 60], ['Frost', 0xbfe9ff, 60], ['Moss', 0x7a9a3c, 60], ['Gold', 0xe0b23a, 150]].map(([name, hex, cost]) => ({ id: hex, name, cost })).concat([{ id: 0x8a5cff, name: 'Nebula', cost: null, trophy: 2 }, { id: 0xffb38a, name: 'Peach Bloom', cost: null, trophy: 5 }, { id: 0xfff0a0, name: 'Starlight', cost: null, stars: 3 }, { id: 0x24305e, name: 'Deep Space', cost: null, stars: 12 }]),
   wheels: [{ id: 'classic', name: 'Classic', cost: 0 }, { id: 'chunky', name: 'Chunky', cost: 80 }, { id: 'spiked', name: 'Spiked', cost: 150 }, { id: 'halo', name: 'Halo', cost: 200 },
     { id: 'bubble', name: 'Bubble', cost: 260 }, { id: 'star', name: 'Star rims', cost: 320 }],
   topper: [{ id: 'antenna', name: 'Antenna', cost: 0 }, { id: 'none', name: 'None', cost: 0 }, { id: 'flag', name: 'Flag', cost: 60 }, { id: 'ears', name: 'Critter ears', cost: 90 }, { id: 'spoiler', name: 'Spoiler', cost: 120 },
     { id: 'dish', name: 'Radar dish', cost: 180 }, { id: 'lamps', name: 'Roof lamps', cost: 200 }, { id: 'booster', name: 'Rocket pack', cost: 300 }, { id: 'crown', name: 'Crown', cost: 500 },
-    { id: 'sprout', name: 'Sprout', cost: null, trophy: 0 }, { id: 'beacon', name: 'Star beacon', cost: null, trophy: 3 }, { id: 'orbit', name: 'Pocket moon', cost: null, trophy: 6 }],
+    { id: 'sprout', name: 'Sprout', cost: null, trophy: 0 }, { id: 'halo', name: 'Star halo', cost: null, stars: 9 }, { id: 'twinstar', name: 'Twin stars', cost: null, stars: 18 }, { id: 'beacon', name: 'Star beacon', cost: null, trophy: 3 }, { id: 'orbit', name: 'Pocket moon', cost: null, trophy: 6 }],
   trail: [{ id: 'leaf', name: 'Moonlet', cost: 0 }, { id: 'sparks', name: 'Sparks', cost: 120 }, { id: 'frost', name: 'Frost', cost: 120 }, { id: 'candy', name: 'Candy', cost: 160 }, { id: 'rainbow', name: 'Rainbow', cost: 300 },
-    { id: 'petals', name: 'Petals', cost: null, trophy: 1 }, { id: 'aurora', name: 'Aurora', cost: null, trophy: 4 }, { id: 'stardust', name: 'Stardust', cost: null, trophy: 7 }],
+    { id: 'petals', name: 'Petals', cost: null, trophy: 1 }, { id: 'comettail', name: 'Comet tail', cost: null, stars: 6 }, { id: 'nova', name: 'Nova', cost: null, stars: 24 }, { id: 'aurora', name: 'Aurora', cost: null, trophy: 4 }, { id: 'stardust', name: 'Stardust', cost: null, trophy: 7 }],
 };
 // what each garage part does in play (paint is cosmetic)
 const PART_FX = {
@@ -952,6 +954,10 @@ const PART_FX = {
   beacon: { fx: { reach: 1.5, bonus: 1.12 }, note: 'Trophy: wider pickups, +12% bonus' },
   orbit: { fx: { bonus: 1.35, fresh: 1.1 }, note: 'Trophy: +35% bonus gems' },
   petals: { fx: {}, note: 'Trophy: flower petals' },
+  halo: { fx: { bonus: 1.15, air: 1.05 }, note: 'Star reward: +15% bonus gems' },
+  twinstar: { fx: { bonus: 1.25, reach: 1.3 }, note: 'Star reward: +25% bonus, wider pickups' },
+  comettail: { fx: {}, note: 'Star reward: white-gold streak' },
+  nova: { fx: {}, note: 'Star reward: blazing sparks' },
   aurora: { fx: {}, note: 'Trophy: northern lights' },
   stardust: { fx: {}, note: 'Trophy: gold and starlight' },
   leaf: { fx: {}, note: "The moonlet's colors" },
@@ -980,7 +986,7 @@ function computeStats() {
   CS.airCtl *= 1 + 0.15 * u('aero'); CS.driftPaint *= 1 + 0.12 * u('drifter'); CS.fresh *= 1 + 0.08 * u('sower');
   CS.nitro *= 1 + 0.12 * u('turbo'); CS.top *= 1 + 0.02 * u('turbo'); CS.air *= 1 + 0.05 * u('hops'); CS.soft = Math.pow(0.85, u('hops'));
   CS.comet = 1 + 0.15 * u('lure'); CS.cometT = u('lure'); CS.luck = 0.04 * u('luck'); CS.bonus *= 1 + 0.06 * u('prism');
-  CS.garden = (1 + 0.08 * u('roots')) * (1 + 0.04 * u('star')); CS.bonus *= 1 + 0.04 * u('star');
+  CS.garden = (1 + 0.08 * u('roots')) * (1 + 0.04 * u('star')); CS.bonus *= (1 + 0.04 * u('star')) * (1 + 0.01 * starCount());
 }
 const DEFAULT_CAR = { body: 'buggy', paint: 0xff6b4a, wheels: 'classic', topper: 'antenna', trail: 'leaf' };
 
@@ -1110,6 +1116,17 @@ function buildCar(cfg) {
       g.add(new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.2, 8).rotateX(Math.PI / 2).translate(sx, rearY + 0.08, -0.32), paint));
       g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.08, 8).rotateX(Math.PI / 2).translate(sx, rearY + 0.08, -1.03), dark));
     }
+  } else if (cfg.topper === 'halo') {
+    spin = new THREE.Group(); spin.position.set(0, roofY + 0.32, 0);
+    spin.add(inked(new THREE.TorusGeometry(0.3, 0.05, 6, 20).rotateX(Math.PI / 2), toon({ color: 0xffc43d, emissive: 0x8a5a00 }), 0.015));
+    for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; spin.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0).translate(Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3), lamp)); }
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4).translate(0, roofY + 0.15, 0), dark)); g.add(spin);
+  } else if (cfg.topper === 'twinstar') {
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.3, 4).translate(0, roofY + 0.15, 0), dark));
+    spin = new THREE.Group(); spin.position.set(0, roofY + 0.36, 0);
+    const gold = toon({ color: 0xffc43d, emissive: 0x8a5a00 });
+    for (const sx of [-1, 1]) spin.add(inked(new THREE.OctahedronGeometry(0.13, 0).scale(1, 1.3, 0.5).translate(sx * 0.2, 0, 0), gold, 0.015));
+    spin.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.03, 0.03), dark)); g.add(spin);
   } else if (cfg.topper === 'sprout') {
     const leaf = toon({ color: 0x5cb85c, emissive: 0x153a10 });
     g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.32, 5).translate(0, roofY + 0.16, 0), leaf));
@@ -1245,9 +1262,9 @@ function updateGoal(frac) {
   if (key !== goalKey) { goalKey = key; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 }
 function updateUI() {
-  renderMissions();
+  renderMissions(); renderStars();
   updateGoal(planet.restored / planet.N);
-  $('missions').hidden = G.planetIdx === 0 && planet.restored / planet.N < 0.2 && !planet.pad.visible;
+  $('missions').hidden = $('stars').hidden = G.planetIdx === 0 && planet.restored / planet.N < 0.2 && !planet.pad.visible;
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
   const goal = planet.def.goal;
@@ -1473,12 +1490,12 @@ function renderGarage() {
       const b = document.createElement('button');
       const have = owns(kind, o.id), on = G.car[kind] === o.id;
       b.className = 'chip' + (on ? ' on' : '') + (have ? '' : ' locked') + (kind === 'paint' ? ' swatch' : '');
-      const lockTxt = o.trophy != null ? `Bloom ${moonName(o.trophy)} to 90%` : `${fmt(price(o.cost))} ${GEM}`;
-      if (o.trophy != null) b.classList.add('trophy');
-      if (kind === 'paint') { b.style.setProperty('--sw', '#' + o.id.toString(16).padStart(6, '0')); b.title = have ? o.name : `${o.name} · ${o.trophy != null ? lockTxt : `${fmt(price(o.cost))} gems`}`; b.setAttribute('aria-label', b.title); if (!have) b.innerHTML = `<small>${o.trophy != null ? 'Trophy' : lockTxt}</small>`; }
+      const lockTxt = o.trophy != null ? `Bloom ${moonName(o.trophy)} to 90%` : o.stars != null ? `${o.stars} stars (you have ${starCount()})` : `${fmt(price(o.cost))} ${GEM}`;
+      if (o.trophy != null || o.stars != null) b.classList.add('trophy');
+      if (kind === 'paint') { b.style.setProperty('--sw', '#' + o.id.toString(16).padStart(6, '0')); b.title = have ? o.name : `${o.name} · ${o.trophy != null || o.stars != null ? lockTxt : `${fmt(price(o.cost))} gems`}`; b.setAttribute('aria-label', b.title); if (!have) b.innerHTML = `<small>${o.trophy != null ? 'Trophy' : o.stars != null ? `${o.stars}&#9733;` : lockTxt}</small>`; }
       else b.innerHTML = `<span>${o.name}${have ? '' : ` <small>${lockTxt}</small>`}</span><em>${PART_FX[o.id].note}</em>`;
       b.onclick = () => {
-        if (!have && o.trophy != null) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); toast(`${o.name} is a trophy: ${lockTxt}`, 2.2); return; }
+        if (!have && (o.trophy != null || o.stars != null)) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); toast(`${o.name} is a ${o.stars != null ? 'star reward' : 'trophy'}: ${lockTxt}`, 2.2); return; }
         if (!have) {
           if (G.gems < price(o.cost)) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); return; }
           G.gems -= price(o.cost); G.owned.push(`${kind}:${o.id}`); toast(`Unlocked ${o.name}!`, 1.8);
@@ -1559,7 +1576,7 @@ function restoreLife(idx) {
   recount(planet);
   if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
 }
-const prodOf = (it) => it.rate * it.frac * mult() * (CS.garden || 1) * (1 + 0.5 * (it.d.lvl || 0));
+const prodOf = (it) => it.rate * it.frac * mult() * (CS.garden || 1) * (1 + 0.2 * starsOn(it.idx)) * (1 + 0.5 * (it.d.lvl || 0));
 const capOf = (it) => Math.max(20, prodOf(it) * 3600 * siloHours());
 // Tending: while you sit in the Gem Garden it grows faster (x2, rising to x3 after two minutes), and silos that are
 // full keep paying straight into your gems, so idling here always earns.
@@ -1785,7 +1802,7 @@ function renderMap() {
     const def = planetDef(i), frac = items[i].frac, row = document.createElement('div'); row.className = 'maprow';
     const hex = (c) => '#' + c.toString(16).padStart(6, '0'), pct = Math.round(frac * 100);
     row.innerHTML = `<span class="dot" style="background:conic-gradient(${hex(def.alive[0])} ${pct}%, ${hex(def.dead[0])} 0)"></span>
-      <div><b>${def.name} · ${def.title}</b><small>${pct}% restored · ${def.intro.replace(/^[^:]*:\s*/, '')}</small>${twistTags(def)}</div>`;
+      <div><b>${def.name} · ${def.title} <span style="color:var(--sun)">${'&#9733;'.repeat(starsOn(i))}${'&#9734;'.repeat(3 - starsOn(i))}</span></b><small>${pct}% restored · ${def.intro.replace(/^[^:]*:\s*/, '')}</small>${twistTags(def)}</div>`;
     if (i === here) row.insertAdjacentHTML('beforeend', '<span class="here">You are here</span>');
     else { const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Fly here'; b.onclick = () => { closeModal(); if (paused) resume(); startTravel(i); }; row.appendChild(b); }
     L.appendChild(row);
@@ -1827,7 +1844,7 @@ function renderStats() {
     ['Time driving', hm], ['Gems earned', `${fmt(st.earned || 0)} ${GEM}`], ['Gems now', `${fmt(G.gems)} ${GEM}`],
     ['Moonlets restored', restored], ['Furthest moonlet', `${planetDef(G.planetIdx).name.replace('Moonlet ', '')}`], ['Garden growth', `${fmtR(gemRate())} ${GEM}/s`],
     ['Tricks landed', st.tricks || 0], ['Best trick', st.bestTrick ? `${fmt(st.bestTrick)} ${GEM}<small>${st.bestTrickName || ''}</small>` : '-'],
-    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0], ['Critters bumped', st.bonks || 0], ['Close shaves', st.shaves || 0], ['Missions done', st.missions || 0], ['Comets caught', st.comets || 0], ['Bloom milestones', st.blooms || 0], ['Daily streak', G.daily ? G.daily.streak || 0 : 0],
+    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0], ['Critters bumped', st.bonks || 0], ['Close shaves', st.shaves || 0], ['Missions done', st.missions || 0], ['Comets caught', st.comets || 0], ['Stars', starCount()], ['Bloom milestones', st.blooms || 0], ['Daily streak', G.daily ? G.daily.streak || 0 : 0],
   ];
   $('stList').innerHTML = rows.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('');
 }
@@ -1972,7 +1989,7 @@ function renderMissions() {
 let driftCombo = 0, driftShown = 0, freshFrame = 0, freshTimer = 0, comboTime = 0, combo = 1, shake = 0;
 const hints = {};
 const FLAME = [new THREE.Color(0xffc040), new THREE.Color(0xff6a2a)];
-const TRAILS = { sparks: [0xffd84a, 0xffa53d, 0xfff3b0], frost: [0x9fe8ff, 0xffffff, 0x7fc8ff], candy: [0xff8fc7, 0xb48cff, 0xfff1f8], petals: [0xff8fc7, 0xffffff, 0xffe066, 0xffb3d9], aurora: [0x6fffc8, 0x7fe3ff, 0xb48cff], stardust: [0xffc43d, 0xfff3b0, 0xffffff, 0x7fe3ff] };
+const TRAILS = { sparks: [0xffd84a, 0xffa53d, 0xfff3b0], frost: [0x9fe8ff, 0xffffff, 0x7fc8ff], candy: [0xff8fc7, 0xb48cff, 0xfff1f8], petals: [0xff8fc7, 0xffffff, 0xffe066, 0xffb3d9], aurora: [0x6fffc8, 0x7fe3ff, 0xb48cff], stardust: [0xffc43d, 0xfff3b0, 0xffffff, 0x7fe3ff], comettail: [0xffffff, 0xfff3b0, 0x7fe3ff], nova: [0xff6b4a, 0xffc43d, 0xffffff] };
 const trailCol = new THREE.Color();
 // sparkle color for drifts and boosts; null means the default look
 function trailColor() {
@@ -2046,6 +2063,7 @@ function land() {
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
     stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
     if (flips) quest('flip', flips); if (spins) quest('spin', spins); quest('combo', trickChain);
+    { const sg = starGoals(planet.index); if (turns >= sg[1].n) awardStar(1); if (trickChain >= sg[2].n) awardStar(2); }
     if ((G.stats.tricks || 0) === 1) bigMoment('FIRST TRICK!');
     else if (turns >= 3 || trickChain >= 3) bigMoment(turns >= 5 || trickChain >= 5 ? 'INSANE!' : turns >= 4 || trickChain >= 4 ? 'AMAZING!' : 'AWESOME!');
     if (gems > (G.stats.bestTrick || 0)) { G.stats.bestTrick = gems; G.stats.bestTrickName = names.join(' + '); }
@@ -2464,20 +2482,46 @@ function updateComet(dt) {
   if (comet.left <= 0) { cometEnd(); bonusText('The comet faded...'); }
 }
 // Bloom milestones: restoring 25 / 50 / 75 / 90 / 98% of a moonlet pays a growing bonus once per moonlet.
-const TROPHY_PARTS = () => Object.entries(CAR_OPTS).flatMap(([kind, list]) => list.filter(o => o.trophy != null).map(o => ({ kind, o })));
+const TROPHY_PARTS = () => Object.entries(CAR_OPTS).flatMap(([kind, list]) => list.filter(o => o.trophy != null || o.stars != null).map(o => ({ kind, o })));
 function grantTrophies(loud) {
   for (const { kind, o } of TROPHY_PARTS()) {
     const key = `${kind}:${o.id}`; if (G.owned.includes(key)) continue;
-    const i = o.trophy, done = (G.bloom && G.bloom[i] >= 4) || (G.done[i] && G.done[i].frac >= 0.9);
+    const i = o.trophy, done = o.stars != null ? starCount() >= o.stars : (G.bloom && G.bloom[i] >= 4) || (G.done[i] && G.done[i].frac >= 0.9);
     if (!done) continue;
     G.owned.push(key);
-    if (loud) toast(`TROPHY! ${o.name} ${kind === 'paint' ? 'paint' : kind} unlocked in the garage`, 3);
+    if (loud) toast(`${o.stars != null ? 'STAR REWARD' : 'TROPHY'}! ${o.name} ${kind === 'paint' ? 'paint' : kind} unlocked in the garage`, 3);
   }
+}
+// Three stars per moonlet: bloom it to 75%, land a big trick, chain a trick combo. Each star pays out, adds +1% to all
+// gems and +20% to that moonlet's garden growth, and stars unlock car parts (Starlight 3, Comet tail 6, Star halo 9...).
+const starGoals = (i) => [
+  { txt: 'Bloom 75%', n: 0.75 },
+  { txt: `${2 + Math.min(2, Math.floor(i / 5))}-turn trick`, n: 2 + Math.min(2, Math.floor(i / 5)) },
+  { txt: `x${3 + Math.min(2, Math.floor(i / 6))} combo`, n: 3 + Math.min(2, Math.floor(i / 6)) }];
+const starsOn = (i) => { const m = (G.stars && G.stars[i]) || 0; return (m & 1) + ((m >> 1) & 1) + ((m >> 2) & 1); };
+const starCount = () => Object.keys(G.stars || {}).reduce((t, k) => t + starsOn(k), 0);
+function awardStar(bit) {
+  const i = planet.index; G.stars = G.stars || {};
+  if ((G.stars[i] || 0) & (1 << bit)) return;
+  G.stars[i] = (G.stars[i] || 0) | (1 << bit);
+  const gems = Math.round(Math.max(gemUnit() * 10, baseIncome()) * 30);
+  G.gems += gems; stat('stars', 1); computeStats();
+  toast(`<span style="font-size:34px;color:var(--sun)">&#9733; STAR!</span><br><span style="font-size:16px">${starGoals(i)[bit].txt} · +${fmt(gems)} ${GEM}</span>`, 2.6, true);
+  const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [0xffc43d, 0xfff3b0, 0xffffff]) burst(at, S.p, new THREE.Color(c), 20, 12);
+  SFX.star(); grantTrophies(true); save();
+}
+function nextStarPart() { return TROPHY_PARTS().filter(({ o }) => o.stars != null && starCount() < o.stars).sort((a, b) => a.o.stars - b.o.stars)[0]; }
+function renderStars() {
+  const el = $('stars'); if (!el) return;
+  const i = planet.index, m = (G.stars && G.stars[i]) || 0, goals = starGoals(i), nx = nextStarPart();
+  el.innerHTML = `<div>${goals.map((g, b) => `<span class="${m & (1 << b) ? 'on' : ''}">&#9733; ${g.txt}</span>`).join('')}</div>` +
+    (nx ? `<small>${starCount()} stars · next reward: ${nx.o.name} at ${nx.o.stars}</small>` : `<small>${starCount()} stars</small>`);
 }
 const BLOOM_MS = [[0.25, 20], [0.5, 35], [0.75, 60], [0.9, 90], [0.98, 150]];
 let bloomAcc = 0;
 function checkBloom(dt) {
   bloomAcc += dt; if (bloomAcc < 0.5) return; bloomAcc = 0;
+  if (planet.restored / planet.N >= 0.75) awardStar(0);
   G.bloom = G.bloom || {};
   const i = planet.index, frac = planet.restored / planet.N, got = BLOOM_MS.filter(([f]) => frac >= f).length;
   if (G.bloom[i] == null) { G.bloom[i] = got; return; } // first visit since this feature: count what's already done, no back pay
@@ -2876,7 +2920,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {} }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
@@ -2961,6 +3005,7 @@ function frame(now) {
     if (!garageOpen && !gardenOpen) { step(dt); sanitize(); stat('time', dt); tickMissions(dt); }
     if (G.gems > lastGems) stat('earned', G.gems - lastGems); else if (G.gems < lastGems - 0.5 && !bonkFrame) SFX.buy(); lastGems = G.gems; bonkFrame = false;
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
+    playLog.t += Math.min(0.05, raw);
     chanTick(toastC, dt); chanTick(bonusC, dt);
   }
   SFX.update(started && !paused && !garageOpen && !gardenOpen && !Platform.adBusy && S.mode === 'drive' && !document.hidden, S.v.length(), S.grounded, !!S.boosting, S.drift || 0);
@@ -2980,6 +3025,20 @@ showWelcome(); if (!welcome) showDaily();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
+// Playtest logging: only the password-protected website build sets window.MR_LOG (tools/build_site.py). Anonymous:
+// random ids, seconds played, moonlet, screen and device type. Never in the Poki build.
+const playLog = { t: 0 };
+if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
+  const rid = () => Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8);
+  let vid = ''; try { vid = localStorage.getItem('moonletRally.vid') || ''; if (!vid) { vid = rid(); localStorage.setItem('moonletRally.vid', vid); } } catch (e) {}
+  const sid = rid(), ret = !!saved;
+  const screen = () => !started ? 'title' : paused ? 'pause' : garageOpen ? 'garage' : gardenOpen ? 'garden' : modal ? String(modal) : S.mode === 'drive' ? 'drive' : 'travel';
+  const send = (end) => { const body = JSON.stringify({ sid, vid, t: Math.round(playLog.t), moon: G.planetIdx, scr: screen(), dev: touch.active ? 'phone' : 'desktop', ret, end });
+    try { if (end && navigator.sendBeacon) navigator.sendBeacon(window.MR_LOG, new Blob([body], { type: 'application/json' })); else fetch(window.MR_LOG, { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {}); } catch (e) {} };
+  setInterval(() => { if (!document.hidden) send(false); }, 30000);
+  setTimeout(() => send(false), 5000);
+  addEventListener('pagehide', () => send(true)); addEventListener('visibilitychange', () => { if (document.hidden) send(true); });
+}
 if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet };
 requestAnimationFrame(frame);
 </script>

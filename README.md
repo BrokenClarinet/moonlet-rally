@@ -164,3 +164,7 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 ## More upgrades (20 total)
 
 New: Aero fins (II), Drift rails (III), Seed sower (IV), Deep roots (V, garden growth), Turbo charger (VI), Comet lure (VII), Hop shocks (VIII), Lucky charm (X, tricks can pay double), Prism paint (XII), and Star core (X), an endless upgrade with +4% all gems and garden growth per level that gets one more level per moonlet.
+
+## Round 3: stars and playtest stats (2026-11-07)
+- Each moonlet has 3 stars (Bloom 75%, an N-turn trick, an xN combo). Stars pay gems, raise the trick bonus and that moonlet's garden output, show on the map, and unlock cosmetic parts at 3/6/9/12/18/24 stars.
+- Website build only: anonymous playtest heartbeats (`site/log.php`, random ids, no IPs) and a login-protected panel at `stats.php` with playtime targets, quit points, next-day return and a desktop/phone split. The Poki build never logs.

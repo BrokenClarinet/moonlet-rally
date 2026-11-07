@@ -81,7 +81,7 @@ $h = fn($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
     <h2>Play the test build</h2>
     <?php if ($in): ?>
       <p>You're signed in.</p>
-      <a class="btn" href="play.php">PLAY</a> <a href="logout.php" class="muted" style="margin-left:12px">Sign out</a>
+      <a class="btn" href="play.php">PLAY</a> <a href="stats.php" class="muted" style="margin-left:12px">Playtest stats</a> <a href="logout.php" class="muted" style="margin-left:12px">Sign out</a>
     <?php else: ?>
       <p class="muted">The game is in private testing. Enter the password to play.</p>
       <form method="post" action="index.php">

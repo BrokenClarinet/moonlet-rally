@@ -19,7 +19,8 @@ game = (ROOT / 'index.html').read_text()
 assert '<?' not in game, 'game HTML must not contain PHP open tags'
 game = game.replace("'./vendor/three.module.min.js'", "'./three.module.min.js'")
 game = game.replace("window.MR_PLATFORM = 'poki';", "window.MR_PLATFORM = 'demo';")  # stand-in ad cards so ad placements can be tried privately
-assert "'./three.module.min.js'" in game and "MR_PLATFORM = 'demo'" in game
+game = game.replace("window.MR_PLATFORM = 'demo';", "window.MR_PLATFORM = 'demo'; window.MR_LOG = 'log.php';")  # anonymous playtest logging, website only (see site/stats.php)
+assert "'./three.module.min.js'" in game and "MR_PLATFORM = 'demo'" in game and 'MR_LOG' in game
 guard = "<?php if (!defined('MR_OK')) { http_response_code(403); exit; } ?>\n"
 (OUT / 'private' / 'game.php').write_text(guard + game)
 
