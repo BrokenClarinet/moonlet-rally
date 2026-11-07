@@ -58,6 +58,10 @@
   #guide { bottom:96px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; font-weight:900; text-shadow:1px 1px 0 var(--ink); }
   #guide i { width:34px; height:34px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M17 3 30 28 17 21 4 28z' fill='%23ffc43d' stroke='%232a1838' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; }
   #fade { inset:0; background:#fff6ea; opacity:0; }
+  #speedlines { inset:-10%; opacity:0; transition:opacity .25s; background:repeating-conic-gradient(from 0deg at 50% 55%, transparent 0 5deg, rgba(255,246,234,.22) 5deg 5.6deg, transparent 5.6deg 11deg);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 55%, transparent 32%, #000 78%); mask-image:radial-gradient(ellipse at 50% 55%, transparent 32%, #000 78%); }
+  #speedlines.on { opacity:1; animation:slines .18s steps(2) infinite; } @keyframes slines { 50% { transform:rotate(2.5deg); } }
+  #upT.nudge { animation:upnudge 1s ease-in-out infinite; } @keyframes upnudge { 50% { transform:scale(1.12); box-shadow:0 0 0 4px rgba(255,196,61,.55), 2px 3px 0 var(--ink); } }
   #title { position:fixed; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 60%, rgba(255,159,134,.35), rgba(28,22,80,.92) 70%); text-align:center; padding:16px; box-sizing:border-box; }
   #title h1 { font-size:clamp(40px,9vw,84px); margin:0; line-height:.95; letter-spacing:1px; color:var(--sun); font-weight:900; text-shadow:3px 4px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink); transform:rotate(-3deg); }
   #title h1 span { display:block; color:var(--mint); font-size:.62em; transform:rotate(2deg); }
@@ -190,6 +194,7 @@
 <div id="precise" class="hud" hidden>PRECISION</div>
 <div id="guide" class="hud" hidden><i></i><span></span></div>
 <div id="nitro" class="hud"><div id="nitrofill"></div><span>NITRO</span></div>
+<div id="speedlines" class="hud"></div>
 <div id="fade" class="hud"></div>
 <div id="garage" hidden>
   <div class="gpanel">
@@ -1220,7 +1225,8 @@ function updateGoal(frac) {
   let main, sub = '', key;
   if (planet.pad.visible) {
     key = 'ramp'; main = `Ramp open! Drive onto the <em>golden ramp</em> to fly to ${next}`;
-    sub = first ? 'Follow the yellow arrow (or keep blooming for bonuses)' : 'Follow the yellow arrow';
+    { const nd = planetDef(atIdx() + 1), tw = (nd.twists || [nd.twist]).filter(t => t !== 'meadow').map(t => TWIST_TEXT[t] || t).join(' + ');
+      sub = `Next: ${nd.title}${tw ? ` (${tw})` : ''} · follow the yellow arrow`; }
   } else {
     key = 'paint'; main = `Turn the <em>grey ground</em> green: <em>${Math.floor(frac * 100)}% / ${Math.round(goal * 100)}%</em>`;
     if (first) {
@@ -1245,7 +1251,9 @@ function updateUI() {
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
   $('rate').innerHTML = `garden grows ${fmtR(gemRate())} ${GEM}/s`;
-  const nUp = UPG.filter(u => upOpen(u) && G.gems >= upCost(u)).length;
+  const nUp = UPG.filter(u => upOpen(u) && G.gems >= upCost(u)).length, anyUp = G.tires > 0 || Object.values(G.up).some(v => v > 0);
+  $('upT').classList.toggle('nudge', nUp > 0 && !anyUp);
+  if (nUp > 0 && !anyUp && !G.upHint && started && S.mode === 'drive') { G.upHint = 1; toast(`You can afford an upgrade!<br><span style="font-size:16px">${touch.active ? 'Tap Upgrades' : `Press ${kn('garage')} or click Upgrades`}</span>`, 3.5); }
   { const nOpen = UPG.filter(u => G.planetIdx >= u.at).length; if (G.upSeen == null) G.upSeen = nOpen; else if (nOpen > G.upSeen && started && S.mode === 'drive') { const nu = UPG.filter(u => G.planetIdx >= u.at).slice(G.upSeen).map(u => u.name).join(', '); G.upSeen = nOpen; toast(`New upgrade in the garage: ${nu}!`, 3); } }
   $('upT').innerHTML = nUp ? `Upgrades · ${nUp} ready` : 'Upgrades';
   const anyFull = gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1 && capOf(it) > 20);
@@ -2022,7 +2030,8 @@ function land() {
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
     stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
     if (flips) quest('flip', flips); if (spins) quest('spin', spins); quest('combo', trickChain);
-    if (turns >= 3 || trickChain >= 3) bigMoment(turns >= 5 || trickChain >= 5 ? 'INSANE!' : turns >= 4 || trickChain >= 4 ? 'AMAZING!' : 'AWESOME!');
+    if ((G.stats.tricks || 0) === 1) bigMoment('FIRST TRICK!');
+    else if (turns >= 3 || trickChain >= 3) bigMoment(turns >= 5 || trickChain >= 5 ? 'INSANE!' : turns >= 4 || trickChain >= 4 ? 'AMAZING!' : 'AWESOME!');
     if (gems > (G.stats.bestTrick || 0)) { G.stats.bestTrick = gems; G.stats.bestTrickName = names.join(' + '); }
     paintAt(S.p, 2.2 + (flips + spins) * 1.2, 1);
     burst(at, S.p, new THREE.Color(planet.def.flowers[0]), 25, 9); burst(at, S.p, new THREE.Color(planet.def.leaf), 25, 7);
@@ -2465,6 +2474,19 @@ function checkBloom(dt) {
   for (const c of [...planet.def.flowers, 0xffc43d]) burst(at, S.p, new THREE.Color(c), 16, 10);
   SFX.rush();
 }
+// If the car hasn't really moved for 4 seconds while you're trying to drive (wedged against something, or caught in
+// some odd loop), it hops free and turns a little, so nobody is ever stuck.
+const stuck = { t: 0, hist: [] }; let jumpNudged = false;
+function checkStuck(dt, inp, R) {
+  stuck.t += dt; if (stuck.t < 1) return; stuck.t = 0;
+  stuck.hist.push(S.p.clone()); if (stuck.hist.length > 4) stuck.hist.shift();
+  if (stuck.hist.length < 4 || inp.thr === 0 || garageOpen || gardenOpen) return;
+  if (stuck.hist[0].angleTo(S.p) * R > 1.2) return;
+  stuck.hist.length = 0;
+  S.f.applyAxisAngle(S.p, (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 0.8)).addScaledVector(S.p, -S.f.dot(S.p)).normalize();
+  S.v.copy(S.f).multiplyScalar(8); S.grounded = false; S.alt += 0.4; S.valt = 7;
+  bonusText('HOP! Unstuck'); stat('unstuck', 1);
+}
 const rush = { t: 50, on: false };
 function updateRush(dt) {
   rush.t -= dt;
@@ -2492,9 +2514,11 @@ function step(dt) {
   const up = S.p;
 
   if (S.mode === 'drive') {
+    checkStuck(dt, inp, R);
+    if (!hints.jump && !jumpNudged && G.planetIdx === 0 && (G.stats.time || 0) > 8) { jumpNudged = true; toast(touch.active ? 'Tap JUMP, then flip in the air for gems!' : `Press ${kn('jump')} to jump, then flip in the air for gems!`, 3.5); }
     const fwd = S.v.dot(S.f), spd = S.v.length();
     const boosting = inp.boost && G.nitro > 0.02 && inp.thr >= 0;
-    S.boosting = boosting;
+    S.boosting = boosting; $('speedlines').classList.toggle('on', !!boosting && SET.speedfx !== false);
     if (boosting) { G.nitro = Math.max(0, G.nitro - 0.4 * CS.drain * dt); }
     const airK = S.grounded ? 1 : (CS.airCtl > 1 ? 0.3 : 0);
     const onIce = hasTwist(planet.def, 'ice') && S.grounded && planet.lifeAt(S.p) < 0.5, traction = onIce ? 0.7 : 1;
@@ -2833,7 +2857,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {} }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }

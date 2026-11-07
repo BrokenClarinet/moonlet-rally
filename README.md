@@ -145,3 +145,11 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 - Geysers: each geyser launches the car at most once every 7 s and gives it some forward speed, so the car can no longer get stuck in a geyser-bounce loop (Trampoline Moon).
 - Trees, shrubs, mushrooms and critters between the camera and the car shrink out of the way and grow back afterwards.
 - Phones in landscape: smaller HUD panels, goal banner and touch buttons. Ice is less slippery with the thumb stick.
+
+## First-minute and flow helpers
+
+- Auto-unstick: if the car hasn't moved for 4 s while you're trying to drive, it hops free and turns a little.
+- If you haven't jumped after 8 s on Moonlet I, a tip tells you how. Your first trick ever gets the slow-motion moment.
+- The Upgrades button pulses (with a one-time tip) when you can first afford an upgrade, until you've bought one.
+- The ramp banner previews the next moonlet ("Next: Frostlet (slippery ice)").
+- Speed lines while boosting (they follow the speed effects setting).
