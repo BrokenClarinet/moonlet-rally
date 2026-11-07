@@ -177,3 +177,8 @@ New: Aero fins (II), Drift rails (III), Seed sower (IV), Deep roots (V, garden g
 - "Buy all" HUD button once 2+ upgrades are affordable.
 - Particles, mushrooms, rocks and trees right next to the camera shrink so they don't fill the screen edges.
 - Website stats: "exclude this device" toggle, a "too few" flag under 15 sessions, and log.php accepts at most one line per session every 25 s plus one closing line, with a 20 MB/day cap.
+
+## Round 5 (2026-11-07)
+- Ramp % never rounds up to the target. Moonlets I and II each have a near-guaranteed star (open the ramp; smash 3 rocks) and a lower bloom star (50%, 65%), so the first star reward lands in a few minutes. Star goal pairs no longer repeat on back-to-back moonlets.
+- The "stars left" toast only shows when you've earned at least one star there, once per session.
+- On touch, the guide arrow hides while a toast is up. Floating gems nearer the camera than the car shrink. The auto-quality toast is silent on Moonlet I. "Buy all" also appears after 60 s of play.
