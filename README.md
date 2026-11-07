@@ -134,3 +134,8 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 - Eight trophy parts can't be bought: each unlocks when a moonlet reaches 90% bloom. They are Sprout (I), Petals trail (II), Nebula paint (III), Star beacon (IV), Aurora trail (V), Peach Bloom paint (VI), Pocket moon (VII) and Stardust trail (VIII). Old saves get trophies for moonlets they already restored to 90%.
 - Once the ramp is open, the HUD shows the next bloom bonus.
 - While the Gem Garden is open, it grows x2, rising to x3 after two minutes. Full silos pay straight into your gems instead of stopping.
+
+## Making the goal obvious
+
+- A goal banner at the top always says what to do: "Turn the grey ground green: 15% / 50%" and then "Ramp open! Drive onto the golden ramp to fly to Moonlet II" (it turns yellow and pops when it changes). On Moonlet I it also shows the controls for the first 25 seconds.
+- The title screen says the goal in one line. Missions stay hidden on Moonlet I until 20% is restored, so new players focus on the main goal. Golden comets start from Moonlet II so the arrow keeps pointing at the main goal.

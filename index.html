@@ -36,14 +36,19 @@
   .btn:focus-visible, .chip:focus-visible { outline:3px solid var(--paper); outline-offset:2px; }
   .gem { display:inline-block; width:1em; height:.9em; vertical-align:-.08em; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M5 1h10l4 5-9 11L1 6z' fill='%237fe3ff' stroke='%232a1838' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M1.5 6h17M7.5 1.5 6 6l4 10.5L14 6l-1.5-4.5' fill='none' stroke='%232a1838' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M6 6l1.5-4.5h-2L2.5 6z' fill='%23d8f8ff'/%3E%3C/svg%3E") center/contain no-repeat; }
   .big { font-size:26px; font-weight:900; text-shadow:2px 3px 0 var(--ink); }
-  #toast { top:20%; left:50%; transform:translateX(-50%); font-size:24px; font-weight:900; color:var(--paper); text-shadow:2px 3px 0 var(--ink); opacity:0; transition:opacity .3s; text-align:center; white-space:nowrap; }
+  #toast { top:32%; left:50%; transform:translateX(-50%); font-size:24px; font-weight:900; color:var(--paper); text-shadow:2px 3px 0 var(--ink); opacity:0; transition:opacity .3s; text-align:center; white-space:nowrap; }
   #drift { bottom:24%; left:50%; transform:translateX(-50%); font-size:22px; font-weight:900; color:var(--sun); text-shadow:2px 3px 0 var(--ink); opacity:0; white-space:nowrap; }
   #combo { bottom:62px; left:50%; transform:translateX(-50%); font-size:18px; font-weight:900; color:var(--mint); text-shadow:2px 2px 0 var(--ink); opacity:0; transition:opacity .2s; white-space:nowrap; }
   #nitro { bottom:22px; left:50%; transform:translateX(-50%); width:min(240px,40vw); height:16px; border-radius:9px; background:var(--panel); overflow:hidden; border:2.5px solid var(--ink); box-shadow:2px 3px 0 var(--ink); }
   #nitrofill { height:100%; width:50%; background:repeating-linear-gradient(-45deg,#ffc43d 0 8px,#ff9a3d 8px 16px); }
   #nitro span { position:absolute; inset:0; font-size:10px; font-weight:900; letter-spacing:2px; text-align:center; line-height:16px; color:var(--paper); text-shadow:1px 1px 0 var(--ink); }
-  #comet { top:150px; left:50%; transform:translateX(-50%) rotate(2deg); font-size:16px; font-weight:900; color:var(--ink); background:var(--sun); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.6s infinite; }
-  #rush { top:96px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
+  #comet { top:156px; left:50%; transform:translateX(-50%) rotate(2deg); font-size:16px; font-weight:900; color:var(--ink); background:var(--sun); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.6s infinite; }
+  #goal { top:58px; left:50%; transform:translateX(-50%); max-width:min(520px,60vw); text-align:center; background:rgba(58,39,88,.92); border:2.5px solid var(--ink); border-radius:14px; box-shadow:2px 3px 0 var(--ink); padding:5px 14px 6px; line-height:1.2; }
+  #goal b { display:block; font-size:15px; font-weight:900; color:var(--paper); } #goal b em { font-style:normal; color:var(--sun); white-space:nowrap; }
+  #goal small { display:block; font-size:12px; font-weight:800; color:var(--gem); margin-top:2px; } #goal small:empty { display:none; }
+  #goal.ramp { background:var(--sun); } #goal.ramp b { color:var(--ink); } #goal.ramp b em { color:var(--coral); } #goal.ramp small { color:var(--ink); }
+  #goal.flash { animation:goalpop .6s ease-out 2; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
+  #rush { top:122px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
   #precise { bottom:44px; left:calc(50% + 140px); font-size:11px; font-weight:900; letter-spacing:2px; color:var(--ink); background:var(--gem); border:2px solid var(--ink); border-radius:8px; padding:2px 7px; }
   .statgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
   .statgrid div { background:var(--panel2); border:2.5px solid var(--ink); border-radius:12px; padding:8px 10px; }
@@ -86,7 +91,9 @@
     #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; } #right { transform-origin:top right; }
     #toast { top:26%; white-space:normal; width:92vw; font-size:19px; }
     body.touch #nitro { bottom:auto; top:140px; } body.touch #combo { bottom:auto; top:162px; }
-    body.touch #guide { top:190px; } #rush { top:200px; } #comet { top:230px; } }
+    #goal { top:128px; max-width:94vw; padding:4px 10px; } #goal b { font-size:13px; } #goal small { font-size:11px; }
+    #toast { top:37%; } body.touch #nitro { top:222px; } body.touch #combo { top:244px; }
+    body.touch #guide { top:258px; } #rush { top:262px; } #comet { top:292px; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
   .gpanel { touch-action:pan-y; overscroll-behavior:contain; pointer-events:auto; width:min(640px,100%); max-height:52vh; overflow:auto; background:var(--panel); border:3px solid var(--ink); border-radius:18px; box-shadow:4px 5px 0 var(--ink); padding:10px 14px 12px; box-sizing:border-box; display:flex; flex-direction:column; gap:8px; }
@@ -173,6 +180,7 @@
 <div id="toast" class="hud"></div>
 <div id="drift" class="hud"></div>
 <div id="combo" class="hud"></div>
+<div id="goal" class="hud" hidden><b></b><small></small></div>
 <div id="rush" class="hud" hidden></div>
 <div id="comet" class="hud" hidden></div>
 <div id="precise" class="hud" hidden>PRECISION</div>
@@ -209,6 +217,7 @@
   <div id="loadView"><div id="loadbar"><div id="loadfill"></div></div><div id="loadtxt">Loading...</div></div>
   <div id="menuView" hidden>
     <p>Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
+    <p style="font-weight:800;color:var(--sun)">Paint each moonlet green with your tire tracks, then launch off the golden ramp to the next one.</p>
     <p id="hint" style="font-size:13px;opacity:.75"></p>
     <p id="rotateHint">Turn your phone sideways for the best view</p>
     <button class="go" id="playBtn">PLAY</button>
@@ -1199,8 +1208,32 @@ const gemUnit = () => { const t = performance.now(); if (t - gemUnitAt > 500) { 
 const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(v) : Math.round(v / Math.pow(10, Math.floor(Math.log10(v)) - 2)) * Math.pow(10, Math.floor(Math.log10(v)) - 2); }; // tidy: 3 significant digits
 const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
+let goalKey = '', goalAt = 0;
+function updateGoal(frac) {
+  const el = $('goal');
+  if (S.mode !== 'drive' || garageOpen || gardenOpen) { el.hidden = true; return; }
+  const goal = planet.def.goal, next = `Moonlet ${roman(atIdx() + 2)}`, first = G.planetIdx === 0, t = performance.now() / 1000;
+  let main, sub = '', key;
+  if (planet.pad.visible) {
+    key = 'ramp'; main = `Ramp open! Drive onto the <em>golden ramp</em> to fly to ${next}`;
+    sub = first ? 'Follow the yellow arrow (or keep blooming for bonuses)' : 'Follow the yellow arrow';
+  } else {
+    key = 'paint'; main = `Turn the <em>grey ground</em> green: <em>${Math.floor(frac * 100)}% / ${Math.round(goal * 100)}%</em>`;
+    if (first) {
+      if (!goalAt) goalAt = t;
+      const age = t - goalAt;
+      sub = age < 25 ? (touch.active ? 'Left thumb drives. Your tire tracks grow grass!' : `${kn('up')} drives, ${kn('left')} ${kn('right')} steer. Your tire tracks grow grass!`)
+        : `Reach ${Math.round(goal * 100)}% to open the launch ramp to ${next}`;
+    } else sub = `${Math.round(goal * 100)}% opens the launch ramp to ${next}`;
+  }
+  el.hidden = false; el.classList.toggle('ramp', key === 'ramp');
+  el.querySelector('b').innerHTML = main; el.querySelector('small').textContent = sub;
+  if (key !== goalKey) { goalKey = key; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+}
 function updateUI() {
   renderMissions();
+  updateGoal(planet.restored / planet.N);
+  $('missions').hidden = G.planetIdx === 0 && planet.restored / planet.N < 0.2 && !planet.pad.visible;
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
   const goal = planet.def.goal;
@@ -2369,7 +2402,7 @@ function cometEnd() { comet.on = false; if (comet.mesh) comet.mesh.visible = fal
 function updateComet(dt) {
   const R = planet.R;
   if (!comet.on) {
-    comet.t -= dt; if (comet.t > 0 || S.mode !== 'drive') return;
+    comet.t -= dt; if (comet.t > 0 || S.mode !== 'drive' || G.planetIdx === 0) return;
     let d = null;
     for (let i = 0; i < 30 && !d; i++) { const c = randDir(Math.random), a = c.angleTo(S.p); if (a > 1.0 && a < 2.3 && !planet.rocks.some(rk => !rk.smashed && c.angleTo(rk.d) * R < rk.r + 2)) d = c; }
     if (!d) { comet.t = 3; return; }
@@ -2593,7 +2626,7 @@ function step(dt) {
 
     // launch ramp
     if (planet.restored / planet.N >= planet.def.goal) {
-      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } toast('Launch ramp open!<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
+      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } toast('LAUNCH RAMP OPEN!', 2.5, true); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
       if (S.p.angleTo(planet.padDir) * R < 2.5 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); }
     }
@@ -2835,7 +2868,7 @@ $('wAd').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { stat(
 function start() {
   if (modal === 'welcome' || modal === 'daily') return;
   if (started) return resume(); started = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart(); checkMissions();
-  toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Drive to bring the moonlet back to life!<br><span style="font-size:16px">Grab the glowing seed pods</span>'), 3.5);
+  toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Let\'s go!<br><span style="font-size:16px">Glowing seed pods fill your nitro</span>'), 3.5);
 }
 
 let bonkFrame = false, lastGems = G.gems, last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
