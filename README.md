@@ -168,3 +168,12 @@ New: Aero fins (II), Drift rails (III), Seed sower (IV), Deep roots (V, garden g
 ## Round 3: stars and playtest stats (2026-11-07)
 - Each moonlet has 3 stars (Bloom 75%, an N-turn trick, an xN combo). Stars pay gems, raise the trick bonus and that moonlet's garden output, show on the map, and unlock cosmetic parts at 3/6/9/12/18/24 stars.
 - Website build only: anonymous playtest heartbeats (`site/log.php`, random ids, no IPs) and a login-protected panel at `stats.php` with playtime targets, quit points, next-day return and a desktop/phone split. The Poki build never logs.
+
+## Round 4: clearer goals and quality of life (2026-11-07)
+- Auto quality: if driving stays under 40 fps for about 4 s, graphics step down one level with a toast. A choice made in Settings is never overridden.
+- Star goals vary early (Moonlet I: a flip or spin and 10 s of drift; II: 1.5 s of air and an x2 combo) and rotate after that. Earned stars glow; unearned ones are hollow; drift totals show progress.
+- While a moonlet's stars are unfinished the HUD shows only the closest mission. Leaving with stars unearned shows "N stars left, replay from the map" (twice per moonlet at most).
+- Toasts sit in their own band (on phones they take the goal banner's spot while showing), so they no longer cover the bonus text near the car.
+- "Buy all" HUD button once 2+ upgrades are affordable.
+- Particles, mushrooms, rocks and trees right next to the camera shrink so they don't fill the screen edges.
+- Website stats: "exclude this device" toggle, a "too few" flag under 15 sessions, and log.php accepts at most one line per session every 25 s plus one closing line, with a 20 MB/day cap.

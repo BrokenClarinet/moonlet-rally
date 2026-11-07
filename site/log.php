@@ -22,5 +22,21 @@ $row = [
 if ($row['sid'] === '') { http_response_code(204); exit; }
 $dir = __DIR__ . '/private/data';
 if (!is_dir($dir)) @mkdir($dir, 0750, true);
-@file_put_contents($dir . '/sessions-' . gmdate('Y-m-d') . '.jsonl', json_encode($row) . "\n", FILE_APPEND | LOCK_EX);
+$day = $dir . '/sessions-' . gmdate('Y-m-d') . '.jsonl';
+if (@filesize($day) > 20 * 1024 * 1024) { http_response_code(204); exit; } // disk guard: 20 MB a day is far beyond any real playtest
+// rate cap: one line per session every 25 s, plus a single closing line, so a rogue client can't flood the log
+$fh = @fopen($dir . '/ratelimit.json', 'c+');
+if ($fh && flock($fh, LOCK_EX)) {
+  $rl = json_decode(stream_get_contents($fh), true) ?: [];
+  $last = $rl[$row['sid']] ?? null; $now = $row['ts'];
+  $ok = !$last || $now - $last[0] >= 25 || ($row['end'] && empty($last[1]));
+  if ($ok) {
+    $rl[$row['sid']] = [$now, $row['end']];
+    if (count($rl) > 500) $rl = array_filter($rl, fn($v) => $now - $v[0] < 3600);
+    ftruncate($fh, 0); rewind($fh); fwrite($fh, json_encode($rl));
+  }
+  flock($fh, LOCK_UN); fclose($fh);
+  if (!$ok) { http_response_code(204); exit; }
+}
+@file_put_contents($day, json_encode($row) . "\n", FILE_APPEND | LOCK_EX);
 http_response_code(204);

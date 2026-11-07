@@ -4,6 +4,20 @@ require __DIR__ . '/auth.php';
 if (!mr_logged_in()) { header('Location: index.php'); exit; }
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
+$dataDir = __DIR__ . '/private/data';
+$exFile = $dataDir . '/excluded.json';
+$excluded = is_file($exFile) ? (json_decode(file_get_contents($exFile), true) ?: []) : [];
+// "exclude this device": the page's script sends this browser's anonymous visitor id so your own play doesn't skew the numbers
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $vid = substr(preg_replace('/[^a-zA-Z0-9_-]/', '', (string)($_POST['vid'] ?? '')), 0, 24);
+  $origin = parse_url($_SERVER['HTTP_ORIGIN'] ?? '', PHP_URL_HOST);
+  if ($vid !== '' && (!$origin || $origin === parse_url('http://' . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST))) {
+    if (($_POST['do'] ?? '') === 'exclude') $excluded[$vid] = gmdate('Y-m-d'); else unset($excluded[$vid]);
+    if (!is_dir($dataDir)) @mkdir($dataDir, 0750, true);
+    @file_put_contents($exFile, json_encode($excluded), LOCK_EX);
+  }
+  header('Location: stats.php?' . http_build_query(array_intersect_key($_GET, ['from' => 1, 'to' => 1]))); exit;
+}
 
 $from = preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['from'] ?? '') ? $_GET['from'] : gmdate('Y-m-d', time() - 13 * 86400);
 $to   = preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['to'] ?? '') ? $_GET['to'] : gmdate('Y-m-d');
@@ -15,6 +29,7 @@ foreach (glob(__DIR__ . '/private/data/sessions-*.jsonl') ?: [] as $f) {
   if ($day < $from || $day > $to) continue;
   foreach (file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
     $r = json_decode($line, true); if (!is_array($r) || empty($r['sid'])) continue;
+    if (!empty($r['vid']) && isset($excluded[$r['vid']])) continue;
     $s = $r['sid'];
     if (!isset($sess[$s]) || $r['t'] >= $sess[$s]['t']) $sess[$s] = $r + ['day' => $day];
     if (!empty($r['vid'])) $visits[$r['vid']][gmdate('Y-m-d', $r['ts'])] = true;
@@ -77,7 +92,7 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES);
 <?php foreach ($groups as $name => $list): $s = summarize($list); ?>
 <tr><td><b><?= $h($name) ?></b></td>
 <?php if (!$s): ?><td colspan="5" class="muted">No sessions yet</td><?php else: ?>
-<td><?= $s['n'] ?></td>
+<td><?= $s['n'] ?><?php if ($s['n'] < 15): ?> <span class="bad" title="Under 15 sessions the percentages swing a lot">(too few)</span><?php endif; ?></td>
 <td class="<?= $cls($s['p1'] >= 0.65) ?>"><?= $pct($s['p1']) ?></td>
 <td class="<?= $cls($s['p3'] >= 0.40) ?>"><?= $pct($s['p3']) ?></td>
 <td class="<?= $cls($s['med'] >= 360) ?>"><?= $fmtT($s['med']) ?></td>
@@ -86,6 +101,23 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES);
 <?php endforeach; ?>
 </table>
 <p class="muted">Next-day return: <?= $retBase ? $pct($ret / $retBase) . " ($ret of $retBase visitors)" : 'not enough days yet' ?>. Small samples swing a lot; aim for 15 to 20 players before trusting these.</p></div>
+
+<h2>Your own play</h2>
+<div class="card"><form method="post" id="exForm" style="margin:0"><input type="hidden" name="vid" id="exVid"><input type="hidden" name="do" id="exDo">
+<span id="exTxt" class="muted">Checking this device...</span> <button type="submit" id="exBtn" hidden></button></form>
+<p class="muted" style="margin:6px 0 0"><?= count($excluded) ?> device<?= count($excluded) === 1 ? '' : 's' ?> excluded. Exclude every device you test on so only your playtesters count. Visitors only show up here after they log in to the site.</p></div>
+<script>
+(() => {
+  const ex = <?= json_encode(array_keys($excluded)) ?>;
+  let vid = ''; try { vid = localStorage.getItem('moonletRally.vid') || ''; } catch (e) {}
+  const t = document.getElementById('exTxt'), b = document.getElementById('exBtn');
+  if (!vid) { t.textContent = 'This device has not played the website build yet, so there is nothing to exclude.'; return; }
+  const on = ex.includes(vid);
+  document.getElementById('exVid').value = vid; document.getElementById('exDo').value = on ? 'include' : 'exclude';
+  t.textContent = on ? 'This device is excluded from the numbers.' : 'This device is counted in the numbers.';
+  b.textContent = on ? 'Count this device again' : 'Exclude this device'; b.hidden = false;
+})();
+</script>
 
 <h2>Where sessions ended</h2>
 <div class="card"><table><tr><th>Moonlet</th><th>Sessions that ended there</th></tr>
