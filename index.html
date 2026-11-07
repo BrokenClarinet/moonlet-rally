@@ -105,7 +105,7 @@
   #gLabels { position:absolute; inset:0; pointer-events:none; }
   .glabel { position:absolute; left:0; top:0; pointer-events:auto; font-family:inherit; font-size:12px; font-weight:800; color:var(--ink); background:var(--paper); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:4px 9px; display:flex; flex-direction:column; align-items:center; cursor:pointer; white-space:nowrap; }
   .glabel b { color:#1f7fa0; display:inline-flex; align-items:center; gap:3px; }
-  .gpop { position:absolute; top:-6px; left:50%; transform:translateX(-50%); color:var(--sun); font-size:16px; font-weight:900; text-shadow:2px 2px 0 var(--ink); animation:gpop .9s forwards; pointer-events:none; }
+  .gpop { position:absolute; top:-26px; left:50%; transform:translateX(-50%); color:var(--sun); font-size:16px; font-weight:900; text-shadow:2px 2px 0 var(--ink); animation:gpop .9s forwards; pointer-events:none; }
   @keyframes gpop { to { transform:translate(-50%,-40px); opacity:0; } }
   #gardenPanel { position:absolute; left:50%; bottom:12px; transform:translateX(-50%); width:min(680px,calc(100% - 24px)); max-height:46vh; }
   .gdhint { margin:0; font-size:12px; opacity:.8; }
@@ -851,7 +851,7 @@ function buildPlanet(index) {
     const shardGeo = facet([[new THREE.OctahedronGeometry(0.5, 0).scale(0.7, 1.4, 0.7).translate(0, 0.7, 0), 0x7fe3ff], [new THREE.OctahedronGeometry(0.35, 0).scale(0.7, 1.3, 0.7).rotateZ(0.5).translate(0.4, 0.45, 0), 0xb48cff], [new THREE.OctahedronGeometry(0.3, 0).scale(0.7, 1.3, 0.7).rotateZ(-0.6).translate(-0.35, 0.4, 0.1), 0x7fe3ff]]);
     const shardMat = toon({ vertexColors: true, emissive: 0x1a4a6a });
     for (let i = 0; i < 3; i++) {
-      const rock = inked(rockGeo, rockMat, 0.05), mark = new THREE.Mesh(markGeo, markMat), shard = inked(shardGeo, shardMat, 0.04);
+      const rock = inked(rockGeo, rockMat, 0.05), mark = new THREE.Mesh(markGeo, markMat.clone()), shard = inked(shardGeo, shardMat, 0.04);
       rock.visible = mark.visible = shard.visible = false; group.add(rock, mark, shard);
       meteors.push({ d: V(), rock, mark, shard, h: 0, state: 'wait', wait: 3 + i * 2.5, shardT: 0 });
     }
@@ -1428,7 +1428,8 @@ let gardenOpen = false;
 function buildGarden() {
   for (const b of GD.bodies) { GD.scene.remove(b.mesh, b.ring); b.label.remove(); }
   GD.bodies = [];
-  const items = gardenItems();
+  // the orbit view shows the 10 newest moonlets plus the one you're on, so it stays readable with 100+ moonlets
+  const all = gardenItems(), items = all.filter((it, i) => i >= all.length - 10 || it.current);
   items.forEach((it, i) => {
     const r = 5.2 + i * 2.7, size = 0.75 + Math.min(0.6, i * 0.12);
     const col = new THREE.Color(it.dead).lerp(new THREE.Color(it.color), Math.min(1, it.frac * 1.3)).getHex();
@@ -1451,7 +1452,7 @@ function harvest(idx, batch) {
   const it = gardenItems()[idx]; const v = Math.floor(it.d.silo || 0); if (v < 1) return 0; SFX.harvest();
   doubleOffer = batch ? doubleOffer + v : v;
   G.gems += v; it.d.silo -= v;
-  const b = GD.bodies[idx]; if (b) { const pop = document.createElement('div'); pop.className = 'gpop'; pop.innerHTML = `+${fmt(v)} ${GEM}`; b.label.appendChild(pop); setTimeout(() => pop.remove(), 900); }
+  const b = GD.bodies.find(x => x.idx === idx); if (b) { const pop = document.createElement('div'); pop.className = 'gpop'; pop.innerHTML = `+${fmt(v)} ${GEM}`; b.label.appendChild(pop); setTimeout(() => pop.remove(), 900); }
   renderGarden(); save(); return v;
 }
 function renderGarden() {
@@ -1497,7 +1498,7 @@ function renderGardenScene(dt) {
   GD.bodies.forEach((b, i) => {
     const a = b.phase + GD.t * b.speed; b.mesh.position.set(Math.cos(a) * b.r, 0, Math.sin(a) * b.r); b.mesh.rotation.y += dt * 0.5;
     pv.copy(b.mesh.position); pv.y += 1.4; pv.project(GD.cam);
-    const it = items[i]; b.label.style.transform = `translate(${((pv.x + 1) / 2 * W).toFixed(0)}px, ${((1 - pv.y) / 2 * H).toFixed(0)}px) translate(-50%, -100%)`;
+    const it = items[b.idx]; b.label.style.transform = `translate(${((pv.x + 1) / 2 * W).toFixed(0)}px, ${((1 - pv.y) / 2 * H).toFixed(0)}px) translate(-50%, -100%)`;
     b.label.innerHTML = `${it.name}<b>${fmt(it.d.silo || 0)} ${GEM}</b>` + (b.label.querySelector('.gpop')?.outerHTML || '');
   });
   gardenUiAcc += dt; if (gardenUiAcc > 0.5) { gardenUiAcc = 0; renderGarden(); }
@@ -2552,7 +2553,7 @@ let offlineMsg = '', welcome = null;
 if (saved && saved.t) {
   const away = Math.max(0, (Date.now() - saved.t) / 1000), before = gardenReady(); tickGarden(Math.min(away, siloHours() * 3600));
   const grew = Math.floor(gardenReady() - before);
-  if (grew >= 1) welcome = { grew, away, capped: away > siloHours() * 3600 && gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1) };
+  if (grew >= 1 && away >= 120) welcome = { grew, away, capped: away > siloHours() * 3600 && gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1) };
 }
 $('playBtn').onclick = start;
 for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => SFX.init(), { capture: true });
