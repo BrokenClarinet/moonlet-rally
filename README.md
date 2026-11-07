@@ -123,3 +123,8 @@ Checked against developers.poki.com (requirements, SDK, quality and content page
 ## Upgrade unlocks
 
 Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitro tank and Gem magnet on Moonlet II, Sticky tread on III, Springs on IV, Bull bar on V, Trick wax on VI, Gem polish on VII and Combo keeper on IX. Each one opens 2 levels when it arrives and one more level per moonlet after that. The next locked upgrade shows as a teaser in the garage, and a message pops up when a new one arrives. Level 1 costs about 40 to 70 seconds of your income and each level roughly doubles.
+
+## Golden comets and bloom milestones
+
+- Every minute or so a golden comet lands somewhere on the moonlet. The guide arrow points at it; reach it within about 15 to 20 seconds for a jackpot (about 40 seconds of income, at least 60 gem units) and a full nitro tank. There's a mission for it too.
+- Restoring 25, 50, 75, 90 and 98% of a moonlet pays a growing one-time bonus (20 to 150 seconds of income), saved per moonlet in `G.bloom`.

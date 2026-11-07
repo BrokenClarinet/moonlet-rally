@@ -42,6 +42,7 @@
   #nitro { bottom:22px; left:50%; transform:translateX(-50%); width:min(240px,40vw); height:16px; border-radius:9px; background:var(--panel); overflow:hidden; border:2.5px solid var(--ink); box-shadow:2px 3px 0 var(--ink); }
   #nitrofill { height:100%; width:50%; background:repeating-linear-gradient(-45deg,#ffc43d 0 8px,#ff9a3d 8px 16px); }
   #nitro span { position:absolute; inset:0; font-size:10px; font-weight:900; letter-spacing:2px; text-align:center; line-height:16px; color:var(--paper); text-shadow:1px 1px 0 var(--ink); }
+  #comet { top:150px; left:50%; transform:translateX(-50%) rotate(2deg); font-size:16px; font-weight:900; color:var(--ink); background:var(--sun); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.6s infinite; }
   #rush { top:96px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
   #precise { bottom:44px; left:calc(50% + 140px); font-size:11px; font-weight:900; letter-spacing:2px; color:var(--ink); background:var(--gem); border:2px solid var(--ink); border-radius:8px; padding:2px 7px; }
   .statgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
@@ -85,7 +86,7 @@
     #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; } #right { transform-origin:top right; }
     #toast { top:26%; white-space:normal; width:92vw; font-size:19px; }
     body.touch #nitro { bottom:auto; top:140px; } body.touch #combo { bottom:auto; top:162px; }
-    body.touch #guide { top:190px; } #rush { top:200px; } }
+    body.touch #guide { top:190px; } #rush { top:200px; } #comet { top:230px; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
   .gpanel { touch-action:pan-y; overscroll-behavior:contain; pointer-events:auto; width:min(640px,100%); max-height:52vh; overflow:auto; background:var(--panel); border:3px solid var(--ink); border-radius:18px; box-shadow:4px 5px 0 var(--ink); padding:10px 14px 12px; box-sizing:border-box; display:flex; flex-direction:column; gap:8px; }
@@ -172,6 +173,7 @@
 <div id="drift" class="hud"></div>
 <div id="combo" class="hud"></div>
 <div id="rush" class="hud" hidden></div>
+<div id="comet" class="hud" hidden></div>
 <div id="precise" class="hud" hidden>PRECISION</div>
 <div id="guide" class="hud" hidden><i></i><span></span></div>
 <div id="nitro" class="hud"><div id="nitrofill"></div><span>NITRO</span></div>
@@ -882,7 +884,7 @@ function disposePlanet(p) {
   p.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
 }
 
-function startPlanet() { for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); if (started || G.missions) checkMissions(); }
+function startPlanet() { cometEnd(); comet.t = Math.min(comet.t, 30); for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); if (started || G.missions) checkMissions(); }
 
 function recount(p) {
   let n = 0; for (let i = 0; i < p.N; i++) { if (p.life[i] >= 0.5) n++; p.paint(i); }
@@ -1725,7 +1727,7 @@ function renderStats() {
     ['Time driving', hm], ['Gems earned', `${fmt(st.earned || 0)} ${GEM}`], ['Gems now', `${fmt(G.gems)} ${GEM}`],
     ['Moonlets restored', restored], ['Furthest moonlet', `${planetDef(G.planetIdx).name.replace('Moonlet ', '')}`], ['Garden growth', `${fmtR(gemRate())} ${GEM}/s`],
     ['Tricks landed', st.tricks || 0], ['Best trick', st.bestTrick ? `${fmt(st.bestTrick)} ${GEM}<small>${st.bestTrickName || ''}</small>` : '-'],
-    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0], ['Critters bumped', st.bonks || 0], ['Close shaves', st.shaves || 0], ['Missions done', st.missions || 0], ['Daily streak', G.daily ? G.daily.streak || 0 : 0],
+    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0], ['Critters bumped', st.bonks || 0], ['Close shaves', st.shaves || 0], ['Missions done', st.missions || 0], ['Comets caught', st.comets || 0], ['Bloom milestones', st.blooms || 0], ['Daily streak', G.daily ? G.daily.streak || 0 : 0],
   ];
   $('stList').innerHTML = rows.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('');
 }
@@ -1813,6 +1815,7 @@ const MISSIONS = [
   { ev: 'air', max: true, txt: (n) => `Stay airborne ${n}s in one jump`, n: (t) => 1.5 + Math.min(2.5, t * 0.5) },
   { ev: 'drift', txt: (n) => `Drift for ${n}s`, n: (t) => 6 + 3 * t },
   { ev: 'pod', txt: (n) => `Grab ${n} seed pods`, n: (t) => 3 + t },
+  { ev: 'comet', txt: (n) => n > 1 ? `Catch ${n} golden comets` : 'Catch a golden comet', n: (t) => 1 + Math.min(2, Math.floor(t / 3)) },
   { ev: 'rock', txt: (n) => `Smash ${n} rocks`, n: (t) => 2 + Math.min(3, t), ok: () => planet.rocks.filter(r => !r.smashed).length >= 4 },
   { ev: 'trail', txt: (n) => `Collect ${n} trail gems`, n: (t) => 10 + 5 * t, ok: () => planet.gemArcs.length > 0 },
   { ev: 'restore', txt: (n) => `Grow ${n}% more of this moonlet`, n: (t) => 4 + Math.min(8, 2 * t), ok: () => planet.restored / planet.N < 0.85 },
@@ -2309,6 +2312,69 @@ function updateCritters(dt) {
 }
 
 // Bloom Rush: a short event on every moonlet where new ground pays triple
+// Golden comet: every minute or so a comet lands somewhere on the moonlet. Reach it before it fades for a jackpot
+// (about 40 seconds of income) and a full nitro tank. The guide arrow points at it while it's down.
+const comet = { t: 28, on: false, left: 0, fall: 0, d: V(), mesh: null };
+function cometMesh() {
+  if (comet.mesh) return comet.mesh;
+  const g = new THREE.Group();
+  const core = inked(new THREE.OctahedronGeometry(0.75, 0), toon({ color: 0xffc43d, emissive: 0x8a5a00 }), 0.05);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.09, 4, 20), new THREE.MeshBasicMaterial({ color: 0xfff3a0 }));
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.8, 16, 8, 1, true).translate(0, 8, 0),
+    new THREE.MeshBasicMaterial({ color: 0xffc43d, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.2; core.position.y = 1.3; g.add(core, ring, beam); g.userData.core = core; g.visible = false;
+  return (comet.mesh = g);
+}
+function cometEnd() { comet.on = false; if (comet.mesh) comet.mesh.visible = false; $('comet').hidden = true; }
+function updateComet(dt) {
+  const R = planet.R;
+  if (!comet.on) {
+    comet.t -= dt; if (comet.t > 0 || S.mode !== 'drive') return;
+    let d = null;
+    for (let i = 0; i < 30 && !d; i++) { const c = randDir(Math.random), a = c.angleTo(S.p); if (a > 1.0 && a < 2.3 && !planet.rocks.some(rk => !rk.smashed && c.angleTo(rk.d) * R < rk.r + 2)) d = c; }
+    if (!d) { comet.t = 3; return; }
+    const m = cometMesh(); planet.group.add(m); comet.d.copy(d); m.quaternion.setFromUnitVectors(Y_AXIS, d); m.visible = true;
+    comet.on = true; comet.fall = 1; comet.left = 14 + R * 0.35; comet.t = 55 + Math.random() * 35;
+    SFX.star(); toast(`GOLDEN COMET! Catch it in ${Math.round(comet.left)}s`, 2.2);
+  }
+  const m = comet.mesh;
+  if (comet.fall > 0) {
+    comet.fall = Math.max(0, comet.fall - dt * 1.6);
+    m.position.copy(comet.d).multiplyScalar(R + groundH(comet.d) + comet.fall * comet.fall * 40);
+    if (comet.fall === 0) { burst(V().copy(comet.d).multiplyScalar(R + groundH(comet.d) + 0.5), comet.d, new THREE.Color(0xffc43d), 40, 12); shake = Math.max(shake, 0.4); }
+    return;
+  }
+  comet.left -= dt;
+  m.userData.core.rotation.y += dt * 3; m.userData.core.position.y = 1.3 + 0.3 * Math.sin(performance.now() / 180);
+  m.scale.setScalar(comet.left < 3 ? 0.6 + 0.4 * Math.abs(Math.sin(comet.left * 8)) : 1);
+  $('comet').hidden = false; $('comet').textContent = `GOLDEN COMET ${Math.ceil(comet.left)}s`;
+  if (S.p.angleTo(comet.d) * R < 2.2 * CS.reach && Math.abs(S.alt - groundH(comet.d)) < 3) {
+    const gems = Math.round(Math.max(60 * gemUnit() * mult() * CS.bonus, gemRate() * 40));
+    G.gems += gems; G.nitro = 1; stat('comets', 1); quest('comet');
+    const at = V().copy(comet.d).multiplyScalar(R + groundH(comet.d) + 1);
+    for (const c of [0xffc43d, 0xfff3a0, 0x7fe3ff, planet.def.flowers[0]]) burst(at, comet.d, new THREE.Color(c), 22, 12);
+    paintAt(comet.d, 7, 1); SFX.bigGems(); shake = Math.max(shake, 0.7); slowT = 0.4;
+    bonusText(`COMET JACKPOT! +${fmt(gems)} ${GEM}`); cometEnd(); return;
+  }
+  if (comet.left <= 0) { cometEnd(); bonusText('The comet faded...'); }
+}
+// Bloom milestones: restoring 25 / 50 / 75 / 90 / 98% of a moonlet pays a growing bonus once per moonlet.
+const BLOOM_MS = [[0.25, 20], [0.5, 35], [0.75, 60], [0.9, 90], [0.98, 150]];
+let bloomAcc = 0;
+function checkBloom(dt) {
+  bloomAcc += dt; if (bloomAcc < 0.5) return; bloomAcc = 0;
+  G.bloom = G.bloom || {};
+  const i = planet.index, frac = planet.restored / planet.N, got = BLOOM_MS.filter(([f]) => frac >= f).length;
+  if (G.bloom[i] == null) { G.bloom[i] = got; return; } // first visit since this feature: count what's already done, no back pay
+  if (got <= G.bloom[i]) return;
+  const [f, secs] = BLOOM_MS[got - 1]; G.bloom[i] = got;
+  const gems = Math.round(Math.max(gemUnit() * 8, baseIncome()) * secs);
+  G.gems += gems; stat('blooms', 1);
+  toast(`${f >= 0.98 ? 'FULL BLOOM!' : `${Math.round(f * 100)}% BLOOMED!`} +${fmt(gems)} ${GEM}`, 2.2);
+  const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5);
+  for (const c of [...planet.def.flowers, 0xffc43d]) burst(at, S.p, new THREE.Color(c), 16, 10);
+  SFX.rush();
+}
 const rush = { t: 50, on: false };
 function updateRush(dt) {
   rush.t -= dt;
@@ -2430,7 +2496,7 @@ function step(dt) {
     if (planet.portals.length) updatePortals(dt);
     if (planet.meteors.length) updateMeteors(dt);
     updateCritters(dt);
-    updateRush(dt);
+    updateRush(dt); updateComet(dt); checkBloom(dt);
 
     // seed pods
     for (const pod of planet.pods) {
@@ -2533,7 +2599,8 @@ function step(dt) {
   planet.beam.material.opacity = 0.25 + 0.15 * Math.sin(performance.now() / 200);
   $('precise').hidden = !S.precise;
   let target = null, label = '';
-  if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
+  if (comet.on && comet.fall === 0) { target = comet.d; label = 'COMET'; }
+  else if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
   else if (planet.hoops.length && planet.hoopIdx < planet.hoops.length) { target = planet.hoops[planet.hoopIdx].d; label = 'HOOP'; }
   else { bareT -= dt; if (bareT <= 0) { bareT = 0.5; bareDir = findBare(); } if (bareDir && S.p.angleTo(bareDir) * planet.R > 9) { target = bareDir; label = 'BARE GROUND'; } }
   if (target && S.mode === 'drive' && SET.guide) {
@@ -2653,7 +2720,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
@@ -2757,7 +2824,7 @@ showWelcome(); if (!welcome) showDaily();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
-if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest };
+if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet };
 requestAnimationFrame(frame);
 </script>
 </body>
