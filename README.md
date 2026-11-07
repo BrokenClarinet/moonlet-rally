@@ -182,3 +182,8 @@ New: Aero fins (II), Drift rails (III), Seed sower (IV), Deep roots (V, garden g
 - Ramp % never rounds up to the target. Moonlets I and II each have a near-guaranteed star (open the ramp; smash 3 rocks) and a lower bloom star (50%, 65%), so the first star reward lands in a few minutes. Star goal pairs no longer repeat on back-to-back moonlets.
 - The "stars left" toast only shows when you've earned at least one star there, once per session.
 - On touch, the guide arrow hides while a toast is up. Floating gems nearer the camera than the car shrink. The auto-quality toast is silent on Moonlet I. "Buy all" also appears after 60 s of play.
+
+## Round 6 (2026-11-07)
+- Critter bumps cost about 5 s of garden income (still capped at 10% of gems) instead of scaling with your total.
+- Missions never duplicate an unearned star goal on the current moonlet.
+- Landscape phones: the golden comet badge sits at the right edge, away from the bonus text.

@@ -102,6 +102,7 @@
     body.touch #guide { top:258px; } #rush { top:262px; } #comet { top:292px; } }
   @media (max-height:500px) {
     body.touch #left, body.touch #right { transform:scale(.72); } body.touch #left { transform-origin:top left; } body.touch #right { transform-origin:top right; }
+    body.touch #comet { left:auto; right:12px; top:58%; transform:rotate(2deg); }
     body.touch #goal { top:52px; max-width:46vw; padding:3px 10px; } body.touch #goal b { font-size:12px; } body.touch #goal small { font-size:10px; }
     body.touch .tb { transform:scale(.85); } body.touch .tb.on { transform:scale(.85) translate(1px,2px); } body.touch #stick { transform:scale(.85); transform-origin:bottom left; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
@@ -1950,8 +1951,9 @@ const MISSIONS = [
 ];
 const mTier = () => Math.floor((G.mDone || 0) / 6);
 const mReward = () => Math.round(200 * econ() * (1 + 0.1 * mTier()));
+const starEvs = () => { if (!planet) return []; const i = planet.index, m = (G.stars && G.stars[i]) || 0; return starGoals(i).filter((g, b) => b > 0 && !(m & (1 << b))).map(g => g.ev); };
 function newMission(skip) {
-  const taken = new Set([...(G.missions || []).map(m => m.ev), ...(skip || [])]);
+  const taken = new Set([...(G.missions || []).map(m => m.ev), ...(skip || []), ...starEvs()]);
   let pool = MISSIONS.filter(m => !taken.has(m.ev) && (!m.ok || m.ok()));
   const twisty = pool.filter(m => m.ok && /wisp|hoop|star|pad|warp|crystal|geyser|bounce/.test(m.ev));
   if (twisty.length && Math.random() < 0.5) pool = twisty; // favour this moonlet's own twist
@@ -1984,7 +1986,7 @@ function tickMissions(dt) {
 }
 function renderMissions() {
   const el = $('missions'); if (!G.missions) { el.innerHTML = ''; return; }
-  const show = starsOn(planet.index) >= 3 ? G.missions : [...G.missions].sort((a, b) => (b.done ? 2 : b.p / b.n) - (a.done ? 2 : a.p / a.n)).slice(0, 1);
+  const se = starEvs(), show = starsOn(planet.index) >= 3 ? G.missions : [...G.missions].filter(m => m.done || !se.includes(m.ev)).sort((a, b) => (b.done ? 2 : b.p / b.n) - (a.done ? 2 : a.p / a.n)).slice(0, 1);
   el.innerHTML = show.map(m => { const d = MISSIONS.find(x => x.ev === m.ev), pr = Math.min(1, m.p / m.n), num = d.max || m.ev === 'drift' || m.ev === 'restore' ? (Math.floor(m.p * 10) / 10) : Math.floor(m.p);
     return `<div class="${m.done ? 'done' : ''}"><i style="width:${(pr * 100).toFixed(0)}%"></i><span>${d.txt(m.n)}</span><b>${m.done ? 'DONE' : `${num}/${m.n}`}</b></div>`; }).join('');
 }
@@ -2420,8 +2422,8 @@ function updateCritters(dt) {
     if (fleeing) { c.body.rotation.y += dt * 12; c.wait -= dt; if (c.wait <= 0) { c.state = 'off'; c.mesh.visible = false; c.body.rotation.y = 0; c.wait = 8 + Math.random() * 6; } return; }
     const dist = S.p.angleTo(c.d) * R, low = S.alt - groundH(c.d) < 1.6;
     if (dist < 1.3 && low && spd > 4 && bonkGrace <= 0) { // slow driving (precision mode) just nudges past them
-      // a bump stings (it scales with how rich you are) but is capped at 10% of what you carry, so it never wrecks a run
-      const pen = Math.floor(Math.min(G.gems * 0.1, Math.max(15 * gemUnit() * mult(), G.gems * 0.05, gemRate() * 20)));
+      // a bump stings a little: about 5 s of garden income, never more than 10% of what you carry
+      const pen = Math.floor(Math.min(G.gems * 0.1, Math.max(15 * gemUnit() * mult(), gemRate() * 5)));
       bonkGrace = 4; bonkFrame = true; SFX.bonk(); // no second bump straight after the first
       G.gems -= pen; S.v.multiplyScalar(0.3); S.f.applyAxisAngle(S.p, (Math.random() < 0.5 ? -1 : 1) * 0.8);
       trickChain = 0; comboTime = 0; driftCombo = 0; shake = Math.max(shake, 0.7); stat('bonks', 1);
