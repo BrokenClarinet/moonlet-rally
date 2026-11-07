@@ -37,7 +37,7 @@
   .gem { display:inline-block; width:1em; height:.9em; vertical-align:-.08em; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M5 1h10l4 5-9 11L1 6z' fill='%237fe3ff' stroke='%232a1838' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M1.5 6h17M7.5 1.5 6 6l4 10.5L14 6l-1.5-4.5' fill='none' stroke='%232a1838' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M6 6l1.5-4.5h-2L2.5 6z' fill='%23d8f8ff'/%3E%3C/svg%3E") center/contain no-repeat; }
   .big { font-size:26px; font-weight:900; text-shadow:2px 3px 0 var(--ink); }
   #toast { top:32%; left:50%; transform:translateX(-50%); font-size:24px; font-weight:900; color:var(--paper); text-shadow:2px 3px 0 var(--ink); opacity:0; transition:opacity .3s; text-align:center; white-space:nowrap; }
-  #drift { bottom:24%; left:50%; transform:translateX(-50%); font-size:22px; font-weight:900; color:var(--sun); text-shadow:2px 3px 0 var(--ink); opacity:0; white-space:nowrap; }
+  #drift { top:44%; left:50%; transform:translateX(-50%); font-size:22px; font-weight:900; color:var(--sun); text-shadow:2px 3px 0 var(--ink); opacity:0; white-space:nowrap; }
   #combo { bottom:62px; left:50%; transform:translateX(-50%); font-size:18px; font-weight:900; color:var(--mint); text-shadow:2px 2px 0 var(--ink); opacity:0; transition:opacity .2s; white-space:nowrap; }
   #nitro { bottom:22px; left:50%; transform:translateX(-50%); width:min(240px,40vw); height:16px; border-radius:9px; background:var(--panel); overflow:hidden; border:2.5px solid var(--ink); box-shadow:2px 3px 0 var(--ink); }
   #nitrofill { height:100%; width:50%; background:repeating-linear-gradient(-45deg,#ffc43d 0 8px,#ff9a3d 8px 16px); }
@@ -392,7 +392,7 @@ function lumpy(g, amt, seed = 0) {
 const shade = (hex, l) => new THREE.Color(hex).offsetHSL(0, 0, l).getHex();
 
 const PLANET_DEFS = [
-  { name: 'Moonlet I',   R: 8,  goal: 0.5,  seed: 7,  rate: 4,
+  { name: 'Moonlet I',   R: 8,  goal: 0.4,  seed: 7,  rate: 4,
     dead: [0xa496b8, 0x84779c], alive: [0x93d66c, 0x52a95c], pollen: 0xffd66b, leaf: 0x5cb85c, trunk: 0x8a5a3c,
     flowers: [0xffcf4a, 0xff7fa8, 0x8fe3ff], rock: [0xd6cce6, 0x9a8db4, 0x655981],
     sky: { top: 0x1c1650, hor: 0xff9f86, top2: 0x2d4fa0, hor2: 0xffd9a8 },
@@ -1247,6 +1247,7 @@ function updateUI() {
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
   const goal = planet.def.goal;
+  $('pct').hidden = frac < goal && S.mode === 'drive';
   $('pct').textContent = frac >= goal ? `${(frac * 100).toFixed(0)}% restored · ${(() => { const n = BLOOM_MS.find(([f]) => frac < f); return n ? `bonus at ${Math.round(n[0] * 100)}%` : 'full bloom!'; })()}` : `${(frac * 100).toFixed(0)}% of ${(goal * 100).toFixed(0)}% to open the ramp`;
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
@@ -1900,7 +1901,7 @@ const MISSIONS = [
   { ev: 'air', max: true, txt: (n) => `Stay airborne ${n}s in one jump`, n: (t) => 1.5 + Math.min(2.5, t * 0.5) },
   { ev: 'drift', txt: (n) => `Drift for ${n}s`, n: (t) => 6 + 3 * t },
   { ev: 'pod', txt: (n) => `Grab ${n} seed pods`, n: (t) => 3 + t },
-  { ev: 'comet', txt: (n) => n > 1 ? `Catch ${n} golden comets` : 'Catch a golden comet', n: (t) => 1 + Math.min(2, Math.floor(t / 3)) },
+  { ev: 'comet', txt: (n) => n > 1 ? `Catch ${n} golden comets` : 'Catch a golden comet', n: (t) => 1 + Math.min(2, Math.floor(t / 3)), ok: () => G.planetIdx > 0 },
   { ev: 'rock', txt: (n) => `Smash ${n} rocks`, n: (t) => 2 + Math.min(3, t), ok: () => planet.rocks.filter(r => !r.smashed).length >= 4 },
   { ev: 'trail', txt: (n) => `Collect ${n} trail gems`, n: (t) => 10 + 5 * t, ok: () => planet.gemArcs.length > 0 },
   { ev: 'restore', txt: (n) => `Grow ${n}% more of this moonlet`, n: (t) => 4 + Math.min(8, 2 * t), ok: () => planet.restored / planet.N < 0.85 },
@@ -2650,16 +2651,16 @@ function step(dt) {
     freshFrame = 0;
 
     // steer assist: nudge the nose toward the open ramp when close and not steering
-    if (planet.pad.visible && S.grounded && !inp.steer) {
+    if (planet.pad.visible && S.grounded && (!inp.steer || atIdx() < 2)) {
       const dist = S.p.angleTo(planet.padDir) * R;
-      if (dist < 9) { const to = tmp2.copy(planet.padDir).addScaledVector(S.p, -planet.padDir.dot(S.p)); if (to.lengthSq() > 1e-6) to.normalize(); const side = to.dot(left), ahead = to.dot(S.f); if (ahead > 0.3 && Number.isFinite(side)) S.f.applyAxisAngle(S.p, clamp(side, -1, 1) * 1.4 * dt); }
+      if (dist < (atIdx() < 2 ? 13 : 9)) { const to = tmp2.copy(planet.padDir).addScaledVector(S.p, -planet.padDir.dot(S.p)); if (to.lengthSq() > 1e-6) to.normalize(); const side = to.dot(left), ahead = to.dot(S.f); if (ahead > 0.3 && Number.isFinite(side)) S.f.applyAxisAngle(S.p, clamp(side, -1, 1) * 1.4 * dt); }
     }
 
     // launch ramp
     if (planet.restored / planet.N >= planet.def.goal) {
       if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } toast('LAUNCH RAMP OPEN!', 2.5, true); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
-      if (S.p.angleTo(planet.padDir) * R < 2.5 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); }
+      if (S.p.angleTo(planet.padDir) * R < (atIdx() < 2 ? 3.6 : 2.8) && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); }
     }
   } else if (S.mode === 'launch') {
     S.t += dt; S.alt += S.valt * dt; S.valt += 10 * dt;
@@ -2716,7 +2717,9 @@ function step(dt) {
   if (comet.on && comet.fall === 0) { target = comet.d; label = 'COMET'; }
   else if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
   else if (planet.hoops.length && planet.hoopIdx < planet.hoops.length) { target = planet.hoops[planet.hoopIdx].d; label = 'HOOP'; }
-  else { bareT -= dt; if (bareT <= 0) { bareT = 0.5; bareDir = findBare(); } if (bareDir && S.p.angleTo(bareDir) * planet.R > 9) { target = bareDir; label = 'BARE GROUND'; } }
+  else {
+    if (planet.restored > lastRestored + 2 || planet.restored < lastRestored - 50) { lastRestored = planet.restored; stallT = 0; } else stallT += dt; // grass not growing for 5 s: point at the nearest grey ground, however close
+    bareT -= dt; if (bareT <= 0) { bareT = 0.5; bareDir = findBare(); } if (bareDir && S.p.angleTo(bareDir) * planet.R > (stallT > 5 ? 2.5 : 9)) { target = bareDir; label = 'GREY GROUND'; } }
   if (target && S.mode === 'drive' && SET.guide) {
     const to = tmp2.copy(target).addScaledVector(S.p, -target.dot(S.p)); const m = Math.round(S.p.angleTo(target) * planet.R);
     const a = Math.atan2(-to.dot(left.crossVectors(S.p, S.f)), to.dot(S.f));
@@ -2725,7 +2728,7 @@ function step(dt) {
 }
 
 // nearest patch of unrestored ground (sampled, so it stays cheap on big moonlets)
-let bareT = 0, bareDir = null;
+let bareT = 0, bareDir = null, stallT = 0, lastRestored = 0;
 function findBare() {
   const { N, dirs, life } = planet, stepN = Math.max(1, Math.floor(N / 2500)), off = Math.floor(Math.random() * stepN);
   let best = -2, bi = -1;
@@ -2769,6 +2772,7 @@ function clearView(dt) {
     e.o = o + (want - o) * k; planet.setDeco(e);
   }
   for (const sh of planet.shrooms) { const want = blocks(V().copy(sh.d).multiplyScalar(R + 1.3), 1.4) ? 0.08 : 1; sh.o = (sh.o ?? 1) + (want - (sh.o ?? 1)) * k; }
+  for (const arc of planet.gemArcs) for (const g of arc.gems) if (g.mesh.visible) { const near = g.mesh.position.distanceTo(camera.position) < 4.5 || blocks(g.mesh.position, 0.5); const want = near ? 0.2 : 1; g.o = (g.o ?? 1) + (want - (g.o ?? 1)) * k; g.mesh.scale.setScalar(g.o); }
   for (const c of critters) if (c.mesh.visible) { const want = blocks(c.mesh.position, 0.6) ? 0.15 : 1; c.o = (c.o ?? 1) + (want - (c.o ?? 1)) * k; c.mesh.scale.setScalar(c.o); }
 }
 function render(dt) {

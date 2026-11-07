@@ -153,3 +153,10 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 - The Upgrades button pulses (with a one-time tip) when you can first afford an upgrade, until you've bought one.
 - The ramp banner previews the next moonlet ("Next: Frostlet (slippery ice)").
 - Speed lines while boosting (they follow the speed effects setting).
+
+## Review round 2 (Nov 7)
+
+- The comet mission only appears from Moonlet II, where comets spawn.
+- If your grass hasn't grown for 5 s, the arrow points at the nearest grey ground, however close.
+- The left panel hides its % line while the goal banner shows it. Bonus text sits above the car. Floating trail gems near the camera shrink.
+- Moonlet I's ramp opens at 40%. On Moonlets I and II the ramp is easier to hit (bigger catch area, stronger steering assist).
