@@ -977,6 +977,10 @@ function computeStats() {
   CS.smash *= Math.pow(0.92, u('bumper'));
   CS.bonus *= 1 + 0.1 * u('polish');
   CS.comboHold = 0.7 + 0.3 * u('combo');
+  CS.airCtl *= 1 + 0.15 * u('aero'); CS.driftPaint *= 1 + 0.12 * u('drifter'); CS.fresh *= 1 + 0.08 * u('sower');
+  CS.nitro *= 1 + 0.12 * u('turbo'); CS.top *= 1 + 0.02 * u('turbo'); CS.air *= 1 + 0.05 * u('hops'); CS.soft = Math.pow(0.85, u('hops'));
+  CS.comet = 1 + 0.15 * u('lure'); CS.cometT = u('lure'); CS.luck = 0.04 * u('luck'); CS.bonus *= 1 + 0.06 * u('prism');
+  CS.garden = (1 + 0.08 * u('roots')) * (1 + 0.04 * u('star')); CS.bonus *= 1 + 0.04 * u('star');
 }
 const DEFAULT_CAR = { body: 'buggy', paint: 0xff6b4a, wheels: 'classic', topper: 'antenna', trail: 'leaf' };
 
@@ -1412,6 +1416,16 @@ const UPG = [
   { id: 'wax', name: 'Trick wax', note: '+8% flip and spin speed, +10% trick gems', max: 5, base: 600, k: 2.15, at: 5 },
   { id: 'polish', name: 'Gem polish', note: '+10% bonus gems from everything', max: 8, base: 700, k: 2.2, at: 6 },
   { id: 'combo', name: 'Combo keeper', note: 'fresh-ground combo survives longer gaps', max: 4, base: 600, k: 2.25, at: 8 },
+  { id: 'aero', name: 'Aero fins', note: '+15% steering in the air', max: 5, base: 450, k: 2.05, at: 1 },
+  { id: 'drifter', name: 'Drift rails', note: '+12% track width while drifting', max: 5, base: 500, k: 2.1, at: 2 },
+  { id: 'sower', name: 'Seed sower', note: '+8% gems for new ground', max: 6, base: 550, k: 2.1, at: 3 },
+  { id: 'roots', name: 'Deep roots', note: '+8% Gem Garden growth', max: 8, base: 650, k: 2.15, at: 4 },
+  { id: 'turbo', name: 'Turbo charger', note: '+12% nitro from tricks and pods, +2% boost speed', max: 5, base: 550, k: 2.1, at: 5 },
+  { id: 'lure', name: 'Comet lure', note: '+15% comet jackpots, +1 s to catch them', max: 5, base: 650, k: 2.2, at: 6 },
+  { id: 'hops', name: 'Hop shocks', note: '+5% jump power, softer sloppy landings', max: 4, base: 600, k: 2.2, at: 7 },
+  { id: 'luck', name: 'Lucky charm', note: '+4% chance a trick pays double', max: 5, base: 750, k: 2.25, at: 9 },
+  { id: 'prism', name: 'Prism paint', note: '+6% bonus gems from everything', max: 6, base: 900, k: 2.3, at: 11 },
+  { id: 'star', name: 'Star core', note: '+4% all gems and garden growth per level, no limit (one more level per moonlet)', max: 999, base: 1200, k: 1.7, at: 9 },
 ];
 const upLvl = (id) => id === 'tires' ? G.tires : (G.up[id] || 0);
 const upCap = (u) => G.planetIdx < u.at ? 0 : Math.min(u.max, 2 + G.planetIdx - u.at);
@@ -1439,7 +1453,7 @@ function renderUpgrades() {
     if (G.planetIdx < u.at) continue;
     const l = upLvl(u.id), cap = upCap(u), maxed = l >= u.max, capped = !maxed && l >= cap, c = upCost(u);
     const row = document.createElement('div'); row.className = 'uprow';
-    row.innerHTML = `<div><b>${u.name}</b><span class="pips">${'<i class="on"></i>'.repeat(Math.min(l, u.max))}${'<i></i>'.repeat(Math.max(0, cap - l))}${'<i class="lk"></i>'.repeat(Math.max(0, u.max - Math.max(l, cap)))}</span><small>${u.note}</small></div>`;
+    row.innerHTML = `<div><b>${u.name}</b>${u.max > 20 ? `<span class="pips" style="font-size:11px;font-weight:900;color:var(--sun)">Lv ${l}</span>` : `<span class="pips">${'<i class="on"></i>'.repeat(Math.min(l, u.max))}${'<i></i>'.repeat(Math.max(0, cap - l))}${'<i class="lk"></i>'.repeat(Math.max(0, u.max - Math.max(l, cap)))}</span>`}<small>${u.note}</small></div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = maxed ? 'Maxed' : capped ? `Next level on ${moonName(u.at + l - 1)}` : `${fmt(c)} ${GEM}`; b.disabled = maxed || capped || G.gems < c;
     if (capped) b.style.fontSize = '10px';
     b.onclick = () => { if (maxed || capped || G.gems < c) return; G.gems -= c; if (u.id === 'tires') G.tires++; else G.up[u.id] = l + 1; computeStats(); renderGarage(); save(); };
@@ -1545,7 +1559,7 @@ function restoreLife(idx) {
   recount(planet);
   if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
 }
-const prodOf = (it) => it.rate * it.frac * mult() * (1 + 0.5 * (it.d.lvl || 0));
+const prodOf = (it) => it.rate * it.frac * mult() * (CS.garden || 1) * (1 + 0.5 * (it.d.lvl || 0));
 const capOf = (it) => Math.max(20, prodOf(it) * 3600 * siloHours());
 // Tending: while you sit in the Gem Garden it grows faster (x2, rising to x3 after two minutes), and silos that are
 // full keep paying straight into your gems, so idling here always earns.
@@ -2017,7 +2031,7 @@ function land() {
     S.v.multiplyScalar(0.25); G.nitro = Math.max(0, G.nitro - 0.2); trickChain = 0; shake = 0.9;
     burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); SFX.crash(); bonusText('CRASH!'); stat('crashes', 1); return;
   }
-  if (yr > 0.7) { S.v.multiplyScalar(0.55); trickChain = 0; shake = 0.5; SFX.sloppy(); bonusText('SLOPPY LANDING'); return; }
+  if (yr > 0.7) { S.v.multiplyScalar(1 - 0.45 * (CS.soft || 1)); trickChain = 0; shake = 0.5; SFX.sloppy(); bonusText('SLOPPY LANDING'); return; }
   const flips = Math.round(Math.abs(P) / TAU), spins = Math.round(Math.abs(Y) / TAU), names = [];
   const MULTI = ['', '', 'DOUBLE ', 'TRIPLE ', 'QUAD '], multi = (n) => MULTI[n] ?? `${n}x `;
   if (flips) names.push(multi(flips) + (P > 0 ? 'FRONTFLIP' : 'BACKFLIP'));
@@ -2027,7 +2041,8 @@ function land() {
   if (points) {
     const now = performance.now() / 1000;
     trickChain = now - lastTrickAt < 4 ? trickChain + 1 : 1; lastTrickAt = now;
-    const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * gemUnit() * mult() * CS.bonus * CS.trick);
+    const lucky = Math.random() < (CS.luck || 0), gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * gemUnit() * mult() * CS.bonus * CS.trick * (lucky ? 2 : 1));
+    if (lucky) names.push('LUCKY x2');
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
     stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
     if (flips) quest('flip', flips); if (spins) quest('spin', spins); quest('combo', trickChain);
@@ -2424,7 +2439,7 @@ function updateComet(dt) {
     for (let i = 0; i < 30 && !d; i++) { const c = randDir(Math.random), a = c.angleTo(S.p); if (a > 1.0 && a < 2.3 && !planet.rocks.some(rk => !rk.smashed && c.angleTo(rk.d) * R < rk.r + 2)) d = c; }
     if (!d) { comet.t = 3; return; }
     const m = cometMesh(); planet.group.add(m); comet.d.copy(d); m.quaternion.setFromUnitVectors(Y_AXIS, d); m.visible = true;
-    comet.on = true; comet.fall = 1; comet.left = 14 + R * 0.35; comet.t = 55 + Math.random() * 35;
+    comet.on = true; comet.fall = 1; comet.left = 14 + R * 0.35 + (CS.cometT || 0); comet.t = 55 + Math.random() * 35;
     SFX.star(); toast(`GOLDEN COMET! Catch it in ${Math.round(comet.left)}s`, 2.2);
   }
   const m = comet.mesh;
@@ -2439,7 +2454,7 @@ function updateComet(dt) {
   m.scale.setScalar(comet.left < 3 ? 0.6 + 0.4 * Math.abs(Math.sin(comet.left * 8)) : 1);
   $('comet').hidden = false; $('comet').textContent = `GOLDEN COMET ${Math.ceil(comet.left)}s`;
   if (S.p.angleTo(comet.d) * R < 2.2 * CS.reach && Math.abs(S.alt - groundH(comet.d)) < 3) {
-    const gems = Math.round(Math.max(60 * gemUnit() * mult() * CS.bonus, gemRate() * 40));
+    const gems = Math.round(Math.max(60 * gemUnit() * mult() * CS.bonus, gemRate() * 40) * (CS.comet || 1));
     G.gems += gems; G.nitro = 1; stat('comets', 1); quest('comet');
     const at = V().copy(comet.d).multiplyScalar(R + groundH(comet.d) + 1);
     for (const c of [0xffc43d, 0xfff3a0, 0x7fe3ff, planet.def.flowers[0]]) burst(at, comet.d, new THREE.Color(c), 22, 12);

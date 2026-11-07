@@ -160,3 +160,7 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 - If your grass hasn't grown for 5 s, the arrow points at the nearest grey ground, however close.
 - The left panel hides its % line while the goal banner shows it. Bonus text sits above the car. Floating trail gems near the camera shrink.
 - Moonlet I's ramp opens at 40%. On Moonlets I and II the ramp is easier to hit (bigger catch area, stronger steering assist).
+
+## More upgrades (20 total)
+
+New: Aero fins (II), Drift rails (III), Seed sower (IV), Deep roots (V, garden growth), Turbo charger (VI), Comet lure (VII), Hop shocks (VIII), Lucky charm (X, tricks can pay double), Prism paint (XII), and Star core (X), an endless upgrade with +4% all gems and garden growth per level that gets one more level per moonlet.
