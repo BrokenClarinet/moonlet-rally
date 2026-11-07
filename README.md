@@ -101,3 +101,21 @@ Every sound is synthesized at runtime with the Web Audio API (engine, drift and 
 ## Prices
 
 All prices (upgrades, car parts, sprinklers, silos) are a proportion of your total base garden income (`baseIncome()`: each restored moonlet's rate x how much of it you restored, plus the current moonlet at its goal; bought multipliers excluded). Price = base cost x income / 10, so each item costs the same number of seconds of income at every stage. Garden level-ups scale with that moonlet's own income.
+
+## Missions, daily gift and juice
+
+- Three missions are always active (flips, spins, combos, air time, drifting, pods, rocks, trail gems, restoring ground, close shaves, and moonlet-specific ones like hoops, portals or geysers). Missions only pick goals the current moonlet supports. Rewards follow your income and grow with how many you've finished.
+- Daily gift: a 7-day streak that resets if you miss a day. Brand-new players start on day 1 the next time they come back. You can watch an ad to double it.
+- Driving gems scale with income (`gemUnit()`), so tricks and pods stay worth it on late moonlets.
+- Big tricks (3+ flips or a 3+ combo) trigger slow motion, confetti and a big word. Opening the ramp throws confetti too.
+- Messages queue: when two pop up at once, the second shows right after the first instead of replacing it.
+
+## Poki requirements
+
+Checked against developers.poki.com (requirements, SDK, quality and content pages):
+- Rewarded buttons are lilac (never green), carry our own video icon, and sit below a standard button of the same size.
+- Rewards are optional bonuses, never gates. No in-game purchases, no second currency, no external requests (three.js is inlined in the Poki build), no external links or ad systems.
+- Any drive key, Enter/Space, or a tap on the title screen starts play; `gameplayStart()` fires on that first input. ESC/P pauses (gameplayStop) and resuming goes through `commercialBreak()`.
+- The on-screen error bar and the `window.__moonlet` test hook are turned off in the Poki build (`?pokidebug` turns the hook back on).
+- On phones the Poki pill is moved below the pause button (`PokiSDK.movePill(0, 58)`). Touch controls turn on for any touch device, tablets included.
+- Store thumbnails are in `store-assets/` and are uploaded separately on each portal. They are not part of the game zip.

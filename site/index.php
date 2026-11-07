@@ -26,6 +26,8 @@ $h = fn($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Moonlet Rally</title>
+<link rel="icon" type="image/png" href="assets/thumbnail.png">
+<meta property="og:image" content="assets/thumbnail.png">
 <meta name="description" content="Moonlet Rally: drive a little car around dead moonlets and bring them back to life with your tire tracks.">
 <style>
   :root { --ink:#2a1838; --paper:#fff6ea; --panel:#3a2758; --panel2:#4c3470; --sun:#ffc43d; --coral:#ff6b4a; --mint:#9be37a; --gem:#7fe3ff;
@@ -62,7 +64,7 @@ $h = fn($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
       <h1>MOONLET<span>RALLY</span></h1>
       <p class="lead">Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
     </div>
-    <img src="assets/car.png" alt="The Moonlet Rally buggy: a coral low-poly car with a yellow antenna" width="975" height="823">
+    <img src="assets/thumbnail.png" alt="Moonlet Rally: the little buggy restoring a moonlet" width="628" height="628" style="border-radius:22px;border:3px solid var(--ink)">
   </section>
 
   <section class="card">

@@ -14,6 +14,12 @@
   .hud { position:fixed; pointer-events:none; }
   .sticker, #left, #right { background:var(--panel); border:2.5px solid var(--ink); border-radius:16px; box-shadow:3px 4px 0 var(--ink); }
   #left { top:12px; left:12px; padding:9px 14px 10px; min-width:200px; }
+  #missions { margin-top:7px; display:flex; flex-direction:column; gap:4px; }
+  #missions:empty { display:none; }
+  #missions div { position:relative; font-size:11px; font-weight:800; padding:3px 8px; border-radius:8px; background:var(--panel2); overflow:hidden; display:flex; justify-content:space-between; gap:8px; }
+  #missions div i { position:absolute; left:0; top:0; bottom:0; background:rgba(155,227,122,.35); z-index:0; }
+  #missions div span, #missions div b { position:relative; z-index:1; } #missions div b { color:var(--sun); }
+  #missions div.done { background:var(--mint); color:var(--ink); } #missions div.done b { color:var(--ink); }
   #pname { font-weight:800; font-size:16px; letter-spacing:.5px; }
   #bar { margin-top:6px; height:12px; background:var(--panel2); border:2px solid var(--ink); border-radius:8px; overflow:hidden; }
   #barfill { height:100%; width:0%; background:repeating-linear-gradient(-45deg,#9be37a 0 8px,#7fd060 8px 16px); transition:width .2s; }
@@ -25,6 +31,7 @@
   .btn { pointer-events:auto; background:var(--sun); color:var(--ink); border:2.5px solid var(--ink); border-radius:12px; padding:6px 10px; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; box-shadow:2px 3px 0 var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:4px; }
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
   .btn.alt { background:var(--mint); }
+  .btn.ad { background:#c9b3ff; } .btn.ad svg.vid { flex:none; }
   .btn[disabled] { background:#6f5c86; color:#d9cde6; cursor:default; }
   .btn:focus-visible, .chip:focus-visible { outline:3px solid var(--paper); outline-offset:2px; }
   .gem { display:inline-block; width:1em; height:.9em; vertical-align:-.08em; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M5 1h10l4 5-9 11L1 6z' fill='%237fe3ff' stroke='%232a1838' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M1.5 6h17M7.5 1.5 6 6l4 10.5L14 6l-1.5-4.5' fill='none' stroke='%232a1838' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M6 6l1.5-4.5h-2L2.5 6z' fill='%23d8f8ff'/%3E%3C/svg%3E") center/contain no-repeat; }
@@ -157,7 +164,7 @@
 </style>
 </head>
 <body>
-<div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div></div>
+<div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div><div id="missions"></div></div>
 <div id="right" class="hud"><div id="gems">0</div><div id="rate">0.0 / sec</div>
   <div id="shop"><button class="btn" id="upT">Upgrades</button><button class="btn alt2" id="gardenBtn">Gem Garden (H)</button><button class="btn alt" id="garageBtn">Garage (G)</button><button class="btn" id="mapBtn" hidden style="background:var(--paper)">Moonlets (M)</button></div></div>
 <div id="toast" class="hud"></div>
@@ -170,7 +177,7 @@
 <div id="fade" class="hud"></div>
 <div id="garage" hidden>
   <div class="gpanel">
-    <div class="ghead"><b>Garage</b><span id="ggems"></span><button class="btn alt" id="gad" hidden>Watch ad: free gems</button><button class="btn" id="gclose">Drive!</button></div>
+    <div class="ghead"><b>Garage</b><span id="ggems"></span><button class="btn ad" id="gad" hidden><svg class="vid" width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1.5" width="11" height="11" rx="2.5" fill="#2a1838"/><path d="M12.5 5.2 17 2.6v8.8l-4.5-2.6z" fill="#2a1838"/><path d="M5 4.3v5.4L9.2 7z" fill="#fff6ea"/></svg>Free gems</button><button class="btn" id="gclose">Drive!</button></div>
     <div class="gtabs"><button class="chip" id="tabParts">Parts</button><button class="chip" id="tabUpg">Upgrades</button></div>
     <div id="gParts">
     <div class="grow"><label>Body</label><div class="chips" id="g-body"></div></div>
@@ -187,7 +194,7 @@
   <div class="gpanel" id="gardenPanel">
     <div class="ghead"><b>Gem Garden</b><span id="gdgems"></span><button class="btn" id="gdclose">Drive!</button></div>
     <p class="gdhint" id="gdhint"></p>
-    <div class="gdtop"><button class="btn alt" id="gdall">Harvest all</button><button class="btn" id="gS">Sprinklers</button><button class="btn" id="gSilo">Bigger silos</button><button class="btn alt" id="gdx" hidden>Watch ad: double it</button><button class="btn alt" id="gdad" hidden>Watch ad: +30 min of growth</button></div>
+    <div class="gdtop"><button class="btn alt" id="gdall">Harvest all</button><button class="btn" id="gS">Sprinklers</button><button class="btn" id="gSilo">Bigger silos</button><button class="btn ad" id="gdx" hidden><svg class="vid" width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1.5" width="11" height="11" rx="2.5" fill="#2a1838"/><path d="M12.5 5.2 17 2.6v8.8l-4.5-2.6z" fill="#2a1838"/><path d="M5 4.3v5.4L9.2 7z" fill="#fff6ea"/></svg>Double it</button><button class="btn ad" id="gdad" hidden><svg class="vid" width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1.5" width="11" height="11" rx="2.5" fill="#2a1838"/><path d="M12.5 5.2 17 2.6v8.8l-4.5-2.6z" fill="#2a1838"/><path d="M5 4.3v5.4L9.2 7z" fill="#fff6ea"/></svg>+30 min of growth</button></div>
     <div id="gdlist"></div>
   </div>
 </div>
@@ -224,8 +231,15 @@
   <div class="ghead"><b>Welcome back!</b></div>
   <p id="wText" style="margin:0;font-weight:700;text-align:center"></p>
   <p id="wCap" class="gdhint" style="text-align:center"></p>
-  <button class="btn alt" id="wAd" hidden></button>
   <button class="btn" id="wTake"></button>
+  <button class="btn ad" id="wAd" hidden></button>
+</div></div>
+<div id="daily" class="modal" hidden><div class="gpanel menu" style="max-width:440px">
+  <div class="ghead"><b>Daily gift</b></div>
+  <div id="dDays" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px"></div>
+  <p id="dText" style="margin:0;font-weight:700;text-align:center"></p>
+  <button class="btn" id="dTake"></button>
+  <button class="btn ad" id="dAd" hidden></button>
 </div></div>
 <div id="stats" class="modal" hidden><div class="gpanel">
   <div class="ghead"><b>Stats</b><button class="btn" id="stClose" style="margin-left:auto">Done</button></div>
@@ -249,7 +263,7 @@
 // show errors on screen so testers can report them (the game keeps running)
 (function () {
   let n = 0;
-  const show = (msg) => { const el = document.getElementById('errbar'); if (!el || n++ > 4) return; el.hidden = false; el.textContent = 'Something went wrong: ' + String(msg).slice(0, 200) + ' (please include this in your bug report)'; };
+  const show = (msg) => { const el = document.getElementById('errbar'); if (!el || n++ > 4 || window.MR_PLATFORM === 'poki') return; el.hidden = false; el.textContent = 'Something went wrong: ' + String(msg).slice(0, 200) + ' (please include this in your bug report)'; };
   addEventListener('error', (e) => { if (e.message) show(e.message); });
   addEventListener('unhandledrejection', (e) => { const r = e.reason; if (r && !/fetch|network/i.test(String(r.message || r))) show(r.message || r); });
 })();
@@ -259,7 +273,7 @@
 window.MR_SDK_READY = new Promise((resolve) => {
   if (window.MR_PLATFORM !== 'poki') return resolve(false);
   const s = document.createElement('script'); s.src = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
-  s.onload = () => { try { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); window.PokiSDK.init().then(() => resolve(true)).catch(() => resolve(true)); } catch (e) { resolve(false); } };
+  s.onload = () => { try { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); const pill = () => { try { window.PokiSDK.movePill(0, 58); } catch (e) {} }; window.PokiSDK.init().then(() => { pill(); resolve(true); }).catch(() => { pill(); resolve(true); }); } catch (e) { resolve(false); } };
   s.onerror = () => resolve(false);
   document.head.appendChild(s);
 });
@@ -867,7 +881,7 @@ function disposePlanet(p) {
   p.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
 }
 
-function startPlanet() { for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); }
+function startPlanet() { for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); if (started || G.missions) checkMissions(); }
 
 function recount(p) {
   let n = 0; for (let i = 0; i < p.N; i++) { if (p.life[i] >= 0.5) n++; p.paint(i); }
@@ -1102,7 +1116,7 @@ function spawn(at, up, color, spread) {
 
 // ---------------------------------------------------------------- game state & save
 const SAVE_KEY = 'moonletRally.v1';
-const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {}, siloLvl: 0, lifeV: 2 };
+const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {}, siloLvl: 0, lifeV: 2, missions: null, mDone: 0, daily: null };
 const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -1117,20 +1131,47 @@ function save() {
 // ---------------------------------------------------------------- UI
 const $ = (id) => document.getElementById(id);
 const GEM = '<i class="gem"></i>';
+const VID = '<svg class="vid" width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1.5" width="11" height="11" rx="2.5" fill="#2a1838"/><path d="M12.5 5.2 17 2.6v8.8l-4.5-2.6z" fill="#2a1838"/><path d="M5 4.3v5.4L9.2 7z" fill="#fff6ea"/></svg>';
 const FMT_U = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
 const fmtR = (n) => n < 100 ? (n || 0).toFixed(1) : fmt(n);
 const fmt = (n) => { if (!(n >= 1000)) return Math.floor(n || 0).toString(); const e = Math.min(FMT_U.length - 1, Math.floor(Math.log10(n) / 3)); const v = n / Math.pow(1000, e); return (e >= FMT_U.length - 1 && v >= 1000 ? n.toExponential(2) : v.toFixed(e === 1 ? 1 : 2) + FMT_U[e]); };
-let toastTimer = 0;
-function toast(msg, secs = 2.5) { $('toast').innerHTML = msg; $('toast').style.opacity = 1; toastTimer = secs; }
+// message lines (#toast up top, #drift near the car). When two messages land at once the second waits its turn
+// instead of overwriting the first: it shows right after, with a short fade between. While something is waiting,
+// the current one is cut short once it has had a fair look, so the queue never lags far behind the action.
+const mkChan = (id, minShow, maxQ, gap) => ({ id, minShow, maxQ, gapT: gap, q: [], t: 0, shown: 0, secs: 0, gap: 0, cur: '', live: false });
+function chanShow(c, msg, secs, live = false) { const el = $(c.id); el.innerHTML = msg; el.style.opacity = 1; c.t = secs; c.secs = secs; c.shown = 0; c.cur = msg; c.live = live; }
+const chanBusy = (c) => c.gap > 0 || (c.t > 0 && !c.live);
+function chanPush(c, msg, secs, now = false) {
+  if (!chanBusy(c)) { chanShow(c, msg, secs); return; }
+  if (c.t > 0 && c.cur === msg) { c.t = Math.max(c.t, secs); return; }
+  if (c.q.some(m => m.msg === msg)) return;
+  if (now) { if (c.t > 0.4 && c.gap <= 0) c.q.unshift({ msg: c.cur, secs: Math.max(c.t, c.minShow) }); c.gap = 0; chanShow(c, msg, secs); }
+  else { c.q.push({ msg, secs }); if (c.q.length > c.maxQ) c.q.shift(); }
+}
+function chanTick(c, dt) {
+  if (c.gap > 0) { c.gap -= dt; if (c.gap <= 0) { const n = c.q.shift(); if (n) chanShow(c, n.msg, n.secs); } return; }
+  if (c.t <= 0) return;
+  c.t -= dt; c.shown += dt;
+  if (c.q.length && !c.live) c.t = Math.min(c.t, Math.max(c.minShow, c.secs * 0.6) - c.shown);
+  if (c.live && c.q.length) c.t = 0;
+  if (c.t <= 0) { $(c.id).style.opacity = 0; c.live = false; if (c.q.length) c.gap = c.gapT; }
+}
+function chanClear(c) { c.q.length = 0; c.t = 0; c.gap = 0; c.live = false; $(c.id).style.opacity = 0; }
+const toastC = mkChan('toast', 1.6, 3, 0.32), bonusC = mkChan('drift', 0.75, 4, 0.12);
+function toast(msg, secs = 2.5, now = false) { chanPush(toastC, msg, secs, now); }
 // prices follow your total income: the base growth of every moonlet you've restored (at the level you restored it)
 // plus the one you're working on (at its ramp goal). Multipliers you buy (sprinklers, garden levels) are left out,
 // so buying them never makes everything else pricier. A price is that income times a proportion: base / 10 seconds.
 const baseIncome = () => G.done.reduce((a, d) => a + (d.rate || 0) * (d.frac || 0), 0) + planetDef(G.planetIdx).rate * planetDef(G.planetIdx).goal;
 const econ = () => Math.max(1, baseIncome() / 10);
+// gems you earn by driving (tricks, pods, hoops...) grow with your garden too, so playing stays worth it late in the game
+let gemUnitCache = 1, gemUnitAt = -1;
+const gemUnit = () => { const t = performance.now(); if (t - gemUnitAt > 500) { gemUnitAt = t; gemUnitCache = Math.max(1 + (planet ? planet.index : 0), baseIncome() * 0.15); } return gemUnitCache; };
 const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(v) : Math.round(v / Math.pow(10, Math.floor(Math.log10(v)) - 2)) * Math.pow(10, Math.floor(Math.log10(v)) - 2); }; // tidy: 3 significant digits
 const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
 function updateUI() {
+  renderMissions();
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
   const goal = planet.def.goal;
@@ -1470,7 +1511,7 @@ function renderGarden() {
   const maxSilo = (G.siloLvl || 0) >= SILO_STEPS.length - 1;
   $('gSilo').innerHTML = maxSilo ? `Silos: ${hrs(siloHours())} (max)` : `Bigger silos: hold ${hrs(SILO_STEPS[(G.siloLvl || 0) + 1])} · ${fmt(siloCost())} ${GEM}`; $('gSilo').disabled = maxSilo || G.gems < siloCost();
   $('gdhint').textContent = `Restored moonlets grow gems here, even while you're away. Silos hold ${hrs(siloHours())} of growth, then stop. Come back to harvest, or build bigger silos.`;
-  $('gdx').hidden = !(Platform.hasAds && doubleOffer >= 1); $('gdx').innerHTML = `Watch ad: double it (+${fmt(doubleOffer)} ${GEM})`;
+  $('gdx').hidden = !(Platform.hasAds && doubleOffer >= 1); $('gdx').innerHTML = `${VID}Double it (+${fmt(doubleOffer)} ${GEM})`;
   const list = $('gdlist'); list.innerHTML = '';
   for (const it of items) {
     const row = document.createElement('div'); row.className = 'gdrow';
@@ -1622,6 +1663,7 @@ function openModal(id) { if (modal) closeModal(); modal = id; $(id).hidden = fal
 function closeModal() {
   if (!modal) return; const was = modal; $(modal).hidden = true; modal = null; rebinding = null; updateLabels();
   if (was === 'map' && paused && $('pause').hidden && $('title').hidden) resume(); // the map was opened straight from play
+  if (was === 'welcome' && dailyGift) setTimeout(showDaily, 350);
 }
 function renderMap() {
   const L = $('mapList'); L.innerHTML = ''; const items = gardenItems(), here = atIdx();
@@ -1671,7 +1713,7 @@ function renderStats() {
     ['Time driving', hm], ['Gems earned', `${fmt(st.earned || 0)} ${GEM}`], ['Gems now', `${fmt(G.gems)} ${GEM}`],
     ['Moonlets restored', restored], ['Furthest moonlet', `${planetDef(G.planetIdx).name.replace('Moonlet ', '')}`], ['Garden growth', `${fmtR(gemRate())} ${GEM}/s`],
     ['Tricks landed', st.tricks || 0], ['Best trick', st.bestTrick ? `${fmt(st.bestTrick)} ${GEM}<small>${st.bestTrickName || ''}</small>` : '-'],
-    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0], ['Critters bumped', st.bonks || 0], ['Close shaves', st.shaves || 0],
+    ['Biggest combo', st.bestCombo ? `x${st.bestCombo}` : '-'], ['Most flips at once', st.mostFlips || 0], ['Longest air', `${(st.bestAir || 0).toFixed(1)}s`], ['Crashes', st.crashes || 0], ['Critters bumped', st.bonks || 0], ['Close shaves', st.shaves || 0], ['Missions done', st.missions || 0], ['Daily streak', G.daily ? G.daily.streak || 0 : 0],
   ];
   $('stList').innerHTML = rows.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('');
 }
@@ -1751,6 +1793,67 @@ function readInput() {
 // ---------------------------------------------------------------- simulation
 const tmp = V(), tmp2 = V(), left = V(), wheelW = V(), carPos = V(), nrm = V();
 const ACCEL = 16, MAXV = 15, MAXV_BOOST = 24, DRAG = 0.6, GRAV = 24, SMASH_SPEED = 10.5;
+// ---- missions
+const MISSIONS = [
+  { ev: 'flip', txt: (n) => `Land ${n} flips`, n: (t) => 3 + 2 * t },
+  { ev: 'spin', txt: (n) => `Land ${n} spins`, n: (t) => 2 + 2 * t },
+  { ev: 'combo', max: true, txt: (n) => `Land a x${n} trick combo`, n: (t) => 2 + Math.min(4, t) },
+  { ev: 'air', max: true, txt: (n) => `Stay airborne ${n}s in one jump`, n: (t) => 1.5 + Math.min(2.5, t * 0.5) },
+  { ev: 'drift', txt: (n) => `Drift for ${n}s`, n: (t) => 6 + 3 * t },
+  { ev: 'pod', txt: (n) => `Grab ${n} seed pods`, n: (t) => 3 + t },
+  { ev: 'rock', txt: (n) => `Smash ${n} rocks`, n: (t) => 2 + Math.min(3, t), ok: () => planet.rocks.filter(r => !r.smashed).length >= 4 },
+  { ev: 'trail', txt: (n) => `Collect ${n} trail gems`, n: (t) => 10 + 5 * t, ok: () => planet.gemArcs.length > 0 },
+  { ev: 'restore', txt: (n) => `Grow ${n}% more of this moonlet`, n: (t) => 4 + Math.min(8, 2 * t), ok: () => planet.restored / planet.N < 0.85 },
+  { ev: 'shave', txt: (n) => `Get ${n} close shaves past critters`, n: (t) => 2 + t, ok: () => planet.restored / planet.N > 0.15 },
+  { ev: 'wisp', txt: (n) => `Pop ${n} wisps`, n: (t) => 3 + t, ok: () => hasTwist(planet.def, 'wisps') },
+  { ev: 'hoop', txt: (n) => `Fly through ${n} hoops`, n: (t) => 6 + 3 * t, ok: () => hasTwist(planet.def, 'hoops') },
+  { ev: 'star', txt: (n) => `Catch ${n} falling stars`, n: (t) => 2 + t, ok: () => hasTwist(planet.def, 'stars') },
+  { ev: 'pad', txt: (n) => `Hit ${n} speed pads`, n: (t) => 5 + 2 * t, ok: () => hasTwist(planet.def, 'pads') },
+  { ev: 'warp', txt: (n) => `Warp through portals ${n} times`, n: (t) => 3 + t, ok: () => hasTwist(planet.def, 'portals') },
+  { ev: 'crystal', txt: (n) => `Grab ${n} space crystals`, n: (t) => 2 + t, ok: () => hasTwist(planet.def, 'meteors') },
+  { ev: 'geyser', txt: (n) => `Ride ${n} geysers`, n: (t) => 3 + t, ok: () => hasTwist(planet.def, 'geysers') },
+  { ev: 'bounce', txt: (n) => `Bounce ${n} times`, n: (t) => 8 + 4 * t, ok: () => hasTwist(planet.def, 'bouncy') },
+];
+const mTier = () => Math.floor((G.mDone || 0) / 6);
+const mReward = () => Math.round(200 * econ() * (1 + 0.1 * mTier()));
+function newMission(skip) {
+  const taken = new Set([...(G.missions || []).map(m => m.ev), ...(skip || [])]);
+  let pool = MISSIONS.filter(m => !taken.has(m.ev) && (!m.ok || m.ok()));
+  const twisty = pool.filter(m => m.ok && /wisp|hoop|star|pad|warp|crystal|geyser|bounce/.test(m.ev));
+  if (twisty.length && Math.random() < 0.5) pool = twisty; // favour this moonlet's own twist
+  const m = pool[Math.floor(Math.random() * pool.length)] || MISSIONS[0];
+  return { ev: m.ev, n: m.n(mTier()), p: 0, done: 0 };
+}
+function checkMissions() {
+  if (!Array.isArray(G.missions)) G.missions = [];
+  G.missions = G.missions.filter(m => { const d = MISSIONS.find(x => x.ev === m.ev); return d && (m.done || !d.ok || d.ok()); });
+  while (G.missions.length < 3) G.missions.push(newMission());
+}
+function quest(ev, amt = 1) {
+  if (!G.missions || S.mode !== 'drive') return;
+  for (const m of G.missions) {
+    if (m.ev !== ev || m.done) continue;
+    const d = MISSIONS.find(x => x.ev === ev);
+    m.p = d.max ? Math.max(m.p, amt) : m.p + amt;
+    if (m.p >= m.n) {
+      m.p = m.n; m.done = 1.8; G.mDone = (G.mDone || 0) + 1; stat('missions', 1);
+      const r = mReward(); G.gems += r; G.nitro = 1; SFX.bigGems();
+      toast(`MISSION COMPLETE! +${fmt(r)} ${GEM}`, 2.2);
+    }
+  }
+}
+function tickMissions(dt) {
+  if (!G.missions) return;
+  let changed = false;
+  for (let i = 0; i < G.missions.length; i++) { const m = G.missions[i]; if (m.done) { m.done -= dt; if (m.done <= 0) { G.missions[i] = newMission([m.ev]); changed = true; } } }
+  if (changed) save();
+}
+function renderMissions() {
+  const el = $('missions'); if (!G.missions) { el.innerHTML = ''; return; }
+  el.innerHTML = G.missions.map(m => { const d = MISSIONS.find(x => x.ev === m.ev), pr = Math.min(1, m.p / m.n), num = d.max || m.ev === 'drift' || m.ev === 'restore' ? (Math.floor(m.p * 10) / 10) : Math.floor(m.p);
+    return `<div class="${m.done ? 'done' : ''}"><i style="width:${(pr * 100).toFixed(0)}%"></i><span>${d.txt(m.n)}</span><b>${m.done ? 'DONE' : `${num}/${m.n}`}</b></div>`; }).join('');
+}
+
 let driftCombo = 0, driftShown = 0, freshFrame = 0, freshTimer = 0, comboTime = 0, combo = 1, shake = 0;
 const hints = {};
 const FLAME = [new THREE.Color(0xffc040), new THREE.Color(0xff6a2a)];
@@ -1764,16 +1867,16 @@ function trailColor() {
 }
 const ROCK_DUST = new THREE.Color(0x8a8296);
 
-function bonusText(msg) { $('drift').innerHTML = msg; driftShown = 1.3; }
+function bonusText(msg) { chanPush(bonusC, msg, 1.3); }
 function burst(at, up, color, n, spread) { for (let i = 0; i < n; i++) spawn(at, up, color, spread); }
 
 function smashRock(rk) {
-  rk.smashed = true; rk.mesh.visible = false; SFX.smash();
+  rk.smashed = true; rk.mesh.visible = false; SFX.smash(); quest('rock');
   const at = V().copy(rk.d).multiplyScalar(planet.R + groundH(rk.d) + 0.5);
   burst(at, rk.d, ROCK_DUST, 40, 9);
   burst(at, rk.d, new THREE.Color(planet.def.flowers[0]), 15, 7);
   paintAt(rk.d, rk.r + 2.4, 1);
-  const gems = Math.round(6 * (1 + planet.index) * mult() * CS.bonus);
+  const gems = Math.round(6 * gemUnit() * mult() * CS.bonus);
   G.gems += gems; bonusText(`SMASH! +${gems} ${GEM}`);
   G.nitro = Math.min(1, G.nitro + 0.1);
   S.v.multiplyScalar(0.9); shake = 0.7;
@@ -1805,7 +1908,7 @@ function airTricks(dt) {
 }
 const stat = (k, v, max) => { const st = G.stats; st[k] = max ? Math.max(st[k] || 0, v) : (st[k] || 0) + v; };
 function land() {
-  const air = S.air; S.air = 0; stat('bestAir', air, true);
+  const air = S.air; S.air = 0; stat('bestAir', air, true); quest('air', Math.floor(air * 10) / 10);
   const { pitch: P, yaw: Y } = S.tr; S.tr = { pitch: 0, yaw: 0 };
   const pr = Math.abs(P - Math.round(P / TAU) * TAU), yr = Math.abs(Y - Math.round(Y / TAU) * TAU);
   const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 0.2);
@@ -1823,9 +1926,11 @@ function land() {
   if (points) {
     const now = performance.now() / 1000;
     trickChain = now - lastTrickAt < 4 ? trickChain + 1 : 1; lastTrickAt = now;
-    const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * (1 + planet.index) * mult() * CS.bonus * CS.trick);
+    const gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * gemUnit() * mult() * CS.bonus * CS.trick);
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
     stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
+    if (flips) quest('flip', flips); if (spins) quest('spin', spins); quest('combo', trickChain);
+    if (turns >= 3 || trickChain >= 3) bigMoment(turns >= 5 || trickChain >= 5 ? 'INSANE!' : turns >= 4 || trickChain >= 4 ? 'AMAZING!' : 'AWESOME!');
     if (gems > (G.stats.bestTrick || 0)) { G.stats.bestTrick = gems; G.stats.bestTrickName = names.join(' + '); }
     paintAt(S.p, 2.2 + (flips + spins) * 1.2, 1);
     burst(at, S.p, new THREE.Color(planet.def.flowers[0]), 25, 9); burst(at, S.p, new THREE.Color(planet.def.leaf), 25, 7);
@@ -1836,7 +1941,7 @@ function land() {
   if (air > 0.25) SFX.land(air);
   if (air < 0.45) return;
   paintAt(S.p, 1.4 + Math.min(air, 2) * 1.6, 1);
-  const gems = Math.round(air * air * 4 * (1 + planet.index) * mult() * CS.bonus) + 1;
+  const gems = Math.round(air * air * 4 * gemUnit() * mult() * CS.bonus) + 1;
   G.gems += gems; bonusText(`AIR ${air.toFixed(1)}s +${gems} ${GEM}`);
   burst(at, S.p, new THREE.Color(planet.def.leaf), 30, 8);
   shake = Math.max(shake, Math.min(0.8, air * 0.4));
@@ -1848,8 +1953,8 @@ function updateGemArcs(dt) {
     if (arc.left === 0) { arc.wait -= dt; if (arc.wait <= 0) { arc.left = arc.gems.length; arc.gems.forEach(g => { g.got = false; g.mesh.visible = true; }); } continue; }
     for (const g of arc.gems) {
       if (g.got || g.mesh.position.distanceTo(cp) > 1.4 * CS.magnet) continue;
-      g.got = true; g.mesh.visible = false; arc.left--; SFX.gem();
-      const v = Math.round(2 * (1 + planet.index) * mult() * CS.bonus); G.gems += v; G.nitro = Math.min(1, G.nitro + 0.04);
+      g.got = true; g.mesh.visible = false; arc.left--; SFX.gem(); quest('trail');
+      const v = Math.round(2 * gemUnit() * mult() * CS.bonus); G.gems += v; G.nitro = Math.min(1, G.nitro + 0.04);
       burst(g.mesh.position, S.p, new THREE.Color(0x7fe3ff), 8, 5);
       if (arc.left === 0) { arc.wait = 15; const b = v * 5; G.gems += b; SFX.bigGems(); bonusText(`GEM TRAIL +${b} ${GEM}`); }
     }
@@ -1872,12 +1977,12 @@ function placePod(pod) {
 }
 
 function collectPod(pod) {
-  SFX.pod(); pod.active = false; pod.mesh.visible = false; pod.wait = 3 + Math.random() * 3;
+  SFX.pod(); quest('pod'); pod.active = false; pod.mesh.visible = false; pod.wait = 3 + Math.random() * 3;
   paintAt(pod.d, 4.5, 1);
   const at = V().copy(pod.d).multiplyScalar(planet.R + groundH(pod.d) + 0.6);
   burst(at, pod.d, new THREE.Color(0xd8ff7a), 30, 8);
   burst(at, pod.d, new THREE.Color(planet.def.flowers[1]), 15, 6);
-  const gems = Math.round(4 * (1 + planet.index) * mult() * CS.bonus);
+  const gems = Math.round(4 * gemUnit() * mult() * CS.bonus);
   G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.35);
   bonusText(`SEED POD +${gems} ${GEM} +NITRO`);
   if (!hints.pod) { hints.pod = true; toast(touch.active ? 'Seed pods fill your nitro. Tap BOOST!' : 'Seed pods fill your nitro. Hold E to boost!', 3.5); }
@@ -1941,8 +2046,8 @@ function updateWisps(dt) {
       const at = V().copy(w.d).multiplyScalar(R + groundH(w.d) + 1);
       burst(at, w.d, new THREE.Color(0x8a6fd0), 30, 9); burst(at, w.d, new THREE.Color(0xfff3b0), 12, 6);
       paintAt(w.d, 3.2, 1);
-      const gems = Math.round(8 * (1 + planet.index) * mult() * CS.bonus);
-      G.gems += gems; SFX.pop(); bonusText(`POP! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
+      const gems = Math.round(8 * gemUnit() * mult() * CS.bonus);
+      G.gems += gems; SFX.pop(); quest('wisp'); bonusText(`POP! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
       if (!hints.wisp) { hints.wisp = true; toast('Pop wisps before they eat your grass!', 3); }
     }
   }
@@ -1973,8 +2078,8 @@ function updateHoops(dt) {
     const at = V().copy(hp.d).multiplyScalar(R + groundH(hp.d) + 1.7);
     burst(at, hp.d, new THREE.Color(0xffc43d), 25, 8);
     planet.hoopIdx++;
-    const n = planet.hoopIdx, gems = Math.round(3 * n * (1 + planet.index) * mult() * CS.bonus);
-    G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.12); SFX.hoop(n, hoops.length);
+    const n = planet.hoopIdx, gems = Math.round(3 * n * gemUnit() * mult() * CS.bonus);
+    G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.12); SFX.hoop(n, hoops.length); quest('hoop');
     if (n === hoops.length) {
       paintAt(hp.d, 6, 1); bonusText(`HOOP RUN! +${gems} ${GEM}`); shake = Math.max(shake, 0.6); planet.hoopWait = 1.5;
     } else bonusText(`HOOP ${n}/${hoops.length} +${gems} ${GEM}`);
@@ -1995,7 +2100,7 @@ function updateGeysers(dt) {
     if (erupt && Math.random() < 0.6) spawn(V().copy(gz.d).multiplyScalar(R + groundH(gz.d) + 0.5 + Math.random() * 4), gz.d, new THREE.Color(0xffffff), 3);
     if (warn && Math.random() < 0.2) spawn(V().copy(gz.d).multiplyScalar(R + groundH(gz.d) + 0.4), gz.d, new THREE.Color(0xd8d0e8), 1.5);
     if (erupt && k > 0.3 && S.p.angleTo(gz.d) * R < 1.5 && S.alt - groundH(gz.d) < 2) {
-      takeoff(); S.valt = 21 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.3; shake = Math.max(shake, 0.4); SFX.whoosh();
+      takeoff(); S.valt = 21 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.3; shake = Math.max(shake, 0.4); SFX.whoosh(); quest('geyser');
       if (!hints.geyser) { hints.geyser = true; toast('Geyser launch! Time to flip!', 2.5); }
     }
   }
@@ -2039,8 +2144,8 @@ function catchStar(st, caught) {
   const at = V().copy(st.d).multiplyScalar(planet.R + groundH(st.d) + 0.5);
   burst(at, st.d, new THREE.Color(0xffd84a), caught ? 40 : 15, 10);
   if (caught) {
-    const gems = Math.round(15 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.3);
-    SFX.star(); bonusText(`STAR CATCH! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
+    const gems = Math.round(15 * gemUnit() * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.3);
+    SFX.star(); quest('star'); bonusText(`STAR CATCH! +${gems} ${GEM}`); shake = Math.max(shake, 0.5);
   }
 }
 
@@ -2054,7 +2159,7 @@ function updatePads(dt) {
     S.v.copy(S.f).multiplyScalar(Math.max(spd, 0) + 13); if (S.v.length() > MAXV_BOOST * 1.5) S.v.setLength(MAXV_BOOST * 1.5);
     G.nitro = Math.min(1, G.nitro + 0.12); paintAt(pd.d, 2.4, 1); shake = Math.max(shake, 0.35);
     burst(V().copy(pd.d).multiplyScalar(R + groundH(pd.d) + 0.4), pd.d, new THREE.Color(0x7fe3ff), 22, 9);
-    SFX.zap(); bonusText('ZOOM!');
+    SFX.zap(); quest('pad'); bonusText('ZOOM!');
     if (!hints.pad) { hints.pad = true; toast('Speed pads launch you forward. Chain them!', 2.5); }
   }
 }
@@ -2071,9 +2176,9 @@ function updatePortals(dt) {
     S.p.applyAxisAngle(V().crossVectors(S.p, S.f).normalize(), 2.4 / R).normalize();
     S.f.addScaledVector(S.p, -S.f.dot(S.p)).normalize(); S.v.addScaledVector(S.p, -S.v.dot(S.p));
     portalCd = 1.2; paintAt(pt.to.d, 3.2, 1); shake = Math.max(shake, 0.4);
-    const gems = Math.round(4 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems;
+    const gems = Math.round(4 * gemUnit() * mult() * CS.bonus); G.gems += gems;
     burst(V().copy(pt.to.d).multiplyScalar(R + groundH(pt.to.d) + 1.6), pt.to.d, new THREE.Color(pt.color), 35, 10);
-    SFX.warp(); bonusText(`WARP! +${gems} ${GEM}`);
+    SFX.warp(); quest('warp'); bonusText(`WARP! +${gems} ${GEM}`);
     if (!hints.portal) { hints.portal = true; toast('Portals come in matching pairs. Use them to reach bare ground fast!', 3); }
     return;
   }
@@ -2109,9 +2214,9 @@ function updateMeteors(dt) {
       m.shardT -= dt; m.shard.rotateY(dt * 2);
       if (m.shardT < 2) m.shard.visible = Math.floor(m.shardT * 6) % 2 === 0;
       if (S.p.angleTo(m.d) * R < 1.7 * CS.reach && S.alt - groundH(m.d) < 2.5) {
-        const gems = Math.round(12 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.2);
+        const gems = Math.round(12 * gemUnit() * mult() * CS.bonus); G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.2);
         paintAt(m.d, 4, 1); burst(V().copy(m.d).multiplyScalar(R + groundH(m.d) + 0.8), m.d, new THREE.Color(0x7fe3ff), 30, 9);
-        SFX.star(); bonusText(`SPACE CRYSTAL +${gems} ${GEM}`); m.shardT = 0;
+        SFX.star(); quest('crystal'); bonusText(`SPACE CRYSTAL +${gems} ${GEM}`); m.shardT = 0;
       }
       if (m.shardT <= 0) { m.shard.visible = false; m.state = 'wait'; m.wait = 2 + Math.random() * 3; }
     }
@@ -2174,7 +2279,7 @@ function updateCritters(dt) {
     const dist = S.p.angleTo(c.d) * R, low = S.alt - groundH(c.d) < 1.6;
     if (dist < 1.3 && low && spd > 4 && bonkGrace <= 0) { // slow driving (precision mode) just nudges past them
       // a bump stings (it scales with how rich you are) but is capped at 10% of what you carry, so it never wrecks a run
-      const pen = Math.floor(Math.min(G.gems * 0.1, Math.max(15 * (1 + planet.index) * mult(), G.gems * 0.05, gemRate() * 20)));
+      const pen = Math.floor(Math.min(G.gems * 0.1, Math.max(15 * gemUnit() * mult(), G.gems * 0.05, gemRate() * 20)));
       bonkGrace = 4; bonkFrame = true; SFX.bonk(); // no second bump straight after the first
       G.gems -= pen; S.v.multiplyScalar(0.3); S.f.applyAxisAngle(S.p, (Math.random() < 0.5 ? -1 : 1) * 0.8);
       trickChain = 0; comboTime = 0; driftCombo = 0; shake = Math.max(shake, 0.7); stat('bonks', 1);
@@ -2185,8 +2290,8 @@ function updateCritters(dt) {
       c.state = 'flee'; c.wait = 1.6;
       c.h.copy(V().copy(c.d).sub(S.p)).addScaledVector(c.d, -V().copy(c.d).sub(S.p).dot(c.d)); if (c.h.lengthSq() < 1e-8) c.h.copy(S.f); c.h.normalize();
     } else if (dist < 2.7 && low && spd > 9 && c.shaveCd <= 0) {
-      c.shaveCd = 3; const gems = Math.round(3 * (1 + planet.index) * mult() * CS.bonus); G.gems += gems; stat('shaves', 1);
-      SFX.shave(); bonusText(`CLOSE SHAVE +${gems} ${GEM}`);
+      c.shaveCd = 3; const gems = Math.round(3 * gemUnit() * mult() * CS.bonus); G.gems += gems; stat('shaves', 1);
+      SFX.shave(); quest('shave'); bonusText(`CLOSE SHAVE +${gems} ${GEM}`);
     }
   });
 }
@@ -2243,12 +2348,12 @@ function step(dt) {
 
     // drift scoring + nitro charge
     const slip = tmp2.length();
-    if (slip > 2.2 && spd > 5 && S.grounded) { driftCombo += dt; G.nitro = Math.min(1, G.nitro + 0.22 * CS.nitro * dt); }
+    if (slip > 2.2 && spd > 5 && S.grounded) { driftCombo += dt; quest('drift', dt); G.nitro = Math.min(1, G.nitro + 0.22 * CS.nitro * dt); }
     else if (driftCombo > 0) {
-      if (driftCombo > 0.6) { const bonus = Math.max(1, Math.floor(Math.pow(driftCombo, 1.3) * 2 * (1 + planet.index) * CS.bonus)); G.gems += bonus; $('drift').innerHTML = `DRIFT +${bonus} ${GEM}`; driftShown = 1.2; }
+      if (driftCombo > 0.6) { const bonus = Math.max(1, Math.floor(Math.pow(driftCombo, 1.3) * 2 * gemUnit() * CS.bonus)); G.gems += bonus; bonusText(`DRIFT +${bonus} ${GEM}`); }
       driftCombo = 0;
     }
-    if (driftCombo > 0.6) { $('drift').textContent = `DRIFT ${driftCombo.toFixed(1)}s`; driftShown = 0.3; }
+    if (driftCombo > 0.6 && !chanBusy(bonusC) && !bonusC.q.length) chanShow(bonusC, `DRIFT ${driftCombo.toFixed(1)}s`, 0.3, true);
     S.drift = slip;
 
     // move along the sphere, then carry the vectors into the new tangent plane
@@ -2286,7 +2391,7 @@ function step(dt) {
     const nextAlt = S.alt + S.valt * dt;
     if (hasTwist(planet.def, 'bouncy') && !S.grounded && nextAlt <= g && S.valt < -7) {
       land(); S.grounded = true; takeoff();
-      S.valt = Math.min(22, -S.valt * 0.68); S.alt = g + 0.05; S.grounded = false; S.air = 0.01; SFX.boing();
+      S.valt = Math.min(22, -S.valt * 0.68); S.alt = g + 0.05; S.grounded = false; S.air = 0.01; SFX.boing(); quest('bounce');
       paintAt(S.p, 1.6, 1); shake = Math.max(shake, 0.25);
       if (!hints.boing) { hints.boing = true; toast('BOING! Flip between bounces for combos', 2.5); }
     } else if (nextAlt <= g || (S.grounded && nextAlt < g + 0.12)) {
@@ -2348,7 +2453,8 @@ function step(dt) {
     if (freshFrame > 0) { freshTimer = CS.comboHold; comboTime += dt; }
     else { freshTimer -= dt; if (freshTimer <= 0) comboTime = 0; }
     combo = 1 + Math.min(4, Math.floor(comboTime / 2.5));
-    G.gems += freshFrame * 0.006 * combo * (1 + planet.index) * mult() * CS.fresh * (rush.on ? 3 : 1);
+    G.gems += freshFrame * 0.006 * combo * gemUnit() * mult() * CS.fresh * (rush.on ? 3 : 1);
+    if (freshFrame > 0) quest('restore', freshFrame / planet.N * 100);
     freshFrame = 0;
 
     // steer assist: nudge the nose toward the open ramp when close and not steering
@@ -2359,7 +2465,7 @@ function step(dt) {
 
     // launch ramp
     if (planet.restored / planet.N >= planet.def.goal) {
-      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); toast('Launch ramp open!<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
+      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } toast('Launch ramp open!<br><span style="font-size:16px">Follow the golden beam to the next moonlet</span>', 4); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
       if (S.p.angleTo(planet.padDir) * R < 2.5 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); }
     }
@@ -2535,7 +2641,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0) }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
@@ -2564,35 +2670,63 @@ if (saved && saved.t) {
 $('playBtn').onclick = start;
 for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => SFX.init(), { capture: true });
 addEventListener('click', (e) => { if (e.target instanceof Element && e.target.closest('.btn, .chip, .go')) SFX.click(); }, { capture: true });
-addEventListener('keydown', (e) => { if (menuReady && !$('title').hidden && !modal && ['Enter', 'Space'].includes(e.code)) { e.preventDefault(); start(); } });
+addEventListener('keydown', (e) => { if (menuReady && !$('title').hidden && !modal && (['Enter', 'Space'].includes(e.code) || isAct('up', e.code))) { e.preventDefault(); start(); } });
+$('title').addEventListener('click', (e) => { if (menuReady && !modal && !paused && !e.target.closest('button, a, input, select, label')) start(); });
 function showWelcome() {
   if (!welcome) return; const w = welcome;
   const h = w.away / 3600, awayTxt = h >= 1 ? `${Math.floor(h)}h ${Math.round((h % 1) * 60)}m` : `${Math.max(1, Math.round(w.away / 60))} min`;
   $('wText').innerHTML = `You were away ${awayTxt}. Your Gem Garden grew <b>+${fmt(w.grew)} ${GEM}</b>`;
   $('wCap').textContent = w.capped ? `Your silos filled up after ${hrs(siloHours())}. Build bigger silos in the Gem Garden to earn for longer.` : '';
-  $('wTake').innerHTML = `Collect +${fmt(w.grew)} ${GEM}`; $('wAd').hidden = !Platform.hasAds; $('wAd').innerHTML = `Watch ad: get +${fmt(w.grew * 2)} ${GEM}`;
+  $('wTake').innerHTML = `Collect +${fmt(w.grew)} ${GEM}`; $('wAd').hidden = !Platform.hasAds; $('wAd').innerHTML = `${VID}Watch ad: get +${fmt(w.grew * 2)} ${GEM}`;
   openModal('welcome');
 }
-const collectWelcome = (k) => { if (!welcome) return; gardenItems().forEach(it => { const v = Math.floor(it.d.silo || 0); G.gems += v; it.d.silo -= v; }); G.gems += welcome.grew * (k - 1); toast(`+${fmt(welcome.grew * k)} ${GEM}${k > 1 ? ' doubled!' : ''}`, 2); welcome = null; closeModal(); save(); };
+// daily gift: come back on consecutive days for a bigger gift (day 7 is the biggest, then it stays there)
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+let dailyGift = null;
+function prepDaily(hadSave) {
+  const today = dayKey(), y = new Date(); y.setDate(y.getDate() - 1);
+  if (!G.daily) { G.daily = { last: hadSave ? '' : today, streak: hadSave ? 0 : 1 }; if (!hadSave) return; }
+  if (G.daily.last === today) return;
+  const streak = G.daily.last === dayKey(y) ? Math.min(99, (G.daily.streak || 0) + 1) : 1;
+  dailyGift = { streak, gems: Math.round(150 * econ() * Math.min(7, streak)) };
+}
+function showDaily() {
+  if (!dailyGift || modal) return; const d = dailyGift, day = Math.min(7, d.streak);
+  $('dDays').innerHTML = [1, 2, 3, 4, 5, 6, 7].map(i => `<div style="text-align:center;padding:6px 0;border-radius:10px;border:2.5px solid var(--ink);font-size:11px;font-weight:900;background:${i < day ? 'var(--mint)' : i === day ? 'var(--sun)' : 'var(--panel2)'};color:${i <= day ? 'var(--ink)' : 'var(--paper)'}">Day ${i}</div>`).join('');
+  $('dText').innerHTML = `${d.streak > 1 ? `${d.streak} days in a row! ` : ''}Today's gift: <b>+${fmt(d.gems)} ${GEM}</b><br><span class="gdhint">Come back tomorrow for a bigger one.</span>`;
+  $('dTake').innerHTML = `Collect +${fmt(d.gems)} ${GEM}`; $('dAd').hidden = !Platform.hasAds; $('dAd').innerHTML = `${VID}Watch ad: get +${fmt(d.gems * 2)} ${GEM}`;
+  openModal('daily');
+}
+const collectDaily = (k) => { if (!dailyGift) return; G.gems += dailyGift.gems * k; G.daily = { last: dayKey(), streak: dailyGift.streak }; toast(`+${fmt(dailyGift.gems * k)} ${GEM}`, 2); dailyGift = null; closeModal(); save(); };
+$('dTake').onclick = () => collectDaily(1);
+$('dAd').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) collectDaily(2); });
+const collectWelcome = (k) => { if (!welcome) return; gardenItems().forEach(it => { const v = Math.floor(it.d.silo || 0); G.gems += v; it.d.silo -= v; }); G.gems += welcome.grew * (k - 1); toast(`+${fmt(welcome.grew * k)} ${GEM}${k > 1 ? ' doubled!' : ''}`, 2); welcome = null; closeModal(); save(); setTimeout(showDaily, 350); };
 $('wTake').onclick = () => collectWelcome(1);
 $('wAd').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { stat('adDoubles', 1); collectWelcome(2); } });
 function start() {
-  if (modal === 'welcome') return;
-  if (started) return resume(); started = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart();
+  if (modal === 'welcome' || modal === 'daily') return;
+  if (started) return resume(); started = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart(); checkMissions();
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Drive to bring the moonlet back to life!<br><span style="font-size:16px">Grab the glowing seed pods</span>'), 3.5);
 }
 
 let bonkFrame = false, lastGems = G.gems, last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
+let slowT = 0;
+function bigMoment(word) {
+  slowT = 0.5; toast(`<span style="font-size:40px;color:var(--sun)">${word}</span>`, 1.2, true); shake = Math.max(shake, 0.7);
+  const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1);
+  for (const c of [planet.def.flowers[0], planet.def.flowers[1], 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 18, 11);
+}
 function frame(now) {
-  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
+  const raw = (now - last) / 1000; last = now;
+  if (slowT > 0) slowT -= Math.min(0.05, raw);
+  const dt = Math.min(0.05, raw) * (slowT > 0 ? 0.35 : 1);
   fpsN++; fpsT += raw; if (fpsT >= 0.5) { if (SET.fps) $('fps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
   if (started && !paused) {
     tickGarden(dt);
-    if (!garageOpen && !gardenOpen) { step(dt); sanitize(); stat('time', dt); }
+    if (!garageOpen && !gardenOpen) { step(dt); sanitize(); stat('time', dt); tickMissions(dt); }
     if (G.gems > lastGems) stat('earned', G.gems - lastGems); else if (G.gems < lastGems - 0.5 && !bonkFrame) SFX.buy(); lastGems = G.gems; bonkFrame = false;
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
-    if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) $('toast').style.opacity = 0; }
-    if (driftShown > 0) { driftShown -= dt; $('drift').style.opacity = 1; } else $('drift').style.opacity = 0;
+    chanTick(toastC, dt); chanTick(bonusC, dt);
   }
   SFX.update(started && !paused && !garageOpen && !gardenOpen && !Platform.adBusy && S.mode === 'drive' && !document.hidden, S.v.length(), S.grounded, !!S.boosting, S.drift || 0);
   uiAcc += dt; if (uiAcc > 0.15) { uiAcc = 0; updateUI(); }
@@ -2606,11 +2740,12 @@ try { renderer.compile(scene, camera); } catch {}
 await loadStep(1, 'Ready!');
 showMenu();
 Platform.loadingFinished();
-showWelcome();
+prepDaily(!!saved);
+showWelcome(); if (!welcome) showDaily();
 Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
-window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX };
+if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest };
 requestAnimationFrame(frame);
 </script>
 </body>
