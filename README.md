@@ -139,3 +139,9 @@ Upgrades arrive gradually: Wider tires and Engine tune from the start, then Nitr
 
 - A goal banner at the top always says what to do: "Turn the grey ground green: 15% / 50%" and then "Ramp open! Drive onto the golden ramp to fly to Moonlet II" (it turns yellow and pops when it changes). On Moonlet I it also shows the controls for the first 25 seconds.
 - The title screen says the goal in one line. Missions stay hidden on Moonlet I until 20% is restored, so new players focus on the main goal. Golden comets start from Moonlet II so the arrow keeps pointing at the main goal.
+
+## Bug fixes from the review (Nov 7)
+
+- Geysers: each geyser launches the car at most once every 7 s and gives it some forward speed, so the car can no longer get stuck in a geyser-bounce loop (Trampoline Moon).
+- Trees, shrubs, mushrooms and critters between the camera and the car shrink out of the way and grow back afterwards.
+- Phones in landscape: smaller HUD panels, goal banner and touch buttons. Ice is less slippery with the thumb stick.
