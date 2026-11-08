@@ -45,11 +45,28 @@
   #nitrofill { height:100%; width:50%; background:repeating-linear-gradient(-45deg,#ffc43d 0 8px,#ff9a3d 8px 16px); }
   #nitro span { position:absolute; inset:0; font-size:10px; font-weight:900; letter-spacing:2px; text-align:center; line-height:16px; color:var(--paper); text-shadow:1px 1px 0 var(--ink); }
   #comet { top:156px; left:50%; transform:translateX(-50%) rotate(2deg); font-size:16px; font-weight:900; color:var(--ink); background:var(--sun); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.6s infinite; }
-  #goal { top:58px; left:50%; transform:translateX(-50%); max-width:min(520px,60vw); text-align:center; background:rgba(58,39,88,.92); border:2.5px solid var(--ink); border-radius:14px; box-shadow:2px 3px 0 var(--ink); padding:5px 14px 6px; line-height:1.2; }
-  #goal b { display:block; font-size:15px; font-weight:900; color:var(--paper); } #goal b em { font-style:normal; color:var(--sun); white-space:nowrap; }
+  #goal { top:62px; left:50%; transform:translateX(-50%); max-width:min(560px,62vw); min-width:220px; text-align:center; background:rgba(58,39,88,.95); border:3px solid var(--sun); border-radius:16px; box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 18px rgba(255,196,61,.45); padding:9px 16px 8px; line-height:1.2; animation:goalglow 2.4s ease-in-out infinite; }
+  #goal::before { content:'GOAL'; position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--sun); color:var(--ink); font-size:11px; font-weight:900; letter-spacing:.12em; padding:1px 10px; border:2.5px solid var(--ink); border-radius:9px; }
+  #goal.ramp::before { content:'GO!'; background:var(--mint); }
+  @keyframes goalglow { 50% { box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 30px rgba(255,196,61,.85); } }
+  #goal .gbar { display:block; height:7px; margin:6px 4px 0; border-radius:4px; background:rgba(0,0,0,.35); overflow:hidden; } #goal .gbar s { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--mint),var(--sun)); border-radius:4px; transition:width .3s; }
+  #goal .gbar[hidden] { display:none; }
+  #goal b { display:block; font-size:17px; font-weight:900; color:var(--paper); } #goal b em { font-style:normal; color:var(--sun); white-space:nowrap; }
   #goal small { display:block; font-size:12px; font-weight:800; color:var(--gem); margin-top:2px; } #goal small:empty { display:none; }
+  #goalCard { position:fixed; left:50%; top:42%; transform:translate(-50%,-50%) scale(.6); opacity:0; z-index:30; width:min(520px,88vw); text-align:center; background:var(--panel); border:4px solid var(--sun); border-radius:22px; box-shadow:0 0 0 3px var(--ink), 5px 6px 0 3px var(--ink), 0 0 40px rgba(255,196,61,.6); padding:16px 18px 14px; pointer-events:auto; transition:transform .35s cubic-bezier(.2,1.6,.4,1), opacity .25s; }
+  #goalCard.show { transform:translate(-50%,-50%) scale(1); opacity:1; }
+  #goalCard.fly { top:62px; transform:translate(-50%,0) scale(.42); opacity:0; transition:top .5s ease-in, transform .5s ease-in, opacity .5s ease-in; }
+  #goalCard[hidden] { display:none; }
+  #goalCard .gk { display:inline-block; background:var(--sun); color:var(--ink); font-size:13px; font-weight:900; letter-spacing:.14em; padding:2px 12px; border:2.5px solid var(--ink); border-radius:10px; }
+  #goalCard .gk.new { background:var(--coral); color:var(--paper); }
+  #goalCard .gm { font-size:13px; font-weight:800; opacity:.8; margin-top:8px; }
+  #goalCard h2 { margin:4px 0 6px; font-size:30px; line-height:1.05; font-weight:900; color:var(--sun); text-shadow:2px 3px 0 var(--ink); }
+  #goalCard p { margin:0; font-size:16px; font-weight:800; color:var(--paper); } #goalCard p em { font-style:normal; color:var(--gem); }
+  #goalCard .gt { margin-top:8px; font-size:13px; font-weight:800; color:var(--mint); } #goalCard .gt:empty { display:none; }
+  @media (max-width:600px) { #goalCard h2 { font-size:24px; } #goalCard p { font-size:14px; } }
+  @media (max-height:500px) { #goalCard { top:50%; padding:10px 14px; } #goalCard h2 { font-size:22px; } #goalCard p { font-size:13px; } }
   #goal.ramp { background:var(--sun); } #goal.ramp b { color:var(--ink); } #goal.ramp b em { color:var(--coral); } #goal.ramp small { color:var(--ink); }
-  #goal.flash { animation:goalpop .6s ease-out 2; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
+  #goal.flash { animation:goalpop .6s ease-out 2, goalglow 2.4s ease-in-out infinite; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
   #rush { top:122px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
   #precise { bottom:44px; left:calc(50% + 140px); font-size:11px; font-weight:900; letter-spacing:2px; color:var(--ink); background:var(--gem); border:2px solid var(--ink); border-radius:8px; padding:2px 7px; }
   .statgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
@@ -97,13 +114,13 @@
     #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; } #right { transform-origin:top right; }
     #toast { white-space:normal; width:92vw; font-size:19px; }
     body.touch #nitro { bottom:auto; top:140px; } body.touch #combo { bottom:auto; top:162px; }
-    #goal { top:128px; max-width:94vw; padding:4px 10px; } #goal b { font-size:13px; } #goal small { font-size:11px; }
-    #toast { top:128px; bottom:auto; } body.toasting #goal { visibility:hidden; } body.touch #nitro { top:222px; } body.touch #combo { top:244px; }
+    #goal { top:132px; max-width:94vw; min-width:0; padding:7px 10px 6px; } #goal b { font-size:15px; } #goal small { font-size:12px; }
+    #toast { top:128px; bottom:auto; } body.touch #nitro { top:auto !important; bottom:236px; } body.touch #combo { top:auto !important; bottom:258px; } body.touch #nitro { top:222px; } body.touch #combo { top:244px; }
     body.touch #guide { top:258px; } #rush { top:262px; } #comet { top:292px; } }
   @media (max-height:500px) {
     body.touch #left, body.touch #right { transform:scale(.72); } body.touch #left { transform-origin:top left; } body.touch #right { transform-origin:top right; }
     body.touch #comet { left:auto; right:12px; top:58%; transform:rotate(2deg); }
-    body.touch #goal { top:52px; max-width:46vw; padding:3px 10px; } body.touch #goal b { font-size:12px; } body.touch #goal small { font-size:10px; }
+    body.touch #goal { top:56px; max-width:48vw; min-width:0; padding:6px 10px 5px; } body.touch #goal b { font-size:13px; } body.touch #goal small { font-size:10px; } body.touch #goal .gbar { height:5px; margin-top:4px; }
     body.touch .tb { transform:scale(.85); } body.touch .tb.on { transform:scale(.85) translate(1px,2px); } body.touch #stick { transform:scale(.85); transform-origin:bottom left; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
@@ -191,7 +208,8 @@
 <div id="toast" class="hud"></div>
 <div id="drift" class="hud"></div>
 <div id="combo" class="hud"></div>
-<div id="goal" class="hud" hidden><b></b><small></small></div>
+<div id="goal" class="hud" hidden><b></b><small></small><i class="gbar" hidden><s></s></i></div>
+<div id="goalCard" hidden><span class="gk">YOUR GOAL</span><div class="gm"></div><h2></h2><p></p><div class="gt"></div></div>
 <div id="rush" class="hud" hidden></div>
 <div id="comet" class="hud" hidden></div>
 <div id="precise" class="hud" hidden>PRECISION</div>
@@ -1242,7 +1260,42 @@ const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(
 const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
 $('buyAll').onclick = (e) => { e.currentTarget.blur(); buyCheapest(); updateUI(); };
-let goalKey = '', goalAt = 0;
+let goalKey = '', goalAt = 0, goalGems = 0, cardT = null;
+// the goal card: a big centred card when you land (and when the ramp opens) that then flies up into the GOAL box,
+// so the box reads as "this is what you're doing" rather than one more HUD panel
+function showCard(kick, isNew, title, text, tip = '') {
+  const c = $('goalCard'); clearTimeout(cardT);
+  c.querySelector('.gk').textContent = kick; c.querySelector('.gk').classList.toggle('new', isNew);
+  c.querySelector('.gm').textContent = `${planet.def.name} · ${planet.def.title}`;
+  c.querySelector('h2').textContent = title; c.querySelector('p').innerHTML = text; c.querySelector('.gt').textContent = tip;
+  c.classList.remove('fly', 'show'); c.hidden = false; void c.offsetWidth; c.classList.add('show'); SFX.star();
+  cardT = setTimeout(flyCard, 3000);
+}
+function flyCard() {
+  const c = $('goalCard'); if (c.hidden || c.classList.contains('fly')) return; clearTimeout(cardT);
+  c.classList.add('fly'); cardT = setTimeout(() => { c.hidden = true; c.classList.remove('fly', 'show'); const g = $('goal'); g.classList.remove('flash'); void g.offsetWidth; g.classList.add('flash'); }, 520);
+}
+$('goalCard').addEventListener('click', flyCard);
+function goalCard() {
+  if (!planet || objDone()) return;
+  const t = obj ? obj.type : 'paint', n = obj ? obj.n : 0, goal = Math.round(planet.def.goal * 100);
+  G.objSeen = G.objSeen || {}; const isNew = t !== 'paint' && !G.objSeen[t]; G.objSeen[t] = 1;
+  const twist = planet.def.intro && planet.index > 0 ? planet.def.intro.replace(/^[^:]*:\s*/, 'Twist: ') : '';
+  const C = {
+    paint: ['TURN THE GREY GROUND GREEN', `Drive around: your tire tracks grow grass. Reach <em>${goal}%</em> to open the launch ramp.`],
+    shards: ['FIND THE STAR SHARDS', `<em>${n}</em> glowing shards are hidden on this moonlet. Follow the yellow arrow to each one.`],
+    trick: ['PUT ON A TRICK SHOW', `Score <em>${n}</em> trick points: jump, flip and spin, then land on your wheels.`],
+    rescue: ['RESCUE THE MOON PUPS', `Drive into a lost pup to scoop it up, then drop it at the glowing nest. <em>${n}</em> pups to save.`],
+    race: ['GATE RALLY', `Race through <em>${n}</em> gates. The first gate starts the clock, every gate after adds time.`],
+    chase: ['CATCH THE ZOOMER', `A golden zoomer is loose! Tag it <em>${n}</em> times. It runs when you get close, so cut it off or boost.`],
+    smash: ['ROCK SMASH', `Smash <em>${n}</em> rocks. Hit them at full speed, or boost into them.`],
+  }[t];
+  showCard(isNew ? 'NEW GOAL' : 'YOUR GOAL', isNew, C[0], C[1] + (t === 'paint' ? '' : ' The launch ramp opens when you finish.'), twist);
+}
+function rampCard() {
+  const next = `Moonlet ${roman(atIdx() + 2)}`, g = goalGems; goalGems = 0;
+  showCard(g ? 'GOAL COMPLETE!' : 'GOAL REACHED!', false, 'LAUNCH RAMP OPEN!', `${g ? `+${fmt(g)} ${GEM} · ` : ''}Follow the yellow arrow and drive onto the <em>golden ramp</em> to fly to ${next}.`);
+}
 function updateGoal(frac) {
   const el = $('goal');
   if (S.mode !== 'drive' || garageOpen || gardenOpen) { el.hidden = true; return; }
@@ -1262,6 +1315,10 @@ function updateGoal(frac) {
         : `Reach ${Math.round(goal * 100)}% to open the launch ramp to ${next}`;
     } else sub = `${Math.round(goal * 100)}% opens the launch ramp to ${next}`; }
   }
+  { let pf = null; const i = planet.index, p = (G.objP && G.objP[i]) || 0;
+    if (key === 'paint') pf = frac / goal;
+    else if (obj && key === 'obj-' + obj.type) pf = obj.type === 'shards' ? (obj.items ? obj.items.filter(x => x.got).length : 0) / obj.n : obj.type === 'race' ? obj.next / obj.n : p / obj.n;
+    const bar = el.querySelector('.gbar'); bar.hidden = pf == null; if (pf != null) bar.firstChild.style.width = (Math.min(1, pf) * 100).toFixed(1) + '%'; }
   el.hidden = false; el.classList.toggle('ramp', key === 'ramp');
   el.querySelector('b').innerHTML = main; el.querySelector('small').textContent = sub;
   if (key !== goalKey) { goalKey = key; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
@@ -2012,7 +2069,7 @@ function bonusText(msg) { chanPush(bonusC, msg, 1.3); }
 function burst(at, up, color, n, spread) { for (let i = 0; i < n; i++) spawn(at, up, color, spread); }
 
 function smashRock(rk) {
-  rk.smashed = true; rk.mesh.visible = false; SFX.smash(); quest('rock'); starQuest('rock', 1);
+  rk.smashed = true; rk.mesh.visible = false; SFX.smash(); quest('rock'); starQuest('rock', 1); objSmash();
   const at = V().copy(rk.d).multiplyScalar(planet.R + groundH(rk.d) + 0.5);
   burst(at, rk.d, ROCK_DUST, 40, 9);
   burst(at, rk.d, new THREE.Color(planet.def.flowers[0]), 15, 7);
@@ -2462,14 +2519,16 @@ function cometMesh() {
 function cometEnd() { comet.on = false; if (comet.mesh) comet.mesh.visible = false; $('comet').hidden = true; }
 // ---- moonlet goals: painting is only one of five main goals, so moonlets play differently from each other.
 // Every goal opens the launch ramp; painting still grows the garden, blooms and stars on every moonlet.
-const OBJ_SEQ = ['paint', 'shards', 'trick', 'rescue', 'race', 'paint', 'shards', 'trick', 'rescue', 'race', 'paint', 'shards', 'trick', 'race', 'rescue', 'paint', 'race', 'rescue', 'trick', 'shards'];
-const OBJ_CYCLE = ['paint', 'shards', 'trick', 'rescue', 'race'];
+const OBJ_SEQ = ['paint', 'shards', 'trick', 'rescue', 'race', 'chase', 'smash', 'trick', 'shards', 'race', 'rescue', 'chase', 'trick', 'race', 'smash', 'paint', 'race', 'chase', 'smash', 'shards'];
+const OBJ_CYCLE = ['paint', 'shards', 'trick', 'rescue', 'race', 'chase', 'smash'];
 const objType = (i) => i < OBJ_SEQ.length ? OBJ_SEQ[i] : OBJ_CYCLE[i % OBJ_CYCLE.length];
 const OBJ_NEW = {
   shards: 'NEW GOAL: Star shards!<br><span style="font-size:16px">Find the glowing shards hidden around this moonlet</span>',
   trick: 'NEW GOAL: Trick show!<br><span style="font-size:16px">Score trick points: jump, flip, spin, land clean</span>',
   rescue: 'NEW GOAL: Lost moon pups!<br><span style="font-size:16px">Scoop up each pup and drive it home to the nest</span>',
   race: 'NEW GOAL: Gate rally!<br><span style="font-size:16px">Race through the gates before the clock runs out</span>',
+  chase: 'NEW GOAL: Catch the zoomer!',
+  smash: 'NEW GOAL: Rock smash!',
 };
 const objGroup = new THREE.Group(); scene.add(objGroup);
 let obj = null, objGeo = null;
@@ -2482,7 +2541,7 @@ function objDone() {
 const objTier = (i) => Math.floor(i / 5);
 function objSize(type, i) {
   const t = objTier(i);
-  return type === 'shards' ? 6 + Math.min(4, t) : type === 'trick' ? 300 + 150 * Math.min(6, t) : type === 'rescue' ? 4 + Math.min(2, t) : type === 'race' ? 6 + Math.min(3, t) : 0;
+  return type === 'shards' ? 6 + Math.min(4, t) : type === 'trick' ? 300 + 150 * Math.min(6, t) : type === 'rescue' ? 4 + Math.min(2, t) : type === 'race' ? 8 + Math.min(4, t) : type === 'chase' ? 3 + Math.min(2, t) : type === 'smash' ? 5 + Math.min(3, t) : 0;
 }
 function objGeos() {
   if (objGeo) return objGeo;
@@ -2498,6 +2557,7 @@ function objGeos() {
     beam: new THREE.CylinderGeometry(0.12, 0.12, 14, 6, 1, true).translate(0, 7, 0),
     beamMat: new THREE.MeshBasicMaterial({ color: 0x7fe3ff, transparent: true, opacity: 0.45, depthWrite: false }),
     pupBeamMat: new THREE.MeshBasicMaterial({ color: 0xff8fc7, transparent: true, opacity: 0.45, depthWrite: false }),
+    zoomBeamMat: new THREE.MeshBasicMaterial({ color: 0xffc43d, transparent: true, opacity: 0.5, depthWrite: false }),
     nestBeam: new THREE.CylinderGeometry(1.3, 1.3, 10, 14, 1, true).translate(0, 5, 0),
     nestBeamMat: new THREE.MeshBasicMaterial({ color: 0xffc43d, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide }),
   };
@@ -2544,7 +2604,7 @@ function objStart() {
     });
   } else if (type === 'race') {
     // a winding course: each gate a fixed drive from the last, turning a little left or right
-    const start = new THREE.Vector3(0, 1, 0), step = Math.min(0.9, 11 / R);
+    const start = new THREE.Vector3(0, 1, 0), step = Math.min(1.1, 14 / R); obj.stepU = step * R;
     let d = start.clone(), head = new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
     obj.gates = [];
     for (let k = 0; k < obj.n; k++) {
@@ -2559,6 +2619,15 @@ function objStart() {
     }
     obj.next = 0; obj.clock = 0; obj.running = false;
     raceLook();
+  } else if (type === 'smash') {
+    obj.n = Math.min(obj.n, Math.max(1, planet.rocks.filter(r => !r.smashed).length));
+  } else if (type === 'chase') {
+    // a golden zoomer that runs from you; tag it and it pops away to somewhere else
+    const c = makeCritter(); c.mesh.visible = true; c.mesh.scale.setScalar(1.15); objGroup.add(c.mesh);
+    c.mesh.traverse(o => { if (o.isMesh && o.material && o.material.color && o.layers.mask === 1 && o.material.vertexColors) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(0x7a5a00); } });
+    const bm = new THREE.Mesh(g.beam, g.zoomBeamMat); c.mesh.add(bm);
+    obj.runner = { d: spreadDirs(1, 1)[0] || new THREE.Vector3(1, 0, 0), h: V(), m: c.mesh, jink: 0, hop: 0 };
+    obj.runner.h.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5); obj.runner.h.addScaledVector(obj.runner.d, -obj.runner.h.dot(obj.runner.d)).normalize();
   }
 }
 function placeNested(it, k) {
@@ -2575,11 +2644,16 @@ function objReward(k = 1) { const gems = Math.round(k * 20 * gemUnit() * mult() 
 function objComplete() {
   const i = objIdx(); G.objDone = G.objDone || {}; G.objDone[i] = 1; stat('goals', 1);
   const gems = objReward(6); SFX.bigGems(); slowT = 0.5;
-  toast(`<span style="font-size:36px;color:var(--sun)">GOAL COMPLETE!</span><br><span style="font-size:16px">+${fmt(gems)} ${GEM} · the launch ramp is open</span>`, 3, true);
+  goalGems = gems;
   save();
 }
 function objProgress(text) { bonusText(text); SFX.star(); G.nitro = Math.min(1, G.nitro + 0.25); }
 // trick points count toward a trick-show goal (called from land())
+function objSmash() {
+  if (!obj || obj.type !== 'smash' || objDone() || S.mode !== 'drive') return;
+  const i = objIdx(); G.objP[i] = (G.objP[i] || 0) + 1; objProgress(`ROCK ${G.objP[i]}/${obj.n} +${fmt(objReward())} ${GEM}`);
+  if (G.objP[i] >= obj.n) objComplete(); else save();
+}
 function objTrick(points) {
   if (!obj || obj.type !== 'trick' || objDone() || S.mode !== 'drive') return;
   const i = objIdx(); G.objP[i] = Math.min(obj.n, (G.objP[i] || 0) + Math.round(points));
@@ -2621,6 +2695,23 @@ function updateObjective(dt) {
       }
     }
     if (home >= obj.n) objComplete();
+  } else if (obj.type === 'chase') {
+    const r = obj.runner, toCar = S.p.angleTo(r.d) * R;
+    // flee: steer away from the car when it's close, wander otherwise; faster when chased, never as fast as the car
+    const away = V().copy(r.d).sub(S.p); away.addScaledVector(r.d, -away.dot(r.d)); if (away.lengthSq() > 1e-6) away.normalize();
+    r.jink -= dt; if (r.jink <= 0) { r.jink = 0.6 + Math.random() * 0.9; r.turn = (Math.random() - 0.5) * 2.4; }
+    if (toCar < 12) r.h.lerp(away, Math.min(1, dt * 3)); r.h.applyAxisAngle(r.d, r.turn * dt); r.h.addScaledVector(r.d, -r.h.dot(r.d)).normalize();
+    const sp = (toCar < 12 ? 8.5 + Math.min(2, objTier(i) * 0.5) : 3) * dt / R;
+    r.d.applyAxisAngle(V().crossVectors(r.d, r.h).normalize(), sp).normalize();
+    r.hop += dt * (toCar < 12 ? 14 : 6);
+    r.m.position.copy(surfAt(r.d, Math.abs(Math.sin(r.hop)) * 0.7)); r.m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(V().crossVectors(r.d, r.h).normalize(), r.d, r.h));
+    if (toCar < 1.9 && S.alt - groundH(r.d) < 2.5) {
+      G.objP[i] = (G.objP[i] || 0) + 1; burst(surfAt(r.d, 1), r.d, new THREE.Color(0xffc43d), 30, 12); shake = Math.max(shake, 0.4);
+      objProgress(`TAGGED! ${G.objP[i]}/${obj.n} +${fmt(objReward(1.5))} ${GEM}`); save();
+      if (G.objP[i] >= obj.n) { r.m.visible = false; objComplete(); return; }
+      r.d.copy(S.p).applyAxisAngle(V().crossVectors(S.p, S.f).normalize(), -(1.2 + Math.random() * 0.6)).normalize(); // pops out well ahead of you
+      r.h.copy(S.f).addScaledVector(r.d, -S.f.dot(r.d)).normalize();
+    }
   } else if (obj.type === 'race') {
     if (obj.running) {
       obj.clock -= dt;
@@ -2632,7 +2723,7 @@ function updateObjective(dt) {
       if (S.p.angleTo(gt.d) * R < 2.3 && S.alt - groundH(gt.d) < 4) {
         obj.next++; burst(surfAt(gt.d, 2), gt.d, new THREE.Color(0xffc43d), 22, 10);
         if (obj.next >= obj.n) { obj.running = false; raceLook(); objComplete(); return; }
-        const bonus = obj.next === 1 ? 10 : 6 + planet.R * 0.1; obj.clock = obj.next === 1 ? bonus : obj.clock + bonus; obj.running = true;
+        const bonus = obj.next === 1 ? 8 : 3 + obj.stepU / 10; // about 1.5x what a clean line needs obj.clock = obj.next === 1 ? bonus : obj.clock + bonus; obj.running = true;
         raceLook(); objProgress(`GATE ${obj.next}/${obj.n} +${Math.round(bonus)}s`); objReward(0.5);
       }
     }
@@ -2645,6 +2736,8 @@ function objTarget() {
   if (obj.type === 'shards') { const d = near(obj.items.filter(x => !x.got).map(x => x.d)); return d && { d, label: 'SHARD' }; }
   if (obj.type === 'rescue') { if (obj.carrying) return { d: obj.nest, label: 'NEST' }; const d = near(obj.items.filter(x => !x.home).map(x => x.d)); return d && { d, label: 'PUP' }; }
   if (obj.type === 'race') { const g = obj.gates[obj.next]; return g && { d: g.d, label: 'GATE' }; }
+  if (obj.type === 'chase') return { d: obj.runner.d, label: 'ZOOMER' };
+  if (obj.type === 'smash') { const d = near(planet.rocks.filter(r => !r.smashed).map(r => r.d)); return d && { d, label: 'ROCK' }; }
   return null;
 }
 function objGoalText() {
@@ -2653,6 +2746,8 @@ function objGoalText() {
   if (obj.type === 'trick') return [`Score <em>trick points</em>: <em>${p} / ${obj.n}</em>`, touch.active ? 'Tap JUMP, then push the stick to flip and spin. Land on your wheels!' : `${kn('jump')} jumps. In the air, ${kn('up')} ${kn('down')} flip and ${kn('left')} ${kn('right')} spin. Land on your wheels!`];
   if (obj.type === 'rescue') return [`Bring the <em>lost moon pups</em> home: <em>${p} / ${obj.n}</em>`, obj.carrying ? 'Pup on board! Drive to the glowing nest.' : 'Drive into a pup to scoop it up.'];
   if (obj.type === 'race') return [`Race through the <em>gates</em>: <em>${obj.next} / ${obj.n}</em>${obj.running ? ` · <em>${Math.ceil(obj.clock)}s</em>` : ''}`, obj.running ? 'Each gate adds time. Drift through the corners!' : 'Drive through the glowing gate to start the clock.'];
+  if (obj.type === 'chase') return [`Catch the <em>golden zoomer</em>: <em>${p} / ${obj.n}</em>`, 'It runs when you get close. Cut it off, or boost!'];
+  if (obj.type === 'smash') return [`Smash <em>rocks</em>: <em>${p} / ${obj.n}</em>`, touch.active ? 'Hit them at full speed, or tap BOOST into them.' : `Hit them at full speed, or boost (${kn('boost')}) into them.`];
   return ['', ''];
 }
 function objIntro() {
@@ -2950,7 +3045,7 @@ function step(dt) {
 
     // launch ramp
     if (objDone()) {
-      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } toast('LAUNCH RAMP OPEN!', 2.5, true); }
+      if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } rampCard(); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
       if (S.p.angleTo(planet.padDir) * R < (atIdx() < 2 ? 3.6 : 2.8) && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); }
     }
@@ -2976,7 +3071,7 @@ function step(dt) {
     S.t += dt; S.valt -= 22 * dt; S.alt += S.valt * dt;
     $('fade').style.opacity = 1 - smooth(0, 0.8, S.t);
     const g = groundH(S.p);
-    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); toast(planet.index < G.planetIdx ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); objIntro(); arrivalGift(); }
+    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); if (planet.index < G.planetIdx) toast(`Welcome back to ${planet.def.title}!`, 3); else goalCard(); setTimeout(arrivalGift, 3200); }
   }
 
   grow(dt);
@@ -3224,7 +3319,7 @@ $('wTake').onclick = () => collectWelcome(1);
 $('wAd').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { stat('adDoubles', 1); collectWelcome(2); } });
 function start() {
   if (modal === 'welcome' || modal === 'daily') return;
-  if (started) return resume(); started = true; $('title').hidden = true; S.jumpHeld = true; Platform.gameplayStart(); checkMissions();
+  if (started) return resume(); started = true; $('title').hidden = true; setTimeout(() => { if (S.mode === 'drive' && !modal) goalCard(); }, 400); S.jumpHeld = true; Platform.gameplayStart(); checkMissions();
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Let\'s go!<br><span style="font-size:16px">Glowing seed pods fill your nitro</span>'), 3.5);
 }
 
@@ -3276,7 +3371,8 @@ function frame(now) {
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
     { const rt = Math.min(0.25, raw); playLog.t += rt; if (planet) playLog.m[planet.index] = (playLog.m[planet.index] || 0) + rt; } // real seconds: the 0.05 s game-step cap undercounted slow phones
     chanTick(toastC, dt); chanTick(bonusC, dt);
-    { const on = toastC.t > 0; if (on !== toasting) { toasting = on; document.body.classList.toggle('toasting', on); } }
+    { const on = toastC.t > 0; if (on !== toasting) { toasting = on; document.body.classList.toggle('toasting', on); }
+      if (on && (innerWidth <= 600 || innerHeight <= 500)) { const g = $('goal'), el = $('toast'); el.style.bottom = 'auto'; el.style.top = (g.hidden ? 128 : Math.round(g.getBoundingClientRect().bottom) + 10) + 'px'; } else if (on) { $('toast').style.top = $('toast').style.bottom = ''; } }
   }
   SFX.update(started && !paused && !garageOpen && !gardenOpen && !Platform.adBusy && S.mode === 'drive' && !document.hidden, S.v.length(), S.grounded, !!S.boosting, S.drift || 0);
   uiAcc += dt; if (uiAcc > 0.15) { uiAcc = 0; updateUI(); }

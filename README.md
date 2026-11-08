@@ -205,3 +205,7 @@ User: "even with the twists, it feels like the same thing over and over". Painti
 - **Lost moon pups**: scoop each pup onto the roof and drive it to the nest.
 - **Gate rally**: drive through 6+ gates; the first gives 10 s and each next one adds time; run out and you restart from gate 1.
 Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX and a 5-cycle after. Painting still grows the garden and earns bloom milestones and stars everywhere. First meeting with each goal shows a "NEW GOAL" toast. Progress saves per moonlet (G.objDone, G.objP).
+
+## Round 9: an obvious goal, and more goal types (2026-11-08)
+- The goal is now a labelled, glowing "GOAL" box with a progress bar. A big goal card shows when you start, land on a new moonlet, or open the ramp, then flies up into the box (tap to skip). The first time you meet a goal type it says "NEW GOAL". On phones, toasts sit under the box instead of hiding it.
+- Two new goals: **Catch the zoomer** (tag a fleeing golden critter 3+ times) and **Rock smash** (5+ rocks at speed or with boost). Gate rally now has 8+ gates spaced further apart, with tighter time.
