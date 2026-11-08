@@ -38,14 +38,14 @@
   .btn:focus-visible, .chip:focus-visible { outline:3px solid var(--paper); outline-offset:2px; }
   .gem { display:inline-block; width:1em; height:.9em; vertical-align:-.08em; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M5 1h10l4 5-9 11L1 6z' fill='%237fe3ff' stroke='%232a1838' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M1.5 6h17M7.5 1.5 6 6l4 10.5L14 6l-1.5-4.5' fill='none' stroke='%232a1838' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M6 6l1.5-4.5h-2L2.5 6z' fill='%23d8f8ff'/%3E%3C/svg%3E") center/contain no-repeat; }
   .big { font-size:26px; font-weight:900; text-shadow:2px 3px 0 var(--ink); }
-  #toast { bottom:66%; left:50%; transform:translateX(-50%); font-size:24px; font-weight:900; color:var(--paper); text-shadow:2px 3px 0 var(--ink); opacity:0; transition:opacity .3s; text-align:center; white-space:nowrap; }
+  #toast { z-index:20; bottom:66%; left:50%; transform:translateX(-50%); font-size:24px; font-weight:900; color:var(--paper); text-shadow:2px 3px 0 var(--ink); opacity:0; transition:opacity .3s; text-align:center; white-space:nowrap; }
   #drift { top:44%; left:50%; transform:translateX(-50%); font-size:22px; font-weight:900; color:var(--sun); text-shadow:2px 3px 0 var(--ink); opacity:0; white-space:nowrap; }
   #combo { bottom:62px; left:50%; transform:translateX(-50%); font-size:18px; font-weight:900; color:var(--mint); text-shadow:2px 2px 0 var(--ink); opacity:0; transition:opacity .2s; white-space:nowrap; }
   #nitro { bottom:22px; left:50%; transform:translateX(-50%); width:min(240px,40vw); height:16px; border-radius:9px; background:var(--panel); overflow:hidden; border:2.5px solid var(--ink); box-shadow:2px 3px 0 var(--ink); }
   #nitrofill { height:100%; width:50%; background:repeating-linear-gradient(-45deg,#ffc43d 0 8px,#ff9a3d 8px 16px); }
   #nitro span { position:absolute; inset:0; font-size:10px; font-weight:900; letter-spacing:2px; text-align:center; line-height:16px; color:var(--paper); text-shadow:1px 1px 0 var(--ink); }
   #comet { top:156px; left:50%; transform:translateX(-50%) rotate(2deg); font-size:16px; font-weight:900; color:var(--ink); background:var(--sun); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.6s infinite; }
-  #goal { top:62px; left:50%; transform:translateX(-50%); max-width:min(560px,62vw); min-width:220px; text-align:center; background:rgba(58,39,88,.95); border:3px solid var(--sun); border-radius:16px; box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 18px rgba(255,196,61,.45); padding:9px 16px 8px; line-height:1.2; animation:goalglow 2.4s ease-in-out infinite; }
+  #goal { top:62px; left:50%; transform:translateX(-50%); max-width:min(560px,62vw,calc(100vw - 620px)); min-width:240px; box-sizing:border-box; text-align:center; background:rgba(58,39,88,.95); border:3px solid var(--sun); border-radius:16px; box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 18px rgba(255,196,61,.45); padding:9px 16px 8px; line-height:1.2; animation:goalglow 2.4s ease-in-out infinite; }
   #goal::before { content:'GOAL'; position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--sun); color:var(--ink); font-size:11px; font-weight:900; letter-spacing:.12em; padding:1px 10px; border:2.5px solid var(--ink); border-radius:9px; }
   #goal.ramp::before { content:'GO!'; background:var(--mint); }
   @keyframes goalglow { 50% { box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 30px rgba(255,196,61,.85); } }
@@ -1280,11 +1280,11 @@ function goalCard() {
   if (!planet || objDone()) return;
   const t = obj ? obj.type : 'paint', n = obj ? obj.n : 0, goal = Math.round(planet.def.goal * 100);
   G.objSeen = G.objSeen || {}; const isNew = t !== 'paint' && !G.objSeen[t]; G.objSeen[t] = 1;
-  const twist = planet.def.intro && planet.index > 0 ? planet.def.intro.replace(/^[^:]*:\s*/, 'Twist: ') : '';
+  const twist = isNew && planet.restored / planet.N > 0.05 ? 'Update: this moonlet has a new goal. Your grass still grows your garden.' : planet.def.intro && planet.index > 0 ? planet.def.intro.replace(/^[^:]*:\s*/, 'Twist: ') : '';
   const C = {
     paint: ['TURN THE GREY GROUND GREEN', `Drive around: your tire tracks grow grass. Reach <em>${goal}%</em> to open the launch ramp.`],
-    shards: ['FIND THE STAR SHARDS', `<em>${n}</em> glowing shards are hidden on this moonlet. Follow the yellow arrow to each one.`],
-    trick: ['PUT ON A TRICK SHOW', `Score <em>${n}</em> trick points: jump, flip and spin, then land on your wheels.`],
+    shards: ['FIND THE STAR SHARDS', `<em>${n}</em> glowing shards are hidden on this moonlet. Follow the yellow arrow, and jump for the high ones.`],
+    trick: ['PUT ON A TRICK SHOW', `Score <em>${n}</em> trick points: jump, flip and spin, then land on your wheels. Big air counts too.`],
     rescue: ['RESCUE THE MOON PUPS', `Drive into a lost pup to scoop it up, then drop it at the glowing nest. <em>${n}</em> pups to save.`],
     race: ['GATE RALLY', `Race through <em>${n}</em> gates. The first gate starts the clock, every gate after adds time.`],
     chase: ['CATCH THE ZOOMER', `A golden zoomer is loose! Tag it <em>${n}</em> times. It runs when you get close, so cut it off or boost.`],
@@ -1331,7 +1331,7 @@ function updateUI() {
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
   const goal = planet.def.goal;
   const paintGoal = !obj || obj.type === 'paint';
-  $('pct').hidden = paintGoal && frac < goal && S.mode === 'drive';
+  $('pct').hidden = paintGoal && frac < goal && S.mode === 'drive'; $('pct').style.opacity = paintGoal ? '' : '.55';
   $('pct').textContent = frac >= goal ? `${(frac * 100).toFixed(0)}% restored · ${(() => { const n = BLOOM_MS.find(([f]) => frac < f); return n ? `bonus at ${Math.round(n[0] * 100)}%` : 'full bloom!'; })()}` : (paintGoal ? `${Math.floor(frac * 100)}% of ${Math.round(goal * 100)}% to open the ramp` : `${Math.floor(frac * 100)}% restored · grows your garden`);
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
@@ -2115,7 +2115,7 @@ function land() {
     burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); SFX.crash(); bonusText('CRASH!'); stat('crashes', 1); return;
   }
   if (yr > 0.7) { S.v.multiplyScalar(1 - 0.45 * (CS.soft || 1)); trickChain = 0; shake = 0.5; SFX.sloppy(); bonusText('SLOPPY LANDING'); return; }
-  starQuest('air', air);
+  starQuest('air', air); if (air > 0.6) objTrick(air * 10); // clean landings after big air count toward a trick show too
   const flips = Math.round(Math.abs(P) / TAU), spins = Math.round(Math.abs(Y) / TAU), names = [];
   const MULTI = ['', '', 'DOUBLE ', 'TRIPLE ', 'QUAD '], multi = (n) => MULTI[n] ?? `${n}x `;
   if (flips) names.push(multi(flips) + (P > 0 ? 'FRONTFLIP' : 'BACKFLIP'));
@@ -2541,7 +2541,7 @@ function objDone() {
 const objTier = (i) => Math.floor(i / 5);
 function objSize(type, i) {
   const t = objTier(i);
-  return type === 'shards' ? 6 + Math.min(4, t) : type === 'trick' ? 300 + 150 * Math.min(6, t) : type === 'rescue' ? 4 + Math.min(2, t) : type === 'race' ? 8 + Math.min(4, t) : type === 'chase' ? 3 + Math.min(2, t) : type === 'smash' ? 5 + Math.min(3, t) : 0;
+  return type === 'shards' ? 6 + Math.min(4, t) : type === 'trick' ? 150 + 75 * Math.min(6, t) : type === 'rescue' ? 4 + Math.min(2, t) : type === 'race' ? 8 + Math.min(4, t) : type === 'chase' ? 3 + Math.min(2, t) : type === 'smash' ? 5 + Math.min(3, t) : 0;
 }
 function objGeos() {
   if (objGeo) return objGeo;
@@ -2588,8 +2588,9 @@ function objStart() {
     const mask = G.objP[i] || 0;
     obj.items = spreadDirs(obj.n, Math.max(5, R * 0.7)).map((d, k) => {
       const m = inked(g.shard, g.shardMat, 0.04), b = new THREE.Mesh(g.beam, g.beamMat); m.add(b); b.position.y = -0.4;
-      placeOn(m, d, 1.1); objGroup.add(m); m.visible = !(mask & (1 << k));
-      return { d, m, got: !!(mask & (1 << k)) };
+      const h = k >= obj.n - (objTier(i) > 0 ? 2 : 1) ? 3.6 : 1.1; // the last one or two float high: jump for them
+      placeOn(m, d, h); objGroup.add(m); m.visible = !(mask & (1 << k));
+      return { d, m, h, got: !!(mask & (1 << k)) };
     });
   } else if (type === 'rescue') {
     obj.nest = spreadDirs(1, 1)[0] || new THREE.Vector3(1, 0, 0);
@@ -2615,6 +2616,7 @@ function objStart() {
       const m = new THREE.Mesh(g.gate, g.gateOff); const ink = new THREE.Mesh(g.gate, inkMat(0.05)); ink.layers.set(1); m.add(ink);
       m.position.copy(surfAt(d, -0.1));
       const x = V().crossVectors(d, head).normalize(); m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, d, V().crossVectors(x, d)));
+      for (const rk of planet.rocks) if (!rk.smashed && rk.d.angleTo(d) * R < rk.r + 3) { rk.smashed = true; rk.mesh.visible = false; } // keep the course clear
       objGroup.add(m); obj.gates.push({ d, m });
     }
     obj.next = 0; obj.clock = 0; obj.running = false;
@@ -2666,8 +2668,8 @@ function updateObjective(dt) {
     let got = 0;
     obj.items.forEach((it, k) => {
       if (it.got) { got++; return; }
-      it.m.rotateY(dt * 1.6); it.m.position.copy(surfAt(it.d, 1.1 + 0.25 * Math.sin(t * 2 + k)));
-      if (S.p.angleTo(it.d) * R < 1.7 && S.alt - groundH(it.d) < 3.2) {
+      it.m.rotateY(dt * 1.6); it.m.position.copy(surfAt(it.d, it.h + 0.25 * Math.sin(t * 2 + k)));
+      if (S.p.angleTo(it.d) * R < 1.8 && Math.abs(S.alt - groundH(it.d) + 0.5 - it.h) < 1.9) {
         it.got = true; it.m.visible = false; got++; G.objP[i] = (G.objP[i] || 0) | (1 << k);
         burst(surfAt(it.d, 1), it.d, new THREE.Color(0x7fe3ff), 24, 10); burst(surfAt(it.d, 1), it.d, new THREE.Color(0xfff3b0), 12, 8);
         objProgress(`SHARD ${got}/${obj.n} +${fmt(objReward())} ${GEM}`); save();
@@ -2723,7 +2725,7 @@ function updateObjective(dt) {
       if (S.p.angleTo(gt.d) * R < 2.3 && S.alt - groundH(gt.d) < 4) {
         obj.next++; burst(surfAt(gt.d, 2), gt.d, new THREE.Color(0xffc43d), 22, 10);
         if (obj.next >= obj.n) { obj.running = false; raceLook(); objComplete(); return; }
-        const bonus = obj.next === 1 ? 8 : 3 + obj.stepU / 10; // about 1.5x what a clean line needs obj.clock = obj.next === 1 ? bonus : obj.clock + bonus; obj.running = true;
+        const bonus = obj.next === 1 ? 8 : 3 + obj.stepU / 10 - Math.min(1.5, 0.35 * objTier(i)); // about 1.5x what a clean line needs obj.clock = obj.next === 1 ? bonus : obj.clock + bonus; obj.running = true;
         raceLook(); objProgress(`GATE ${obj.next}/${obj.n} +${Math.round(bonus)}s`); objReward(0.5);
       }
     }
@@ -2742,7 +2744,7 @@ function objTarget() {
 }
 function objGoalText() {
   const i = objIdx(), p = (G.objP && G.objP[i]) || 0;
-  if (obj.type === 'shards') { const got = obj.items ? obj.items.filter(x => x.got).length : 0; return [`Find the <em>star shards</em>: <em>${got} / ${obj.n}</em>`, 'Follow the yellow arrow. Each one pays out.']; }
+  if (obj.type === 'shards') { const got = obj.items ? obj.items.filter(x => x.got).length : 0; return [`Find the <em>star shards</em>: <em>${got} / ${obj.n}</em>`, 'Follow the yellow arrow. High ones need a jump!']; }
   if (obj.type === 'trick') return [`Score <em>trick points</em>: <em>${p} / ${obj.n}</em>`, touch.active ? 'Tap JUMP, then push the stick to flip and spin. Land on your wheels!' : `${kn('jump')} jumps. In the air, ${kn('up')} ${kn('down')} flip and ${kn('left')} ${kn('right')} spin. Land on your wheels!`];
   if (obj.type === 'rescue') return [`Bring the <em>lost moon pups</em> home: <em>${p} / ${obj.n}</em>`, obj.carrying ? 'Pup on board! Drive to the glowing nest.' : 'Drive into a pup to scoop it up.'];
   if (obj.type === 'race') return [`Race through the <em>gates</em>: <em>${obj.next} / ${obj.n}</em>${obj.running ? ` · <em>${Math.ceil(obj.clock)}s</em>` : ''}`, obj.running ? 'Each gate adds time. Drift through the corners!' : 'Drive through the glowing gate to start the clock.'];
@@ -3038,16 +3040,16 @@ function step(dt) {
     freshFrame = 0;
 
     // steer assist: nudge the nose toward the open ramp when close and not steering
-    if (planet.pad.visible && S.grounded && (!inp.steer || atIdx() < 2)) {
+    if (planet.pad.visible && S.grounded) {
       const dist = S.p.angleTo(planet.padDir) * R;
-      if (dist < (atIdx() < 2 ? 13 : 9)) { const to = tmp2.copy(planet.padDir).addScaledVector(S.p, -planet.padDir.dot(S.p)); if (to.lengthSq() > 1e-6) to.normalize(); const side = to.dot(left), ahead = to.dot(S.f); if (ahead > 0.3 && Number.isFinite(side)) S.f.applyAxisAngle(S.p, clamp(side, -1, 1) * 1.4 * dt); }
+      if (dist < (atIdx() < 2 ? 13 : 10)) { const to = tmp2.copy(planet.padDir).addScaledVector(S.p, -planet.padDir.dot(S.p)); if (to.lengthSq() > 1e-6) to.normalize(); const side = to.dot(left), ahead = to.dot(S.f); if (ahead > -0.2 && Number.isFinite(side)) S.f.applyAxisAngle(S.p, clamp(side * 1.5, -1, 1) * (inp.steer ? 1.2 : 2.4) * dt); }
     }
 
     // launch ramp
     if (objDone()) {
       if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } rampCard(); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
-      if (S.p.angleTo(planet.padDir) * R < (atIdx() < 2 ? 3.6 : 2.8) && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); }
+      if (S.p.angleTo(planet.padDir) * R < 3.6 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); }
     }
   } else if (S.mode === 'launch') {
     S.t += dt; S.alt += S.valt * dt; S.valt += 10 * dt;
@@ -3372,7 +3374,7 @@ function frame(now) {
     { const rt = Math.min(0.25, raw); playLog.t += rt; if (planet) playLog.m[planet.index] = (playLog.m[planet.index] || 0) + rt; } // real seconds: the 0.05 s game-step cap undercounted slow phones
     chanTick(toastC, dt); chanTick(bonusC, dt);
     { const on = toastC.t > 0; if (on !== toasting) { toasting = on; document.body.classList.toggle('toasting', on); }
-      if (on && (innerWidth <= 600 || innerHeight <= 500)) { const g = $('goal'), el = $('toast'); el.style.bottom = 'auto'; el.style.top = (g.hidden ? 128 : Math.round(g.getBoundingClientRect().bottom) + 10) + 'px'; } else if (on) { $('toast').style.top = $('toast').style.bottom = ''; } }
+      if (on) { const g = $('goal'), el = $('toast'); if (g.hidden) { el.style.top = el.style.bottom = ''; } else { el.style.bottom = 'auto'; el.style.top = Math.round(g.getBoundingClientRect().bottom) + 12 + 'px'; } } } // toasts always sit just under the GOAL box
   }
   SFX.update(started && !paused && !garageOpen && !gardenOpen && !Platform.adBusy && S.mode === 'drive' && !document.hidden, S.v.length(), S.grounded, !!S.boosting, S.drift || 0);
   uiAcc += dt; if (uiAcc > 0.15) { uiAcc = 0; updateUI(); }

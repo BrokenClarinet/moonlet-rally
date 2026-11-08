@@ -209,3 +209,9 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 ## Round 9: an obvious goal, and more goal types (2026-11-08)
 - The goal is now a labelled, glowing "GOAL" box with a progress bar. A big goal card shows when you start, land on a new moonlet, or open the ramp, then flies up into the box (tap to skip). The first time you meet a goal type it says "NEW GOAL". On phones, toasts sit under the box instead of hiding it.
 - Two new goals: **Catch the zoomer** (tag a fleeing golden critter 3+ times) and **Rock smash** (5+ rocks at speed or with boost). Gate rally now has 8+ gates spaced further apart, with tighter time.
+
+## Round 10 (2026-11-08)
+- Trick show targets halved (150 + 75 per tier) and clean landings after 0.6 s+ of air count (10 points per second).
+- Ramp assist on every moonlet within 10 m, also while steering and when the ramp is beside you; catch radius 3.6 everywhere.
+- GOAL box never wider than the gap between the side panels; toasts always sit just under it and draw above the panels.
+- On non-paint goals the restored % line is dimmed. The last 1-2 star shards float high and need a jump. Gate rally gives less time per gate on later tiers and clears rocks off the course. Saves that were mid-way through a moonlet whose goal changed get an "Update" line on the goal card.
