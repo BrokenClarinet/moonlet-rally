@@ -215,3 +215,4 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 - Ramp assist on every moonlet within 10 m, also while steering and when the ramp is beside you; catch radius 3.6 everywhere.
 - GOAL box never wider than the gap between the side panels; toasts always sit just under it and draw above the panels.
 - On non-paint goals the restored % line is dimmed. The last 1-2 star shards float high and need a jump. Gate rally gives less time per gate on later tiers and clears rocks off the course. Saves that were mid-way through a moonlet whose goal changed get an "Update" line on the goal card.
+- No high shards on the first tier (Moonlets II and IX); from VI on, 1-2 float high, and the arrow reads "JUMP!" when you're under one.
