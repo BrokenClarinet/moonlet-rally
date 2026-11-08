@@ -195,3 +195,4 @@ First real data (17 sessions, 16 on phone) showed a quit spike on Moonlet III.
 - Every geyser moonlet has a geyser 5 m ahead of the landing spot that fires the moment you reach it (phones auto-throttle into it).
 - Logging now sends why a session ended (page hidden / unloaded), the screen before the auto-pause, seconds per moonlet, load time and whether PLAY was pressed; stats.php shows them. Playtime now counts real seconds (the old count used the 0.05 s game-step cap and undercounted slow phones).
 - Phones: +8 degrees field of view in portrait, auto-quality reacts after 3 s, and on Low under 30 fps the ink outlines turn off.
+- Logging also sends the average driving frame rate and the final graphics level; stats.php shows median fps, the share under 30/20 fps and the graphics levels by device.

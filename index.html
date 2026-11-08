@@ -1186,7 +1186,7 @@ function spawn(at, up, color, spread) {
 
 // ---------------------------------------------------------------- game state & save
 const SAVE_KEY = 'moonletRally.v1';
-const playLog = { t: 0, m: {}, ld: 0 }; // playtest timing (only sent on the website build)
+const playLog = { t: 0, m: {}, ld: 0, fs: 0, fn: 0 }; // playtest timing (only sent on the website build)
 const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {}, siloLvl: 0, lifeV: 2, missions: null, mDone: 0, daily: null };
 const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
@@ -3046,6 +3046,7 @@ function bigMoment(word) {
 const fpsHist = []; let aqLast = 0;
 function autoQuality(f, now) {
   const live = started && !paused && !garageOpen && !gardenOpen && !modal && !Platform.adBusy && S.mode === 'drive' && !document.hidden;
+  if (live && f < 250) { playLog.fs += f; playLog.fn++; } // average driving frame rate, for the playtest panel
   // last step, only when already on Low and still under 30 fps: drop the ink outlines (they double the draw calls)
   const atFloor = SET.quality === 'low' && (!SET.outlines || SET.oUser);
   if (!live || SET.qUser || atFloor) { fpsHist.length = 0; return; }
@@ -3100,7 +3101,7 @@ if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
   // the game auto-pauses when the tab is hidden, so remember the screen from just before that: that's where the player really left
   let live = 'title'; setInterval(() => { if (!document.hidden) live = screen(); }, 1000);
   const mt = () => { const o = {}; for (const k of Object.keys(playLog.m).slice(-40)) o[k] = Math.round(playLog.m[k]); return o; };
-  const send = (end, why = '') => { const body = JSON.stringify({ sid, vid, t: Math.round(playLog.t), moon: G.planetIdx, scr: end ? live : screen(), dev: touch.active ? 'phone' : 'desktop', ret, end, why, mt: mt(), ld: playLog.ld, pl: started ? 1 : 0 });
+  const send = (end, why = '') => { const body = JSON.stringify({ sid, vid, t: Math.round(playLog.t), moon: G.planetIdx, scr: end ? live : screen(), dev: touch.active ? 'phone' : 'desktop', ret, end, why, mt: mt(), ld: playLog.ld, pl: started ? 1 : 0, fps: playLog.fn ? Math.round(playLog.fs / playLog.fn) : 0, q: SET.quality + (SET.outlines ? '' : '-flat') });
     try { if (end && navigator.sendBeacon) navigator.sendBeacon(window.MR_LOG, new Blob([body], { type: 'application/json' })); else fetch(window.MR_LOG, { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {}); } catch (e) {} };
   setInterval(() => { if (!document.hidden) send(false); }, 30000);
   setTimeout(() => send(false), 5000);

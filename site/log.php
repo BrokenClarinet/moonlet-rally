@@ -21,6 +21,8 @@ $row = [
   'why' => in_array($in['why'] ?? '', ['hidden', 'unload'], true) ? $in['why'] : '',
   'ld'  => max(0, min(600000, (int)($in['ld'] ?? 0))),
   'pl'  => !empty($in['pl']) ? 1 : 0,
+  'fps' => max(0, min(240, (int)($in['fps'] ?? 0))),
+  'q'   => in_array($in['q'] ?? '', ['high', 'medium', 'low', 'high-flat', 'medium-flat', 'low-flat'], true) ? $in['q'] : '',
   'mt'  => [],
 ];
 // seconds spent on each moonlet this session (index => seconds), kept small

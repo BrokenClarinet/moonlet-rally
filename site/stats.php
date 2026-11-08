@@ -70,6 +70,9 @@ foreach ($all as $r) {
   if (empty($r['pl'])) { $noPlay++; if (!empty($r['ld'])) $titleLoads[] = $r['ld']; }
 }
 ksort($reach);
+// performance by device: is phone quitting about the content or about the frame rate?
+$perf = [];
+foreach ($all as $r) { if (empty($r['fps'])) continue; $d = $r['dev']; $perf[$d]['fps'][] = $r['fps']; $perf[$d]['q'][$r['q'] ?: '?'] = ($perf[$d]['q'][$r['q'] ?: '?'] ?? 0) + 1; $perf[$d]['t'][] = $r['t']; }
 $quitMoon = []; $quitScr = [];
 foreach ($all as $r) { $quitMoon[$r['moon']] = ($quitMoon[$r['moon']] ?? 0) + 1; $quitScr[$r['scr'] ?: '?'] = ($quitScr[$r['scr'] ?: '?'] ?? 0) + 1; }
 ksort($quitMoon); arsort($quitScr);
@@ -120,6 +123,14 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES);
 <tr><td>No end signal (browser killed it, or still playing)</td><td><?= $whyN[''] ?></td></tr>
 </table>
 <p class="muted">Never pressed PLAY: <?= $noPlay ?> session<?= $noPlay === 1 ? '' : 's' ?><?= $titleLoads ? ', median load time ' . round($med($titleLoads) / 1000, 1) . ' s' : '' ?>. Median load time for everyone: <?= $loads ? round($med($loads) / 1000, 1) . ' s' : 'n/a' ?>. A slow load with no PLAY tap points to loading; a fast load with no tap points to the title screen.</p></div>
+
+<h2>Frame rate while driving</h2>
+<div class="card"><table><tr><th>Device</th><th>Sessions</th><th>Median fps</th><th>Under 30 fps</th><th>Under 20 fps</th><th>Graphics at the end</th></tr>
+<?php foreach ($perf as $d => $pf): $n = count($pf['fps']); $u30 = count(array_filter($pf['fps'], fn($f) => $f < 30)); $u20 = count(array_filter($pf['fps'], fn($f) => $f < 20)); arsort($pf['q']); ?>
+<tr><td><b><?= $h(ucfirst($d)) ?></b></td><td><?= $n ?></td><td class="<?= $cls($med($pf['fps']) >= 40) ?>"><?= round($med($pf['fps'])) ?></td><td><?= $pct($u30 / $n) ?></td><td><?= $pct($u20 / $n) ?></td><td><?= $h(implode(', ', array_map(fn($k, $v) => "$k $v", array_keys($pf['q']), $pf['q']))) ?></td></tr>
+<?php endforeach; ?>
+<?php if (!$perf): ?><tr><td colspan="6" class="muted">No sessions from the new build yet</td></tr><?php endif; ?>
+</table><p class="muted">"-flat" means the ink outlines were switched off to speed things up. Green = a median of 40 fps or more.</p></div>
 
 <h2>Time on each moonlet</h2>
 <div class="card"><table><tr><th>Moonlet</th><th>Sessions that played it</th><th>Median time there</th><th>Average time there</th></tr>
