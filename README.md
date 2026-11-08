@@ -187,3 +187,11 @@ New: Aero fins (II), Drift rails (III), Seed sower (IV), Deep roots (V, garden g
 - Critter bumps cost about 5 s of garden income (still capped at 10% of gems) instead of scaling with your total.
 - Missions never duplicate an unearned star goal on the current moonlet.
 - Landscape phones: the golden comet badge sits at the right edge, away from the bonus text.
+
+## Round 7: first playtest (2026-11-08)
+First real data (17 sessions, 16 on phone) showed a quit spike on Moonlet III.
+- Moonlets II and III open their ramp at 50% (was 60%).
+- Reaching Moonlet III the first time gives a free new car, equipped on the spot, with a celebration.
+- Every geyser moonlet has a geyser 5 m ahead of the landing spot that fires the moment you reach it (phones auto-throttle into it).
+- Logging now sends why a session ended (page hidden / unloaded), the screen before the auto-pause, seconds per moonlet, load time and whether PLAY was pressed; stats.php shows them. Playtime now counts real seconds (the old count used the 0.05 s game-step cap and undercounted slow phones).
+- Phones: +8 degrees field of view in portrait, auto-quality reacts after 3 s, and on Low under 30 fps the ink outlines turn off.

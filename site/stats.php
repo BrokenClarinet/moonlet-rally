@@ -59,6 +59,17 @@ foreach ($visits as $days) foreach ($days as $d => $_) {
   if ($next > $to) continue; $retBase++; if (isset($days[$next])) $ret++;
 }
 
+$med = function ($a) { $n = count($a); if (!$n) return null; sort($a); return $n % 2 ? $a[intdiv($n, 2)] : ($a[$n / 2 - 1] + $a[$n / 2]) / 2; };
+// time spent on each moonlet (only sessions logged by builds that send it), why sessions ended, and title-screen sessions
+$reach = []; $whyN = ['hidden' => 0, 'unload' => 0, '' => 0]; $loads = []; $titleN = 0; $titleLoads = []; $noPlay = 0; $hasNew = 0;
+foreach ($all as $r) {
+  if (!array_key_exists('why', $r)) continue; $hasNew++;
+  $whyN[$r['why'] ?? ''] = ($whyN[$r['why'] ?? ''] ?? 0) + 1;
+  foreach (($r['mt'] ?? []) as $m => $sec) $reach[(int)$m][] = (int)$sec;
+  if (!empty($r['ld'])) $loads[] = $r['ld'];
+  if (empty($r['pl'])) { $noPlay++; if (!empty($r['ld'])) $titleLoads[] = $r['ld']; }
+}
+ksort($reach);
 $quitMoon = []; $quitScr = [];
 foreach ($all as $r) { $quitMoon[$r['moon']] = ($quitMoon[$r['moon']] ?? 0) + 1; $quitScr[$r['scr'] ?: '?'] = ($quitScr[$r['scr'] ?: '?'] ?? 0) + 1; }
 ksort($quitMoon); arsort($quitScr);
@@ -102,6 +113,20 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES);
 </table>
 <p class="muted">Next-day return: <?= $retBase ? $pct($ret / $retBase) . " ($ret of $retBase visitors)" : 'not enough days yet' ?>. Small samples swing a lot; aim for 15 to 20 players before trusting these.</p></div>
 
+<h2>Why sessions ended<?= $hasNew < count($all) ? ' <span class="muted">(' . $hasNew . ' sessions from builds that log this)</span>' : '' ?></h2>
+<div class="card"><table><tr><th>How it ended</th><th>Sessions</th></tr>
+<tr><td>Page hidden (switched app, locked phone, or closed the tab)</td><td><?= $whyN['hidden'] ?></td></tr>
+<tr><td>Page closed or reloaded</td><td><?= $whyN['unload'] ?></td></tr>
+<tr><td>No end signal (browser killed it, or still playing)</td><td><?= $whyN[''] ?></td></tr>
+</table>
+<p class="muted">Never pressed PLAY: <?= $noPlay ?> session<?= $noPlay === 1 ? '' : 's' ?><?= $titleLoads ? ', median load time ' . round($med($titleLoads) / 1000, 1) . ' s' : '' ?>. Median load time for everyone: <?= $loads ? round($med($loads) / 1000, 1) . ' s' : 'n/a' ?>. A slow load with no PLAY tap points to loading; a fast load with no tap points to the title screen.</p></div>
+
+<h2>Time on each moonlet</h2>
+<div class="card"><table><tr><th>Moonlet</th><th>Sessions that played it</th><th>Median time there</th><th>Average time there</th></tr>
+<?php foreach ($reach as $m => $list): ?><tr><td>Moonlet <?= $roman($m + 1) ?></td><td><?= count($list) ?></td><td><?= $fmtT($med($list)) ?></td><td><?= $fmtT(array_sum($list) / count($list)) ?></td></tr><?php endforeach; ?>
+<?php if (!$reach): ?><tr><td colspan="4" class="muted">No sessions from the new build yet</td></tr><?php endif; ?>
+</table><p class="muted">Counts every visit in a session, including going back to an earlier moonlet from the map.</p></div>
+
 <h2>Your own play</h2>
 <div class="card"><form method="post" id="exForm" style="margin:0"><input type="hidden" name="vid" id="exVid"><input type="hidden" name="do" id="exDo">
 <span id="exTxt" class="muted">Checking this device...</span> <button type="submit" id="exBtn" hidden></button></form>
@@ -124,7 +149,7 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES);
 <?php foreach ($quitMoon as $m => $c): ?><tr><td>Moonlet <?= $roman($m + 1) ?></td><td><?= $c ?></td></tr><?php endforeach; ?>
 <?php if (!$quitMoon): ?><tr><td colspan="2" class="muted">No sessions yet</td></tr><?php endif; ?>
 </table>
-<table style="margin-top:12px"><tr><th>Screen at the end</th><th>Sessions</th></tr>
+<table style="margin-top:12px"><tr><th>Screen at the end (before the auto-pause, in new builds)</th><th>Sessions</th></tr>
 <?php foreach ($quitScr as $k => $c): ?><tr><td><?= $h($k) ?></td><td><?= $c ?></td></tr><?php endforeach; ?>
 </table></div>
 </main></body></html>

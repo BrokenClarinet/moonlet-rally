@@ -4,7 +4,7 @@
 require __DIR__ . '/auth.php';
 header('Cache-Control: no-store');
 if (!mr_logged_in() || $_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(204); exit; }
-$raw = file_get_contents('php://input', false, null, 0, 2048);
+$raw = file_get_contents('php://input', false, null, 0, 4096);
 $in = json_decode($raw, true);
 if (!is_array($in)) { http_response_code(204); exit; }
 $clean = fn($v, $n) => substr(preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$v), 0, $n);
@@ -18,7 +18,14 @@ $row = [
   'dev' => ($in['dev'] ?? '') === 'phone' ? 'phone' : 'desktop',
   'ret' => !empty($in['ret']) ? 1 : 0,
   'end' => !empty($in['end']) ? 1 : 0,
+  'why' => in_array($in['why'] ?? '', ['hidden', 'unload'], true) ? $in['why'] : '',
+  'ld'  => max(0, min(600000, (int)($in['ld'] ?? 0))),
+  'pl'  => !empty($in['pl']) ? 1 : 0,
+  'mt'  => [],
 ];
+// seconds spent on each moonlet this session (index => seconds), kept small
+if (is_array($in['mt'] ?? null)) foreach (array_slice($in['mt'], 0, 40, true) as $k => $v) if (ctype_digit((string)$k) && (int)$k < 10000) $row['mt'][(int)$k] = max(0, min(86400, (int)$v));
+if (!$row['mt']) $row['mt'] = new stdClass();
 if ($row['sid'] === '') { http_response_code(204); exit; }
 $dir = __DIR__ . '/private/data';
 if (!is_dir($dir)) @mkdir($dir, 0750, true);

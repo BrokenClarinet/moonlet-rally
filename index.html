@@ -400,16 +400,16 @@ const PLANET_DEFS = [
     flowers: [0xffcf4a, 0xff7fa8, 0x8fe3ff], rock: [0xd6cce6, 0x9a8db4, 0x655981],
     sky: { top: 0x1c1650, hor: 0xff9f86, top2: 0x2d4fa0, hor2: 0xffd9a8 },
     twist: 'meadow', title: 'Meadow', intro: 'Drive to bring the moonlet back to life!' },
-  { name: 'Moonlet II',  R: 11, goal: 0.6, seed: 21, rate: 12,
+  { name: 'Moonlet II',  R: 11, goal: 0.5, seed: 21, rate: 12,
     dead: [0xd8ecf7, 0xa9c6de], alive: [0x63d4ab, 0x2e9c86], pollen: 0xfff07a, leaf: 0x3fbf9a, trunk: 0x6e4a5a,
     flowers: [0xffe066, 0xff8c5a, 0xd9a6ff], rock: [0xeaf8ff, 0xa6d4f0, 0x6a9cc4],
     sky: { top: 0x142045, hor: 0xa8c8ff, top2: 0x2a4f9a, hor2: 0xe0f0ff },
     twist: 'ice', title: 'Frostlet', intro: 'Frostlet: frozen ground is slippery until it blooms!' },
-  { name: 'Moonlet III', R: 11, goal: 0.6, seed: 31, rate: 25,
+  { name: 'Moonlet III', R: 11, goal: 0.5, seed: 31, rate: 25,
     dead: [0x9c8a80, 0x76655c], alive: [0x8fd16a, 0x4fa65a], pollen: 0xfff07a, leaf: 0x58b85a, trunk: 0x6e4a3a,
     flowers: [0xff8c5a, 0xffe066, 0x8fe3ff], rock: [0xd8c8bc, 0x9c8a80, 0x645248],
     sky: { top: 0x2a1030, hor: 0xff8a5a, top2: 0x4a3080, hor2: 0xffd0a0 },
-    twist: 'geysers', title: 'Geyser Moon', intro: 'Geyser Moon: drive over erupting geysers for huge jumps!' },
+    twist: 'geysers', title: 'Geyser Moon', intro: 'Geyser Moon: drive onto the geyser right ahead for a huge jump!' },
   { name: 'Moonlet IV', R: 13, goal: 0.6, seed: 55, rate: 45, grav: 0.5,
     dead: [0x8a7ca8, 0x665886], alive: [0xb8e35c, 0x6cae3c], pollen: 0xffb05a, leaf: 0x7cc23a, trunk: 0x7a5236,
     flowers: [0xff5d73, 0xfff1a8, 0x7ad7ff], rock: [0xc4d2e2, 0x8296ae, 0x56667e],
@@ -808,11 +808,12 @@ function buildPlanet(index) {
     const steamGeo = new THREE.CylinderGeometry(0.45, 0.8, 1, 7, 1, true).translate(0, 0.5, 0);
     const steamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
     for (let i = 0; i < 7; i++) {
-      const d = randDir(rng); if (d.dot(start) > 0.93 || !awayFromRocks(d)) { i--; continue; }
+      // geyser 0 sits a few metres straight ahead of where you land, so every geyser moonlet opens with a big launch
+      const d = i === 0 ? new THREE.Vector3(0, Math.cos(5 / R), Math.sin(5 / R)) : randDir(rng); if (i > 0 && (d.dot(start) > 0.93 || !awayFromRocks(d))) { i--; continue; }
       const m = new THREE.Group(); m.add(inked(ventGeo, ventMat, 0.05));
       const steam = new THREE.Mesh(steamGeo, steamMat); steam.scale.set(1, 0.01, 1); m.add(steam);
       m.position.copy(d).multiplyScalar(R + height(d.x, d.y, d.z) - 0.1); m.quaternion.setFromUnitVectors(Y, d);
-      group.add(m); geysers.push({ d, mesh: m, steam, t: rng() * 5 });
+      group.add(m); geysers.push({ d, mesh: m, steam, t: rng() * 5, welcome: i === 0 });
     }
   }
   if (hasTwist(def, 'stars')) {
@@ -1185,6 +1186,7 @@ function spawn(at, up, color, spread) {
 
 // ---------------------------------------------------------------- game state & save
 const SAVE_KEY = 'moonletRally.v1';
+const playLog = { t: 0, m: {}, ld: 0 }; // playtest timing (only sent on the website build)
 const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {}, siloLvl: 0, lifeV: 2, missions: null, mDone: 0, daily: null };
 const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
@@ -1779,7 +1781,7 @@ function renderSettings() {
     const row = document.createElement('div'); row.className = 'srow'; row.innerHTML = `<label>${label}</label><div class="seg"></div>`;
     for (const [v, t] of opts) {
       const b = document.createElement('button'); b.className = 'chip' + (SET[k] === v ? ' on' : ''); b.textContent = t;
-      b.onclick = () => { SET[k] = v; if (k === 'quality') SET.qUser = true; saveSettings(); applySettings(); renderSettings(); };
+      b.onclick = () => { SET[k] = v; if (k === 'quality') SET.qUser = true; if (k === 'outlines') SET.oUser = true; saveSettings(); applySettings(); renderSettings(); };
       row.lastChild.appendChild(b);
     }
     L.appendChild(row);
@@ -1832,7 +1834,7 @@ let resuming = false;
 function showMenu() {
   $('loadView').hidden = true; $('menuView').hidden = false; $('title').hidden = false;
   $('playBtn').textContent = (started || G.planetIdx > 0 || G.gems > 0) ? 'CONTINUE' : 'PLAY';
-  updateLabels(); menuReady = true;
+  updateLabels(); menuReady = true; if (!playLog.ld) playLog.ld = Math.round(performance.now());
 }
 $('pauseBtn').onclick = pause;
 $('pResume').onclick = resume;
@@ -2235,6 +2237,7 @@ function updateHoops(dt) {
 function updateGeysers(dt) {
   const R = planet.R;
   for (const gz of planet.geysers) {
+    if (gz.welcome && !(gz.cool > 0) && gz.t < 3.6 && S.mode === 'drive' && S.p.angleTo(gz.d) * R < 2.2) gz.t = 3.75; // the welcome geyser fires as soon as you reach it
     gz.t = (gz.t + dt) % 5; if (gz.cool > 0) gz.cool -= dt; const erupt = gz.t > 3.6, warn = gz.t > 2.8 && !erupt;
     const k = erupt ? Math.sin((gz.t - 3.6) / 1.4 * Math.PI) : warn ? 0.06 : 0.01;
     gz.steam.scale.set(1 + k * 0.4, Math.max(0.01, k * 7), 1 + k * 0.4);
@@ -2771,7 +2774,7 @@ function step(dt) {
     S.t += dt; S.valt -= 22 * dt; S.alt += S.valt * dt;
     $('fade').style.opacity = 1 - smooth(0, 0.8, S.t);
     const g = groundH(S.p);
-    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); toast(planet.index < G.planetIdx && planet.restored / planet.N >= planet.def.goal ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); }
+    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); toast(planet.index < G.planetIdx && planet.restored / planet.N >= planet.def.goal ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); arrivalGift(); }
   }
 
   grow(dt);
@@ -2926,7 +2929,8 @@ function render(dt) {
   }
   camera.position.copy(camSmooth);
   if (shake > 0) { shake = Math.max(0, shake - dt * 2); const k = SET.shake ? shake * shake * 0.8 : 0; camera.position.x += (Math.random() - .5) * k; camera.position.y += (Math.random() - .5) * k; camera.position.z += (Math.random() - .5) * k; }
-  const fov = !SET.speedfx ? 62 : S.boosting ? 74 : 60 + Math.min(6, spd * 0.3);
+  // portrait phones see a narrow slice of the moon; widen the view a little so turns and hazards show up sooner
+  const fov = (!SET.speedfx ? 62 : S.boosting ? 74 : 60 + Math.min(6, spd * 0.3)) + (camera.aspect < 0.9 ? 8 : 0);
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * (1 - Math.exp(-5 * dt)); camera.updateProjectionMatrix(); }
   if (garageOpen) {
     garageSpin += dt * 0.45;
@@ -2952,7 +2956,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, gift3: saved.gift3 || (saved.planetIdx || 0) > 2 ? 1 : 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
@@ -3022,6 +3026,17 @@ function start() {
 
 let bonkFrame = false, lastGems = G.gems, last = performance.now(), saveAcc = 0, uiAcc = 0, fpsN = 0, fpsT = 0;
 let slowT = 0;
+// reaching Moonlet III is the first big milestone: a free new car, swapped in on the spot so you see it right away
+function arrivalGift() {
+  if (planet.index !== 2 || G.gift3) return; G.gift3 = 1;
+  const o = CAR_OPTS.body.find(b => b.cost > 0 && !owns('body', b.id)); if (!o) { save(); return; }
+  G.owned.push(`body:${o.id}`); G.car.body = o.id; applyCar(); SFX.bigGems();
+  slowT = 0.6; shake = Math.max(shake, 0.8);
+  toast(`<span style="font-size:38px;color:var(--sun)">NEW CAR!</span><br><span style="font-size:17px">The ${o.name} is yours · swap cars any time in the Garage</span>`, 3.5, true);
+  const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1);
+  for (const c of [0xffc43d, 0x7fe3ff, 0xff8fc7, 0x9be37a, 0xffffff]) burst(at, S.p, new THREE.Color(c), 24, 14);
+  save();
+}
 function bigMoment(word) {
   slowT = 0.5; toast(`<span style="font-size:40px;color:var(--sun)">${word}</span>`, 1.2, true); shake = Math.max(shake, 0.7);
   const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1);
@@ -3031,12 +3046,16 @@ function bigMoment(word) {
 const fpsHist = []; let aqLast = 0;
 function autoQuality(f, now) {
   const live = started && !paused && !garageOpen && !gardenOpen && !modal && !Platform.adBusy && S.mode === 'drive' && !document.hidden;
-  if (!live || SET.qUser || SET.quality === 'low') { fpsHist.length = 0; return; }
-  fpsHist.push(f); if (fpsHist.length > 8) fpsHist.shift();
-  if (fpsHist.length < 8 || now - aqLast < 10000) return;
-  const med = [...fpsHist].sort((a, b) => a - b)[4];
-  if (med >= 40) return;
-  SET.quality = SET.quality === 'high' ? 'medium' : 'low'; aqLast = now; fpsHist.length = 0;
+  // last step, only when already on Low and still under 30 fps: drop the ink outlines (they double the draw calls)
+  const atFloor = SET.quality === 'low' && (!SET.outlines || SET.oUser);
+  if (!live || SET.qUser || atFloor) { fpsHist.length = 0; return; }
+  const need = touch.active ? 6 : 8; // phones react a little sooner: they are most of the players
+  fpsHist.push(f); if (fpsHist.length > need) fpsHist.shift();
+  if (fpsHist.length < need || now - aqLast < 8000) return;
+  const med = [...fpsHist].sort((a, b) => a - b)[need >> 1];
+  if (med >= (SET.quality === 'low' ? 30 : 40)) return;
+  if (SET.quality === 'low') SET.outlines = false; else SET.quality = SET.quality === 'high' ? 'medium' : 'low';
+  aqLast = now; fpsHist.length = 0;
   saveSettings(); applySettings(); if (G.planetIdx > 0) toast('Graphics lowered for smoother play (change in Settings)', 2.6);
 }
 let toasting = false;
@@ -3050,7 +3069,7 @@ function frame(now) {
     if (!garageOpen && !gardenOpen) { step(dt); sanitize(); stat('time', dt); tickMissions(dt); }
     if (G.gems > lastGems) stat('earned', G.gems - lastGems); else if (G.gems < lastGems - 0.5 && !bonkFrame) SFX.buy(); lastGems = G.gems; bonkFrame = false;
     saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
-    playLog.t += Math.min(0.05, raw);
+    { const rt = Math.min(0.25, raw); playLog.t += rt; if (planet) playLog.m[planet.index] = (playLog.m[planet.index] || 0) + rt; } // real seconds: the 0.05 s game-step cap undercounted slow phones
     chanTick(toastC, dt); chanTick(bonusC, dt);
     { const on = toastC.t > 0; if (on !== toasting) { toasting = on; document.body.classList.toggle('toasting', on); } }
   }
@@ -3073,17 +3092,19 @@ $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
 // Playtest logging: only the password-protected website build sets window.MR_LOG (tools/build_site.py). Anonymous:
 // random ids, seconds played, moonlet, screen and device type. Never in the Poki build.
-const playLog = { t: 0 };
 if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
   const rid = () => Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8);
   let vid = ''; try { vid = localStorage.getItem('moonletRally.vid') || ''; if (!vid) { vid = rid(); localStorage.setItem('moonletRally.vid', vid); } } catch (e) {}
   const sid = rid(), ret = !!saved;
   const screen = () => !started ? 'title' : paused ? 'pause' : garageOpen ? 'garage' : gardenOpen ? 'garden' : modal ? String(modal) : S.mode === 'drive' ? 'drive' : 'travel';
-  const send = (end) => { const body = JSON.stringify({ sid, vid, t: Math.round(playLog.t), moon: G.planetIdx, scr: screen(), dev: touch.active ? 'phone' : 'desktop', ret, end });
+  // the game auto-pauses when the tab is hidden, so remember the screen from just before that: that's where the player really left
+  let live = 'title'; setInterval(() => { if (!document.hidden) live = screen(); }, 1000);
+  const mt = () => { const o = {}; for (const k of Object.keys(playLog.m).slice(-40)) o[k] = Math.round(playLog.m[k]); return o; };
+  const send = (end, why = '') => { const body = JSON.stringify({ sid, vid, t: Math.round(playLog.t), moon: G.planetIdx, scr: end ? live : screen(), dev: touch.active ? 'phone' : 'desktop', ret, end, why, mt: mt(), ld: playLog.ld, pl: started ? 1 : 0 });
     try { if (end && navigator.sendBeacon) navigator.sendBeacon(window.MR_LOG, new Blob([body], { type: 'application/json' })); else fetch(window.MR_LOG, { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {}); } catch (e) {} };
   setInterval(() => { if (!document.hidden) send(false); }, 30000);
   setTimeout(() => send(false), 5000);
-  addEventListener('pagehide', () => send(true)); addEventListener('visibilitychange', () => { if (document.hidden) send(true); });
+  addEventListener('pagehide', () => send(true, 'unload')); addEventListener('visibilitychange', () => { if (document.hidden) send(true, 'hidden'); });
 }
 if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet };
 requestAnimationFrame(frame);
