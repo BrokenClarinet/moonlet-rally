@@ -907,7 +907,7 @@ function disposePlanet(p) {
   p.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
 }
 
-function startPlanet() { for (const k in starProg) delete starProg[k]; cometEnd(); comet.t = Math.min(comet.t, 30); for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); if (started || G.missions) checkMissions(); }
+function startPlanet() { for (const k in starProg) delete starProg[k]; cometEnd(); comet.t = Math.min(comet.t, 30); for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); objStart(); if (started || G.missions) checkMissions(); }
 
 function recount(p) {
   let n = 0; for (let i = 0; i < p.N; i++) { if (p.life[i] >= 0.5) n++; p.paint(i); }
@@ -1253,13 +1253,14 @@ function updateGoal(frac) {
     { const nd = planetDef(atIdx() + 1), tw = (nd.twists || [nd.twist]).filter(t => t !== 'meadow').map(t => TWIST_TEXT[t] || t).join(' + ');
       sub = `Next: ${nd.title}${tw ? ` (${tw})` : ''} · follow the yellow arrow`; }
   } else {
-    key = 'paint'; main = `Turn the <em>grey ground</em> green: <em>${Math.floor(frac * 100)}% / ${Math.round(goal * 100)}%</em>`;
+    if (obj && obj.type !== 'paint') { key = 'obj-' + obj.type; [main, sub] = objGoalText(); }
+    else { key = 'paint'; main = `Turn the <em>grey ground</em> green: <em>${Math.floor(frac * 100)}% / ${Math.round(goal * 100)}%</em>`;
     if (first) {
       if (!goalAt) goalAt = t;
       const age = t - goalAt;
       sub = age < 25 ? (touch.active ? 'Left thumb drives. Your tire tracks grow grass!' : `${kn('up')} drives, ${kn('left')} ${kn('right')} steer. Your tire tracks grow grass!`)
         : `Reach ${Math.round(goal * 100)}% to open the launch ramp to ${next}`;
-    } else sub = `${Math.round(goal * 100)}% opens the launch ramp to ${next}`;
+    } else sub = `${Math.round(goal * 100)}% opens the launch ramp to ${next}`; }
   }
   el.hidden = false; el.classList.toggle('ramp', key === 'ramp');
   el.querySelector('b').innerHTML = main; el.querySelector('small').textContent = sub;
@@ -1272,8 +1273,9 @@ function updateUI() {
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
   const goal = planet.def.goal;
-  $('pct').hidden = frac < goal && S.mode === 'drive';
-  $('pct').textContent = frac >= goal ? `${(frac * 100).toFixed(0)}% restored · ${(() => { const n = BLOOM_MS.find(([f]) => frac < f); return n ? `bonus at ${Math.round(n[0] * 100)}%` : 'full bloom!'; })()}` : `${Math.floor(frac * 100)}% of ${Math.round(goal * 100)}% to open the ramp`;
+  const paintGoal = !obj || obj.type === 'paint';
+  $('pct').hidden = paintGoal && frac < goal && S.mode === 'drive';
+  $('pct').textContent = frac >= goal ? `${(frac * 100).toFixed(0)}% restored · ${(() => { const n = BLOOM_MS.find(([f]) => frac < f); return n ? `bonus at ${Math.round(n[0] * 100)}%` : 'full bloom!'; })()}` : (paintGoal ? `${Math.floor(frac * 100)}% of ${Math.round(goal * 100)}% to open the ramp` : `${Math.floor(frac * 100)}% restored · grows your garden`);
   $('barfill').style.width = Math.min(100, frac / goal * 100).toFixed(1) + '%';
   $('gems').innerHTML = fmt(G.gems) + ' ' + GEM;
   $('rate').innerHTML = `garden grows ${fmtR(gemRate())} ${GEM}/s`;
@@ -1579,7 +1581,7 @@ function restoreLife(idx) {
     const n = Math.ceil(G.done[idx].frac * planet.N); for (let k = 0; k < n; k++) planet.life[order[k]] = 1;
   }
   recount(planet);
-  if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
+  if (objDone()) planet.pad.visible = true;
 }
 const prodOf = (it) => it.rate * it.frac * mult() * (CS.garden || 1) * (1 + 0.2 * starsOn(it.idx)) * (1 + 0.5 * (it.d.lvl || 0));
 const capOf = (it) => Math.max(20, prodOf(it) * 3600 * siloHours());
@@ -2069,7 +2071,7 @@ function land() {
     const lucky = Math.random() < (CS.luck || 0), gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * gemUnit() * mult() * CS.bonus * CS.trick * (lucky ? 2 : 1));
     if (lucky) names.push('LUCKY x2');
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
-    stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
+    objTrick(points); stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
     if (flips) quest('flip', flips); if (spins) quest('spin', spins); quest('combo', trickChain);
     starQuest('turns', turns); starQuest('combo', trickChain);
     if ((G.stats.tricks || 0) === 1) bigMoment('FIRST TRICK!');
@@ -2458,6 +2460,206 @@ function cometMesh() {
   return (comet.mesh = g);
 }
 function cometEnd() { comet.on = false; if (comet.mesh) comet.mesh.visible = false; $('comet').hidden = true; }
+// ---- moonlet goals: painting is only one of five main goals, so moonlets play differently from each other.
+// Every goal opens the launch ramp; painting still grows the garden, blooms and stars on every moonlet.
+const OBJ_SEQ = ['paint', 'shards', 'trick', 'rescue', 'race', 'paint', 'shards', 'trick', 'rescue', 'race', 'paint', 'shards', 'trick', 'race', 'rescue', 'paint', 'race', 'rescue', 'trick', 'shards'];
+const OBJ_CYCLE = ['paint', 'shards', 'trick', 'rescue', 'race'];
+const objType = (i) => i < OBJ_SEQ.length ? OBJ_SEQ[i] : OBJ_CYCLE[i % OBJ_CYCLE.length];
+const OBJ_NEW = {
+  shards: 'NEW GOAL: Star shards!<br><span style="font-size:16px">Find the glowing shards hidden around this moonlet</span>',
+  trick: 'NEW GOAL: Trick show!<br><span style="font-size:16px">Score trick points: jump, flip, spin, land clean</span>',
+  rescue: 'NEW GOAL: Lost moon pups!<br><span style="font-size:16px">Scoop up each pup and drive it home to the nest</span>',
+  race: 'NEW GOAL: Gate rally!<br><span style="font-size:16px">Race through the gates before the clock runs out</span>',
+};
+const objGroup = new THREE.Group(); scene.add(objGroup);
+let obj = null, objGeo = null;
+const objIdx = () => planet.index;
+function objDone() {
+  const i = objIdx();
+  if (i < G.planetIdx || (G.objDone && G.objDone[i])) return true;
+  return objType(i) === 'paint' && planet.restored / planet.N >= planet.def.goal;
+}
+const objTier = (i) => Math.floor(i / 5);
+function objSize(type, i) {
+  const t = objTier(i);
+  return type === 'shards' ? 6 + Math.min(4, t) : type === 'trick' ? 300 + 150 * Math.min(6, t) : type === 'rescue' ? 4 + Math.min(2, t) : type === 'race' ? 6 + Math.min(3, t) : 0;
+}
+function objGeos() {
+  if (objGeo) return objGeo;
+  const shard = facet([[new THREE.OctahedronGeometry(0.55, 0).scale(0.7, 1.5, 0.7), 0x7fe3ff], [new THREE.OctahedronGeometry(0.32, 0).scale(0.7, 1.3, 0.7).rotateZ(0.6).translate(0.42, -0.25, 0), 0xb48cff], [new THREE.OctahedronGeometry(0.28, 0).scale(0.7, 1.3, 0.7).rotateZ(-0.6).translate(-0.38, -0.3, 0.1), 0xfff3b0]]);
+  const post = new THREE.CylinderGeometry(0.18, 0.24, 3.2, 6).translate(0, 1.6, 0);
+  const gate = facet([[post.clone().translate(-2, 0, 0), 0xffffff], [post.clone().translate(2, 0, 0), 0xffffff], [new THREE.BoxGeometry(4.6, 0.6, 0.3).translate(0, 3.2, 0), 0xffffff], [new THREE.ConeGeometry(0.3, 0.6, 5).translate(-2, 3.5, 0), 0xffffff], [new THREE.ConeGeometry(0.3, 0.6, 5).translate(2, 3.5, 0), 0xffffff]]);
+  const nest = facet([[new THREE.TorusGeometry(1.6, 0.35, 6, 14).rotateX(Math.PI / 2).translate(0, 0.25, 0), 0xb07a4a], [new THREE.CylinderGeometry(1.4, 1.5, 0.2, 14).translate(0, 0.1, 0), 0x7a5236]]);
+  objGeo = {
+    shard, gate, nest,
+    shardMat: toon({ vertexColors: true, emissive: 0x2a4a7a }),
+    gateOn: toon({ color: 0xffc43d, emissive: 0x6a4000 }), gateNext: toon({ color: 0xfff6ea }), gateOff: toon({ color: 0x7a6a9a, transparent: true, opacity: 0.55 }),
+    nestMat: toon({ vertexColors: true }),
+    beam: new THREE.CylinderGeometry(0.12, 0.12, 14, 6, 1, true).translate(0, 7, 0),
+    beamMat: new THREE.MeshBasicMaterial({ color: 0x7fe3ff, transparent: true, opacity: 0.45, depthWrite: false }),
+    pupBeamMat: new THREE.MeshBasicMaterial({ color: 0xff8fc7, transparent: true, opacity: 0.45, depthWrite: false }),
+    nestBeam: new THREE.CylinderGeometry(1.3, 1.3, 10, 14, 1, true).translate(0, 5, 0),
+    nestBeamMat: new THREE.MeshBasicMaterial({ color: 0xffc43d, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide }),
+  };
+  return objGeo;
+}
+const surfAt = (d, h = 0) => V().copy(d).multiplyScalar(planet.R + groundH(d) + h);
+function placeOn(m, d, h = 0) { m.position.copy(surfAt(d, h)); m.quaternion.setFromUnitVectors(Y_AXIS, d); }
+// spread points over the moonlet, away from the landing spot and from each other
+function spreadDirs(n, minSep, avoid = []) {
+  const out = [], R = planet.R, start = new THREE.Vector3(0, 1, 0);
+  for (let tries = 0; out.length < n && tries < 4000; tries++) {
+    const d = randDir(Math.random), sep = tries > 2500 ? minSep * 0.5 : minSep;
+    if (d.angleTo(start) * R < 6) continue;
+    if (out.some(o => o.angleTo(d) * R < sep) || avoid.some(o => o.angleTo(d) * R < sep)) continue;
+    out.push(d);
+  }
+  return out;
+}
+function objClear() { for (const c of [...objGroup.children]) objGroup.remove(c); obj = null; }
+function objStart() {
+  objClear();
+  const i = objIdx(), type = objType(i);
+  obj = { type, n: objSize(type, i), i };
+  G.objP = G.objP || {};
+  if (type === 'paint' || objDone()) return;
+  const g = objGeos(), R = planet.R;
+  if (type === 'shards') {
+    const mask = G.objP[i] || 0;
+    obj.items = spreadDirs(obj.n, Math.max(5, R * 0.7)).map((d, k) => {
+      const m = inked(g.shard, g.shardMat, 0.04), b = new THREE.Mesh(g.beam, g.beamMat); m.add(b); b.position.y = -0.4;
+      placeOn(m, d, 1.1); objGroup.add(m); m.visible = !(mask & (1 << k));
+      return { d, m, got: !!(mask & (1 << k)) };
+    });
+  } else if (type === 'rescue') {
+    obj.nest = spreadDirs(1, 1)[0] || new THREE.Vector3(1, 0, 0);
+    const nm = inked(g.nest, g.nestMat, 0.04); nm.add(new THREE.Mesh(g.nestBeam, g.nestBeamMat)); placeOn(nm, obj.nest, -0.05); objGroup.add(nm);
+    const home = G.objP[i] || 0;
+    obj.items = spreadDirs(obj.n, Math.max(5, R * 0.6), [obj.nest]).map((d, k) => {
+      const c = makeCritter(); c.mesh.scale.setScalar(0.9); c.mesh.visible = true; objGroup.add(c.mesh);
+      const bm = new THREE.Mesh(g.beam, g.pupBeamMat); c.mesh.add(bm);
+      const it = { d, m: c.mesh, beam: bm, home: k < home, ph: Math.random() * 6 }; bm.visible = !it.home;
+      if (it.home) placeNested(it, k);
+      return it;
+    });
+  } else if (type === 'race') {
+    // a winding course: each gate a fixed drive from the last, turning a little left or right
+    const start = new THREE.Vector3(0, 1, 0), step = Math.min(0.9, 11 / R);
+    let d = start.clone(), head = new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
+    obj.gates = [];
+    for (let k = 0; k < obj.n; k++) {
+      head.applyAxisAngle(d, (Math.random() - 0.5) * 1.3);
+      const axis = V().crossVectors(d, head).normalize();
+      d = d.clone().applyAxisAngle(axis, k === 0 ? 8 / R : step).normalize();
+      head.addScaledVector(d, -head.dot(d)).normalize();
+      const m = new THREE.Mesh(g.gate, g.gateOff); const ink = new THREE.Mesh(g.gate, inkMat(0.05)); ink.layers.set(1); m.add(ink);
+      m.position.copy(surfAt(d, -0.1));
+      const x = V().crossVectors(d, head).normalize(); m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, d, V().crossVectors(x, d)));
+      objGroup.add(m); obj.gates.push({ d, m });
+    }
+    obj.next = 0; obj.clock = 0; obj.running = false;
+    raceLook();
+  }
+}
+function placeNested(it, k) {
+  const R = planet.R, a = (k / Math.max(1, obj.n)) * Math.PI * 2;
+  const t = V().crossVectors(obj.nest, Math.abs(obj.nest.y) < 0.9 ? Y_AXIS : new THREE.Vector3(1, 0, 0)).normalize();
+  const d = obj.nest.clone().applyAxisAngle(t, 1 / R).applyAxisAngle(obj.nest, a).normalize();
+  it.d = d; placeOn(it.m, d, 0); it.m.visible = true;
+}
+function raceLook() {
+  const g = objGeos();
+  obj.gates.forEach((gt, k) => { gt.m.material = k === obj.next ? g.gateOn : k === obj.next + 1 ? g.gateNext : g.gateOff; gt.m.visible = k >= obj.next; gt.m.scale.setScalar(k === obj.next ? 1.1 : 1); });
+}
+function objReward(k = 1) { const gems = Math.round(k * 20 * gemUnit() * mult() * CS.bonus); G.gems += gems; return gems; }
+function objComplete() {
+  const i = objIdx(); G.objDone = G.objDone || {}; G.objDone[i] = 1; stat('goals', 1);
+  const gems = objReward(6); SFX.bigGems(); slowT = 0.5;
+  toast(`<span style="font-size:36px;color:var(--sun)">GOAL COMPLETE!</span><br><span style="font-size:16px">+${fmt(gems)} ${GEM} · the launch ramp is open</span>`, 3, true);
+  save();
+}
+function objProgress(text) { bonusText(text); SFX.star(); G.nitro = Math.min(1, G.nitro + 0.25); }
+// trick points count toward a trick-show goal (called from land())
+function objTrick(points) {
+  if (!obj || obj.type !== 'trick' || objDone() || S.mode !== 'drive') return;
+  const i = objIdx(); G.objP[i] = Math.min(obj.n, (G.objP[i] || 0) + Math.round(points));
+  if (G.objP[i] >= obj.n) objComplete();
+}
+function updateObjective(dt) {
+  if (!obj || obj.type === 'paint' || objDone()) return;
+  const R = planet.R, i = objIdx(), t = performance.now() / 1000, low = S.alt - groundH(S.p) < 3;
+  if (obj.type === 'shards') {
+    let got = 0;
+    obj.items.forEach((it, k) => {
+      if (it.got) { got++; return; }
+      it.m.rotateY(dt * 1.6); it.m.position.copy(surfAt(it.d, 1.1 + 0.25 * Math.sin(t * 2 + k)));
+      if (S.p.angleTo(it.d) * R < 1.7 && S.alt - groundH(it.d) < 3.2) {
+        it.got = true; it.m.visible = false; got++; G.objP[i] = (G.objP[i] || 0) | (1 << k);
+        burst(surfAt(it.d, 1), it.d, new THREE.Color(0x7fe3ff), 24, 10); burst(surfAt(it.d, 1), it.d, new THREE.Color(0xfff3b0), 12, 8);
+        objProgress(`SHARD ${got}/${obj.n} +${fmt(objReward())} ${GEM}`); save();
+      }
+    });
+    if (got >= obj.n) objComplete();
+  } else if (obj.type === 'rescue') {
+    let home = 0;
+    obj.items.forEach((it, k) => {
+      if (it.home) { home++; it.m.position.copy(surfAt(it.d, Math.abs(Math.sin(t * 5 + k)) * 0.35)); return; }
+      if (it === obj.carrying) return;
+      it.m.position.copy(surfAt(it.d, Math.abs(Math.sin(t * 3 + it.ph)) * 0.6)); it.m.quaternion.setFromUnitVectors(Y_AXIS, it.d);
+      if (!obj.carrying && low && S.p.angleTo(it.d) * R < 1.6) {
+        obj.carrying = it; it.m.scale.setScalar(0.7); it.beam.visible = false;
+        SFX.pop(); bonusText('PUP ON BOARD! Take it to the nest'); burst(surfAt(it.d, 0.8), it.d, new THREE.Color(0xffb3d1), 18, 8);
+      }
+    });
+    if (obj.carrying) {
+      const it = obj.carrying; it.m.position.copy(car.position).addScaledVector(S.up, 1.15 + Math.abs(Math.sin(t * 6)) * 0.12); it.m.quaternion.copy(car.quaternion); // riding on the roof
+      if (S.p.angleTo(obj.nest) * R < 2.4 && low) {
+        it.m.scale.setScalar(0.9); it.home = true; obj.carrying = null;
+        const n = obj.items.filter(x => x.home).length; G.objP[i] = n; placeNested(it, n - 1); home = n;
+        burst(surfAt(obj.nest, 1), obj.nest, new THREE.Color(0xffc43d), 26, 10);
+        objProgress(`PUP HOME ${n}/${obj.n} +${fmt(objReward(1.5))} ${GEM}`); save();
+      }
+    }
+    if (home >= obj.n) objComplete();
+  } else if (obj.type === 'race') {
+    if (obj.running) {
+      obj.clock -= dt;
+      if (obj.clock <= 0) { obj.running = false; obj.next = 0; raceLook(); SFX.sloppy(); toast('Out of time! Back to the first gate', 2.4); }
+    }
+    const gt = obj.gates[obj.next];
+    if (gt) {
+      gt.m.scale.setScalar(1.1 + 0.05 * Math.sin(t * 6));
+      if (S.p.angleTo(gt.d) * R < 2.3 && S.alt - groundH(gt.d) < 4) {
+        obj.next++; burst(surfAt(gt.d, 2), gt.d, new THREE.Color(0xffc43d), 22, 10);
+        if (obj.next >= obj.n) { obj.running = false; raceLook(); objComplete(); return; }
+        const bonus = obj.next === 1 ? 10 : 6 + planet.R * 0.1; obj.clock = obj.next === 1 ? bonus : obj.clock + bonus; obj.running = true;
+        raceLook(); objProgress(`GATE ${obj.next}/${obj.n} +${Math.round(bonus)}s`); objReward(0.5);
+      }
+    }
+  }
+}
+// where the guide arrow points for this goal
+function objTarget() {
+  if (!obj || obj.type === 'paint' || obj.type === 'trick' || objDone()) return null;
+  const near = (list) => list.reduce((b, d) => !b || S.p.angleTo(d) < S.p.angleTo(b) ? d : b, null);
+  if (obj.type === 'shards') { const d = near(obj.items.filter(x => !x.got).map(x => x.d)); return d && { d, label: 'SHARD' }; }
+  if (obj.type === 'rescue') { if (obj.carrying) return { d: obj.nest, label: 'NEST' }; const d = near(obj.items.filter(x => !x.home).map(x => x.d)); return d && { d, label: 'PUP' }; }
+  if (obj.type === 'race') { const g = obj.gates[obj.next]; return g && { d: g.d, label: 'GATE' }; }
+  return null;
+}
+function objGoalText() {
+  const i = objIdx(), p = (G.objP && G.objP[i]) || 0;
+  if (obj.type === 'shards') { const got = obj.items ? obj.items.filter(x => x.got).length : 0; return [`Find the <em>star shards</em>: <em>${got} / ${obj.n}</em>`, 'Follow the yellow arrow. Each one pays out.']; }
+  if (obj.type === 'trick') return [`Score <em>trick points</em>: <em>${p} / ${obj.n}</em>`, touch.active ? 'Tap JUMP, then push the stick to flip and spin. Land on your wheels!' : `${kn('jump')} jumps. In the air, ${kn('up')} ${kn('down')} flip and ${kn('left')} ${kn('right')} spin. Land on your wheels!`];
+  if (obj.type === 'rescue') return [`Bring the <em>lost moon pups</em> home: <em>${p} / ${obj.n}</em>`, obj.carrying ? 'Pup on board! Drive to the glowing nest.' : 'Drive into a pup to scoop it up.'];
+  if (obj.type === 'race') return [`Race through the <em>gates</em>: <em>${obj.next} / ${obj.n}</em>${obj.running ? ` · <em>${Math.ceil(obj.clock)}s</em>` : ''}`, obj.running ? 'Each gate adds time. Drift through the corners!' : 'Drive through the glowing gate to start the clock.'];
+  return ['', ''];
+}
+function objIntro() {
+  if (!obj || obj.type === 'paint' || objDone()) return;
+  G.objSeen = G.objSeen || {};
+  if (!G.objSeen[obj.type]) { G.objSeen[obj.type] = 1; const [a, b] = OBJ_NEW[obj.type].split('<br>'); toast(`<span style="font-size:28px;color:var(--sun)">${a}</span><br>${b}`, 4.5); }
+}
 function updateComet(dt) {
   const R = planet.R;
   if (!comet.on) {
@@ -2701,7 +2903,7 @@ function step(dt) {
     if (planet.portals.length) updatePortals(dt);
     if (planet.meteors.length) updateMeteors(dt);
     updateCritters(dt);
-    updateRush(dt); updateComet(dt); checkBloom(dt);
+    updateRush(dt); updateComet(dt); checkBloom(dt); updateObjective(dt);
 
     // seed pods
     for (const pod of planet.pods) {
@@ -2747,7 +2949,7 @@ function step(dt) {
     }
 
     // launch ramp
-    if (planet.restored / planet.N >= planet.def.goal) {
+    if (objDone()) {
       if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } toast('LAUNCH RAMP OPEN!', 2.5, true); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
       if (S.p.angleTo(planet.padDir) * R < (atIdx() < 2 ? 3.6 : 2.8) && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); }
@@ -2774,7 +2976,7 @@ function step(dt) {
     S.t += dt; S.valt -= 22 * dt; S.alt += S.valt * dt;
     $('fade').style.opacity = 1 - smooth(0, 0.8, S.t);
     const g = groundH(S.p);
-    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); toast(planet.index < G.planetIdx && planet.restored / planet.N >= planet.def.goal ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); arrivalGift(); }
+    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); toast(planet.index < G.planetIdx ? `Welcome back to ${planet.def.title}!` : planet.def.intro, 4); objIntro(); arrivalGift(); }
   }
 
   grow(dt);
@@ -2807,6 +3009,8 @@ function step(dt) {
   let target = null, label = '';
   if (comet.on && comet.fall === 0) { target = comet.d; label = 'COMET'; }
   else if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
+  else if (objTarget()) { const ot = objTarget(); target = ot.d; label = ot.label; }
+  else if (obj && obj.type !== 'paint') { /* trick show: no arrow */ }
   else if (planet.hoops.length && planet.hoopIdx < planet.hoops.length) { target = planet.hoops[planet.hoopIdx].d; label = 'HOOP'; }
   else {
     if (planet.restored > lastRestored + 2 || planet.restored < lastRestored - 50) { lastRestored = planet.restored; stallT = 0; } else stallT += dt; // grass not growing for 5 s: point at the nearest grey ground, however close
@@ -2956,7 +3160,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, gift3: saved.gift3 || (saved.planetIdx || 0) > 2 ? 1 : 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, gift3: saved.gift3 || (saved.planetIdx || 0) > 2 ? 1 : 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, objDone: (saved.objDone && typeof saved.objDone === 'object') ? saved.objDone : {}, objP: (saved.objP && typeof saved.objP === 'object') ? saved.objP : {}, objSeen: (saved.objSeen && typeof saved.objSeen === 'object') ? saved.objSeen : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
@@ -2967,7 +3171,7 @@ planet = buildPlanet(atIdx());
 if (saved && saved.life) {
   try { if (!unpackLife(saved.life, planet.N, planet.life)) planet.life.fill(0); } catch { planet.life.fill(0); }
   recount(planet);
-  if (planet.restored / planet.N >= planet.def.goal) planet.pad.visible = true;
+  if (objDone()) planet.pad.visible = true;
 }
 setSky();
 S.alt = groundH(S.p);
@@ -3107,7 +3311,7 @@ if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
   setTimeout(() => send(false), 5000);
   addEventListener('pagehide', () => send(true, 'unload')); addEventListener('visibilitychange', () => { if (document.hidden) send(true, 'hidden'); });
 }
-if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet };
+if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet, get obj() { return obj; }, objDone };
 requestAnimationFrame(frame);
 </script>
 </body>

@@ -196,3 +196,12 @@ First real data (17 sessions, 16 on phone) showed a quit spike on Moonlet III.
 - Logging now sends why a session ended (page hidden / unloaded), the screen before the auto-pause, seconds per moonlet, load time and whether PLAY was pressed; stats.php shows them. Playtime now counts real seconds (the old count used the 0.05 s game-step cap and undercounted slow phones).
 - Phones: +8 degrees field of view in portrait, auto-quality reacts after 3 s, and on Low under 30 fps the ink outlines turn off.
 - Logging also sends the average driving frame rate and the final graphics level; stats.php shows median fps, the share under 30/20 fps and the graphics levels by device.
+
+## Round 8: different goals per moonlet (2026-11-08)
+User: "even with the twists, it feels like the same thing over and over". Painting is now one of five main goals that open the ramp:
+- **Paint** (Moonlet I and every 5th): grow grass to the target %.
+- **Star shards**: find 6+ glowing shards (beams mark them, the arrow points to the nearest).
+- **Trick show**: score 300+ trick points.
+- **Lost moon pups**: scoop each pup onto the roof and drive it to the nest.
+- **Gate rally**: drive through 6+ gates; the first gives 10 s and each next one adds time; run out and you restart from gate 1.
+Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX and a 5-cycle after. Painting still grows the garden and earns bloom milestones and stars everywhere. First meeting with each goal shows a "NEW GOAL" toast. Progress saves per moonlet (G.objDone, G.objP).
