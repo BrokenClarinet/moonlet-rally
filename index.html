@@ -102,6 +102,26 @@
   #tD { right:30px; bottom:128px; width:72px; height:72px; }
   #tP { right:128px; bottom:112px; width:58px; height:58px; font-size:11px; }
   body.touch #precise { left:auto; right:200px; bottom:100px; }
+  /* swipe steering: drag anywhere, a small slider shows where your thumb is */
+  body.swipe #tzone { width:100%; height:100%; } body.swipe #stick, body.swipe #tD, body.swipe #tP { display:none; }
+  body.touch #left, body.touch #right { z-index:1; } body.touch #goal { z-index:2; }
+  #sbar { position:absolute; left:0; top:0; width:132px; height:30px; margin:-15px 0 0 -66px; border-radius:15px; background:rgba(58,39,88,.5); border:3px solid rgba(42,24,56,.85); pointer-events:none; display:none; }
+  #sbar.on { display:block; }
+  #sbar b { position:absolute; inset:0; background:radial-gradient(circle at 12px 50%, var(--paper) 0 3px, transparent 4px), radial-gradient(circle at calc(100% - 12px) 50%, var(--paper) 0 3px, transparent 4px); opacity:.7; }
+  #sbar i { position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:var(--sun); border:3px solid var(--ink); box-shadow:2px 3px 0 var(--ink); }
+ 
+  #tB.full { background:rgba(126,232,250,.9); color:var(--ink); animation:bpulse .9s ease-in-out infinite; } @keyframes bpulse { 50% { transform:scale(1.1); } }
+  /* first-minute coach: one instruction at a time with a moving demo dot */
+  #coach { left:50%; bottom:70px; transform:translateX(-50%); z-index:5; display:flex; flex-direction:column; align-items:center; gap:10px; width:min(440px,90vw); text-align:center; }
+  #coach b { font-size:22px; font-weight:900; line-height:1.15; color:var(--paper); text-shadow:2px 3px 0 var(--ink); background:rgba(42,24,56,.88); border:3px solid var(--sun); border-radius:16px; padding:8px 14px; }
+  @media (max-height:500px) { #coach { gap:4px; bottom:58px; } #coach b { font-size:17px; padding:6px 12px; } #coach b small { font-size:12px; } #coach .cd { height:36px; } }
+  #coach b em { font-style:normal; color:var(--sun); } #coach b small { display:block; font-size:14px; margin-top:3px; color:var(--mint); }
+  #coach .cd { position:relative; width:150px; height:46px; } #coach .cd i { position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:var(--sun); border:3px solid var(--ink); box-shadow:0 0 0 6px rgba(255,196,61,.35); }
+  #coach .cd s { position:absolute; left:8px; right:8px; top:50%; height:6px; margin-top:-3px; border-radius:3px; background:rgba(255,246,234,.4); }
+  #coach.steer .cd i { animation:cslide 1.6s ease-in-out infinite; } @keyframes cslide { 0%,100% { transform:translateX(-52px); } 50% { transform:translateX(52px); } }
+  #coach.tap .cd s, #coach.goal .cd { display:none; } #coach.tap .cd i { animation:ctap 1s ease-out infinite; } @keyframes ctap { 0% { transform:scale(1.3); box-shadow:0 0 0 0 rgba(255,196,61,.7); } 30% { transform:scale(.85); } 100% { transform:scale(1); box-shadow:0 0 0 22px rgba(255,196,61,0); } }
+  #coach.goal { bottom:auto; top:118px; } #coach.goal b::before { content:''; display:block; margin:-30px auto 6px; width:0; height:0; border:12px solid transparent; border-bottom:16px solid var(--sun); border-top:0; }
+  body.in-garden #coach, body.in-garage #coach { display:none !important; } body.coaching #toast { visibility:hidden; }
   body.touch #combo { bottom:48px; } body.touch #nitro { bottom:16px; width:min(200px,34vw); }
   body.touch #guide { bottom:auto; top:96px; } body.touch.toasting #guide { visibility:hidden; }
   .maprow { display:grid; grid-template-columns:24px 1fr auto; gap:10px; align-items:center; padding:7px 0; border-top:2px solid var(--panel2); }
@@ -214,6 +234,7 @@
 <div id="comet" class="hud" hidden></div>
 <div id="precise" class="hud" hidden>PRECISION</div>
 <div id="guide" class="hud" hidden><i></i><span></span></div>
+<div id="coach" class="hud" hidden><div class="cd"><s></s><i></i></div><b></b></div>
 <div id="nitro" class="hud"><div id="nitrofill"></div><span>NITRO</span></div>
 <div id="speedlines" class="hud"></div>
 <div id="fade" class="hud"></div>
@@ -240,7 +261,7 @@
     <div id="gdlist"></div>
   </div>
 </div>
-<div id="touch"><div id="tzone"><div id="stick"><b></b><i></i></div></div><div class="tb" id="tB">BOOST</div><div class="tb" id="tD">DRIFT</div><div class="tb" id="tP">SLOW</div><div class="tb" id="tJ">JUMP</div></div>
+<div id="touch"><div id="tzone"><div id="stick"><b></b><i></i></div><div id="sbar"><b></b><i></i></div></div><div class="tb" id="tB">BOOST</div><div class="tb" id="tD">DRIFT</div><div class="tb" id="tP">SLOW</div><div class="tb" id="tJ">JUMP</div></div>
 <button class="btn alt" id="pauseBtn" aria-label="Pause"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="#2a1838"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="#2a1838"/></svg></button>
 <div id="fps" class="hud" hidden></div>
 <div id="title"><h1>MOONLET<span>RALLY</span></h1>
@@ -338,7 +359,7 @@ await loadStep(0.05, 'Loading your save');
 await Promise.race([window.MR_SDK_READY || Promise.resolve(false), new Promise((r) => setTimeout(() => r(false), 8000))]);
 // ---------------------------------------------------------------- settings (saved per device; Poki syncs these too)
 const SET_KEY = 'moonletRally.settings';
-const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', fps: false, sound: true, vol: 'med' };
+const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', tctl: 'swipe', fps: false, sound: true, vol: 'med' };
 let SET = { ...SET_DEF };
 try { Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch {}
 const saveSettings = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch {} };
@@ -1247,7 +1268,7 @@ function chanTick(c, dt) {
 }
 function chanClear(c) { c.q.length = 0; c.t = 0; c.gap = 0; c.live = false; $(c.id).style.opacity = 0; }
 const toastC = mkChan('toast', 1.6, 3, 0.32), bonusC = mkChan('drift', 0.75, 4, 0.12);
-function toast(msg, secs = 2.5, now = false) { chanPush(toastC, msg, secs, now); }
+function toast(msg, secs = 2.5, now = false) { if (!now && document.body.classList.contains('coaching')) return; chanPush(toastC, msg, secs, now); } // the first-minute coach talks alone
 // prices follow your total income: the base growth of every moonlet you've restored (at the level you restored it)
 // plus the one you're working on (at its ramp goal). Multipliers you buy (sprinklers, garden levels) are left out,
 // so buying them never makes everything else pricier. A price is that income times a proportion: base / 10 seconds.
@@ -1260,6 +1281,7 @@ const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(
 const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
 $('buyAll').onclick = (e) => { e.currentTarget.blur(); buyCheapest(); updateUI(); };
+let nitroShow = 0.5, nitroW = '';
 let goalKey = '', goalAt = 0, goalGems = 0, cardT = null;
 // the goal card: a big centred card when you land (and when the ramp opens) that then flies up into the GOAL box,
 // so the box reads as "this is what you're doing" rather than one more HUD panel
@@ -1311,7 +1333,7 @@ function updateGoal(frac) {
     if (first) {
       if (!goalAt) goalAt = t;
       const age = t - goalAt;
-      sub = age < 25 ? (touch.active ? 'Left thumb drives. Your tire tracks grow grass!' : `${kn('up')} drives, ${kn('left')} ${kn('right')} steer. Your tire tracks grow grass!`)
+      sub = age < 25 ? (touch.active ? (swipeMode() ? 'Drag anywhere to steer. Your tire tracks grow grass!' : 'Left thumb drives. Your tire tracks grow grass!') : `${kn('up')} drives, ${kn('left')} ${kn('right')} steer. Your tire tracks grow grass!`)
         : `Reach ${Math.round(goal * 100)}% to open the launch ramp to ${next}`;
     } else sub = `${Math.round(goal * 100)}% opens the launch ramp to ${next}`; }
   }
@@ -1344,7 +1366,6 @@ function updateUI() {
   $('buyAll').hidden = nUp < 2 || !(anyUp || (G.stats.time || 0) > 60); $('buyAll').textContent = 'Buy all ↑';
   const anyFull = gardenItems().some(it => (it.d.silo || 0) >= capOf(it) - 1 && capOf(it) > 20);
   $('gardenBtn').innerHTML = `Gem Garden${touch.active ? '' : ` (${kn('garden')})`} · ${anyFull ? 'FULL · ' : ''}${fmt(gardenReady())} ${GEM}`;
-  $('nitrofill').style.width = (G.nitro * 100).toFixed(0) + '%';
   $('mapBtn').hidden = G.planetIdx < 1;
   $('combo').textContent = combo > 1 ? `x${combo} FRESH GROUND` : '';
   $('combo').style.opacity = combo > 1 ? 1 : 0;
@@ -1749,7 +1770,7 @@ function renderGardenScene(dt) {
 
 // ---------------------------------------------------------------- input
 const keys = {};
-const touch = { sx: 0, sy: 0, D: false, B: false, J: false, P: false, active: false };
+const touch = { sx: 0, sy: 0, D: false, B: false, J: false, P: false, active: false, tapUntil: 0, hard: 0 };
 // rebindable keys: two slots per action, saved per device
 const ACTIONS = [
   ['up', 'Drive / flip forward', ['KeyW', 'ArrowUp']], ['down', 'Reverse / flip back', ['KeyS', 'ArrowDown']],
@@ -1800,16 +1821,22 @@ function renderControls() {
   }
 }
 function updateLabels() {
-  $('hint').innerHTML = touchActive() ? 'Left thumb: drag to steer, pull back to brake<br>Right thumb: JUMP, BOOST, DRIFT · in the air, push the stick to flip and spin'
+  $('hint').innerHTML = touchActive() ? (SET.tctl !== 'stick' ? 'Drag anywhere to steer. The car drives itself!<br>Tap to jump · in the air, swipe to flip and spin · BOOST for speed' : 'Left thumb: drag to steer, pull back to brake<br>Right thumb: JUMP, BOOST, DRIFT · in the air, push the stick to flip and spin')
     : `${kn('up')} ${kn('left')} ${kn('down')} ${kn('right')} drive · ${kn('drift')} drift · ${kn('boost')} boost · ${kn('jump')} jump · ${kn('precise')} precision<br>In the air: ${kn('up')} ${kn('down')} flip, ${kn('left')} ${kn('right')} spin · ${kn('garage')} garage · ${kn('garden')} Gem Garden · ${kn('map')} moonlets · ${kn('pause')} pause`;
   $('garageBtn').innerHTML = touchActive() ? 'Garage' : `Garage (${kn('garage')})`;
   $('mapBtn').innerHTML = touchActive() ? 'Moonlets' : `Moonlets (${kn('map')})`;
 }
 addEventListener('keydown', (e) => { if (Platform.adBusy) { e.preventDefault(); return; } keys[e.code] = true; if (BOUND.has(e.code) || ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; for (const k of ['D', 'B', 'J', 'P']) touch[k] = false; touch.sx = touch.sy = 0; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; for (const k of ['D', 'B', 'J', 'P']) touch[k] = false; touch.sx = touch.sy = 0; if (typeof swRest === 'function') swRest(); });
 const touchDetected = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 const touchActive = () => SET.touch === 'on' || (SET.touch === 'auto' && touchDetected);
+const swipeMode = () => touch.active && SET.tctl !== 'stick';
+// touch help text, worded for whichever steering the player uses
+const TT = {
+  jump: () => swipeMode() ? 'Tap anywhere to jump' : 'Tap JUMP',
+  air: () => swipeMode() ? 'swipe up or down to flip, sideways to spin' : 'push the stick up or down to flip, sideways to spin',
+};
 // settings screen
 const SET_UI = [
   ['quality', 'Graphics', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']]],
@@ -1818,7 +1845,8 @@ const SET_UI = [
   ['speedfx', 'Speed zoom', [[true, 'On'], [false, 'Off']]],
   ['cam', 'Camera distance', [['close', 'Close'], ['normal', 'Normal'], ['far', 'Far']]],
   ['guide', 'Guide arrow', [[true, 'On'], [false, 'Off']]],
-  ['touch', 'Touch buttons', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']]],
+  ['touch', 'Touch controls', [['auto', 'Auto'], ['on', 'On'], ['off', 'Off']]],
+  ['tctl', 'Touch steering', [['swipe', 'Swipe anywhere'], ['stick', 'Stick + buttons']]],
   ['sound', 'Sound', [[true, 'On'], [false, 'Off']]],
   ['vol', 'Volume', [['low', 'Low'], ['med', 'Medium'], ['high', 'High']]],
   ['fps', 'Show FPS', [[true, 'On'], [false, 'Off']]],
@@ -1829,7 +1857,7 @@ function applySettings() {
   renderer.setPixelRatio(SET.quality === 'low' ? Math.min(dpr, 1) * 0.75 : SET.quality === 'medium' ? Math.min(dpr, 1.25) : Math.min(dpr, 2));
   renderer.setSize(innerWidth, innerHeight);
   for (const c of [camera, GD.cam]) SET.outlines ? c.layers.enable(1) : c.layers.disable(1);
-  touch.active = touchActive(); $('touch').style.display = touch.active ? 'block' : 'none'; document.body.classList.toggle('touch', touch.active);
+  touch.active = touchActive(); $('touch').style.display = touch.active ? 'block' : 'none'; document.body.classList.toggle('touch', touch.active); document.body.classList.toggle('swipe', swipeMode());
   $('fps').hidden = !SET.fps;
   SFX.setLevel();
   updateLabels();
@@ -1948,14 +1976,36 @@ function stickRest() {
   stick.id = null; touch.sx = touch.sy = 0;
   stick.el.classList.remove('on'); stick.el.style.left = ''; stick.el.style.top = ''; stick.el.style.bottom = ''; stick.knob.style.transform = '';
 }
+// swipe steering: put a thumb down anywhere and slide it; the anchor follows the thumb past full lock so turning
+// the other way is instant. A quick tap (or a second finger) jumps.
+const SW = { id: null, ox: 0, oy: 0, x0: 0, y0: 0, t0: 0, moved: 0, el: $('sbar'), knob: $('sbar').querySelector('i') };
+const SW_X = 44, SW_Y = 54;
+function swRest() { SW.id = null; touch.sx = touch.sy = 0; SW.el.classList.remove('on'); SW.knob.style.transform = ''; }
+function swDown(e) {
+  if (SW.id !== null) { touch.tapUntil = performance.now() + 240; touch.tapJ = true; return; } // second finger: jump right away
+  const r = $('tzone').getBoundingClientRect();
+  Object.assign(SW, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: 0 }); capture($('tzone'), e);
+  SW.el.style.left = (e.clientX - r.left) + 'px'; SW.el.style.top = (e.clientY - r.top) + 'px'; SW.el.classList.add('on');
+}
+function swMove(e) {
+  const x = e.clientX, y = e.clientY; SW.moved = Math.max(SW.moved, Math.hypot(x - SW.x0, y - SW.y0));
+  let dx = x - SW.ox, dy = y - SW.oy;
+  if (Math.abs(dx) > SW_X) { SW.ox = x - Math.sign(dx) * SW_X; dx = Math.sign(dx) * SW_X; }
+  if (Math.abs(dy) > SW_Y) { SW.oy = y - Math.sign(dy) * SW_Y; dy = Math.sign(dy) * SW_Y; }
+  SW.knob.style.transform = `translateX(${(dx * 1.1).toFixed(0)}px)`;
+  const dz = (v, z) => Math.abs(v) < z ? 0 : Math.sign(v) * (Math.abs(v) - z) / (1 - z);
+  touch.sx = dz(dx / SW_X, 0.1); touch.sy = dz(-dy / SW_Y, 0.2);
+}
+function swUp(e) { if (performance.now() - SW.t0 < 240 && SW.moved < 14) touch.tapUntil = performance.now() + 240; touch.tapJ = true; swRest(); }
 $('tzone').addEventListener('pointerdown', (e) => {
-  e.preventDefault(); if (stick.id !== null) return;
+  e.preventDefault(); if (swipeMode()) return swDown(e); if (stick.id !== null) return;
   const r = $('tzone').getBoundingClientRect();
   stick.id = e.pointerId; stick.ox = e.clientX; stick.oy = e.clientY; capture($('tzone'), e);
   stick.el.classList.add('on'); stick.el.style.bottom = 'auto';
   stick.el.style.left = (e.clientX - r.left - 58) + 'px'; stick.el.style.top = (e.clientY - r.top - 58) + 'px';
 });
 $('tzone').addEventListener('pointermove', (e) => {
+  if (swipeMode()) { if (e.pointerId === SW.id) { e.preventDefault(); swMove(e); } return; }
   if (e.pointerId !== stick.id) return;
   e.preventDefault();
   let dx = e.clientX - stick.ox, dy = e.clientY - stick.oy; const d = Math.hypot(dx, dy);
@@ -1964,7 +2014,7 @@ $('tzone').addEventListener('pointermove', (e) => {
   const dz = (v) => Math.abs(v) < STICK_DEAD ? 0 : Math.sign(v) * (Math.abs(v) - STICK_DEAD) / (1 - STICK_DEAD);
   touch.sx = dz(dx / STICK_R); touch.sy = dz(-dy / STICK_R);
 });
-for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) $('tzone').addEventListener(t, (e) => { if (e.pointerId === stick.id) stickRest(); });
+for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) $('tzone').addEventListener(t, (e) => { if (e.pointerId === SW.id) { if (t === 'pointerup') swUp(e); else swRest(); } else if (e.pointerId === stick.id) stickRest(); });
 for (const [id, k] of [['tD', 'D'], ['tB', 'B'], ['tJ', 'J'], ['tP', 'P']]) {
   const el = $(id); let pid = null;
   const on = (e) => { e.preventDefault(); pid = e.pointerId; capture(el, e); touch[k] = true; el.classList.add('on'); };
@@ -1980,7 +2030,13 @@ function readInput() {
   let drift = act('drift'), boost = act('boost'), jump = act('jump'), precise = act('precise');
   if (touch.active) {
     steer -= touch.sx; if (touch.D) drift = true; if (touch.B) boost = true; if (touch.J) jump = true; if (touch.P) precise = true;
-    if (thr === 0) thr = touch.sy < -0.55 ? -1 : 1; // auto-throttle on touch; pull the stick back to brake and reverse
+    if (swipeMode()) {
+      if (touch.tapJ || performance.now() < touch.tapUntil) { jump = true; touch.tapJ = false; } // a tap always gives at least one frame of jump, and lands as a jump just after touchdown
+      if (thr === 0) thr = touch.sy < -0.7 && -touch.sy > Math.abs(touch.sx) ? -1 : 1; // drag down to brake and reverse
+      // hold full lock at speed and the car slides into a (gentler) drift by itself: wider grass, nitro
+      const hard = Math.abs(touch.sx) > 0.85 && S.grounded && S.v.length() > 9;
+      if (!hard) touch.hard = 0; else if (!touch.hard) touch.hard = performance.now(); else if (performance.now() - touch.hard > 300) drift = drift || 'auto';
+    } else if (thr === 0) thr = touch.sy < -0.55 ? -1 : 1; // auto-throttle on touch; pull the stick back to brake and reverse
   }
   return { thr, steer: clamp(steer, -1, 1), drift, boost, jump, precise };
 }
@@ -2147,7 +2203,7 @@ function land() {
   G.gems += gems; bonusText(`AIR ${air.toFixed(1)}s +${gems} ${GEM}`);
   burst(at, S.p, new THREE.Color(planet.def.leaf), 30, 8);
   shake = Math.max(shake, Math.min(0.8, air * 0.4));
-  if (!hints.trick) { hints.trick = true; toast(touch.active ? 'In the air: push the stick up or down to flip, sideways to spin' : `In the air: press ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin`, 3); }
+  if (!hints.trick) { hints.trick = true; toast(touch.active ? `In the air: ${TT.air()}` : `In the air: press ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin`, 3); }
 }
 function updateGemArcs(dt) {
   const R = planet.R, cp = carPos.copy(S.p).multiplyScalar(R + S.alt + 0.5);
@@ -2732,6 +2788,36 @@ function updateObjective(dt) {
   }
 }
 // where the guide arrow points for this goal
+// first-minute coach (first moonlet, new players only): steer, paint, look at the goal, jump. One thing at a time,
+// each step ends as soon as the player has done it, so nobody waits on text
+let lastInp = null;
+const coach = { step: null, t: 0, acc: 0, base: 0, done: false };
+const COACH = ['steer', 'goal', 'jump'];
+function coachText(step) {
+  const sw = swipeMode(), tc = touch.active;
+  if (step === 'steer') return sw ? '<em>Drag left or right</em> anywhere to steer<small>The car drives by itself</small>' : tc ? 'Drag the <em>left stick</em> to steer<small>The car drives by itself</small>' : `Hold <em>${kn('up')}</em> to drive, <em>${kn('left')} ${kn('right')}</em> to steer`;
+  if (step === 'goal') return 'Your <em>GOAL</em>: drive over grey ground to turn it green<small>Fill the bar to open the launch ramp to the next moonlet</small>';
+  return sw ? '<em>Tap</em> anywhere to jump!<small>Swipe up or down in the air to flip</small>' : tc ? 'Tap <em>JUMP</em>!<small>Push the stick in the air to flip</small>' : `Press <em>${kn('jump')}</em> to jump!<small>${kn('up')} ${kn('down')} in the air to flip</small>`;
+}
+function coachGo(i) {
+  const el = $('coach'); coach.step = COACH[i] || null; coach.t = 0; coach.acc = 0; coach.base = planet.restored / planet.N;
+  if (!coach.step) { el.hidden = true; G.coached = 1; save(); return; }
+  el.className = 'hud ' + (coach.step === 'jump' ? 'jump tap' : coach.step); el.querySelector('b').innerHTML = coachText(coach.step); el.hidden = false;
+  if (coach.step === 'goal') { const g = $('goal'); g.classList.remove('flash'); void g.offsetWidth; g.classList.add('flash'); SFX.star(); }
+}
+function updateCoach(dt, frac) {
+  const el = $('coach');
+  const live = started && !paused && S.mode === 'drive' && !garageOpen && !gardenOpen && !modal && $('goalCard').hidden && G.planetIdx === 0 && atIdx() === 0;
+  document.body.classList.toggle('coaching', !G.coached && live);
+  if (G.coached || !live) { if (!el.hidden) el.hidden = true; return; }
+  if (!coach.step) return coachGo(0);
+  el.hidden = false; coach.t += dt;
+  if (coach.step === 'goal' || camera.aspect < 0.9) { const r = $('goal').getBoundingClientRect(); el.style.top = (r.bottom + (coach.step === 'goal' ? 34 : 14)) + 'px'; el.style.bottom = 'auto'; } else el.style.top = el.style.bottom = ''; // portrait: under the goal box, clear of the car and thumbs
+  const i = COACH.indexOf(coach.step);
+  if (coach.step === 'steer') { if (lastInp && Math.abs(lastInp.steer) > 0.35) coach.acc += dt; if (coach.acc > 0.8 || coach.t > 7) coachGo(i + 1); }
+  else if (coach.step === 'goal') { if (coach.t > 5) coachGo(i + 1); }
+  else if (coach.step === 'jump') { if (!S.grounded && coach.t > 0.2 && hints.jump) coach.acc = 1; if ((coach.acc && S.grounded) || coach.t > 10) { hints.jump = true; coachGo(i + 1); } }
+}
 function objTarget() {
   if (!obj || obj.type === 'paint' || obj.type === 'trick' || objDone()) return null;
   const near = (list) => list.reduce((b, d) => !b || S.p.angleTo(d) < S.p.angleTo(b) ? d : b, null);
@@ -2745,7 +2831,7 @@ function objTarget() {
 function objGoalText() {
   const i = objIdx(), p = (G.objP && G.objP[i]) || 0;
   if (obj.type === 'shards') { const got = obj.items ? obj.items.filter(x => x.got).length : 0; return [`Find the <em>star shards</em>: <em>${got} / ${obj.n}</em>`, obj.items && obj.items.some(x => x.h > 2 && !x.got) ? 'Follow the yellow arrow. High ones need a jump!' : 'Follow the yellow arrow. Each one pays out.']; }
-  if (obj.type === 'trick') return [`Score <em>trick points</em>: <em>${p} / ${obj.n}</em>`, touch.active ? 'Tap JUMP, then push the stick to flip and spin. Land on your wheels!' : `${kn('jump')} jumps. In the air, ${kn('up')} ${kn('down')} flip and ${kn('left')} ${kn('right')} spin. Land on your wheels!`];
+  if (obj.type === 'trick') return [`Score <em>trick points</em>: <em>${p} / ${obj.n}</em>`, touch.active ? `${TT.jump()}, then ${TT.air()}. Land on your wheels!` : `${kn('jump')} jumps. In the air, ${kn('up')} ${kn('down')} flip and ${kn('left')} ${kn('right')} spin. Land on your wheels!`];
   if (obj.type === 'rescue') return [`Bring the <em>lost moon pups</em> home: <em>${p} / ${obj.n}</em>`, obj.carrying ? 'Pup on board! Drive to the glowing nest.' : 'Drive into a pup to scoop it up.'];
   if (obj.type === 'race') return [`Race through the <em>gates</em>: <em>${obj.next} / ${obj.n}</em>${obj.running ? ` · <em>${Math.ceil(obj.clock)}s</em>` : ''}`, obj.running ? 'Each gate adds time. Drift through the corners!' : 'Drive through the glowing gate to start the clock.'];
   if (obj.type === 'chase') return [`Catch the <em>golden zoomer</em>: <em>${p} / ${obj.n}</em>`, 'It runs when you get close. Cut it off, or boost!'];
@@ -2900,12 +2986,12 @@ function grow(dt) {
 }
 
 function step(dt) {
-  const R = planet.R, inp = readInput();
+  const R = planet.R, inp = readInput(); lastInp = inp;
   const up = S.p;
 
   if (S.mode === 'drive') {
     checkStuck(dt, inp, R);
-    if (!hints.jump && !jumpNudged && G.planetIdx === 0 && (G.stats.time || 0) > 8) { jumpNudged = true; toast(touch.active ? 'Tap JUMP, then flip in the air for gems!' : `Press ${kn('jump')} to jump, then flip in the air for gems!`, 3.5); }
+    if (!hints.jump && !jumpNudged && !coach.step && G.planetIdx === 0 && (G.stats.time || 0) > 8) { jumpNudged = true; toast(touch.active ? `${TT.jump()}, then flip in the air for gems!` : `Press ${kn('jump')} to jump, then flip in the air for gems!`, 3.5); }
     const fwd = S.v.dot(S.f), spd = S.v.length();
     const boosting = inp.boost && G.nitro > 0.02 && inp.thr >= 0;
     S.boosting = boosting; $('speedlines').classList.toggle('on', !!boosting && SET.speedfx !== false);
@@ -2923,14 +3009,14 @@ function step(dt) {
       S.v.multiplyScalar(Math.exp(-DRAG * dt));
     }
     tmp.copy(S.f).multiplyScalar(S.v.dot(S.f)); tmp2.copy(S.v).sub(tmp); // tmp2 = lateral slip
-    const grip = !S.grounded ? 0 : S.precise ? 14 : inp.drift ? 1.1 : onIce ? (touch.active ? 2.3 : 1.4) * CS.iceGrip : 7.5 * CS.grip; // thumb sticks steer softer than keys, so ice is kinder on phones
+    const grip = !S.grounded ? 0 : S.precise ? 14 : inp.drift ? (inp.drift === 'auto' ? 2.4 : 1.1) : onIce ? (touch.active ? 2.3 : 1.4) * CS.iceGrip : 7.5 * CS.grip; // thumb sticks steer softer than keys, so ice is kinder on phones
     S.v.addScaledVector(tmp2, -Math.min(1, grip * dt));
     const maxV = S.precise ? 6.5 : (boosting ? MAXV_BOOST : MAXV) * CS.top;
     if (S.v.length() > maxV) S.v.setLength(Math.max(maxV, S.v.length() - (S.precise ? 30 : 12) * dt));
 
     // drift scoring + nitro charge
     const slip = tmp2.length();
-    if (slip > 2.2 && spd > 5 && S.grounded) { driftCombo += dt; quest('drift', dt); starQuest('drift', dt); G.nitro = Math.min(1, G.nitro + 0.22 * CS.nitro * dt); }
+    if (slip > 2.2 && spd > 5 && S.grounded) { driftCombo += dt; quest('drift', dt); starQuest('drift', dt); G.nitro = Math.min(1, G.nitro + 0.12 * CS.nitro * Math.min(1, 0.35 + driftCombo / 2) * dt); } // drifts charge gently, building up the longer you hold one
     else if (driftCombo > 0) {
       if (driftCombo > 0.6) { const bonus = Math.max(1, Math.floor(Math.pow(driftCombo, 1.3) * 2 * gemUnit() * CS.bonus)); G.gems += bonus; bonusText(`DRIFT +${bonus} ${GEM}`); }
       driftCombo = 0;
@@ -2961,7 +3047,7 @@ function step(dt) {
     // jump: off the ground the instant it's pressed; keep holding for a higher hop
     if (S.grounded && inp.jump && !S.jumpHeld) {
       takeoff(); S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3; SFX.jump();
-      if (!hints.jump) { hints.jump = true; toast(touch.active ? 'In the air: push the stick up or down to flip, sideways to spin. Land upright!' : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
+      if (!hints.jump) { hints.jump = true; toast(touch.active ? `In the air: ${TT.air()}. Land upright!` : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
     }
     S.jumpHeld = inp.jump;
     if (!S.grounded && S.jumpBoost > 0) { if (inp.jump) { S.valt += 26 * Math.sqrt(CS.air) * dt; S.jumpBoost -= dt; } else S.jumpBoost = 0; }
@@ -3102,7 +3188,7 @@ function step(dt) {
   const frac = planet.restored / planet.N;
   planet.atmoMat.opacity = 0.05 + frac * 0.16;
   planet.beam.material.opacity = 0.25 + 0.15 * Math.sin(performance.now() / 200);
-  $('precise').hidden = !S.precise;
+  $('precise').hidden = !S.precise; $('tB').classList.toggle('full', G.nitro > 0.95 && swipeMode()); updateCoach(dt, frac);
   let target = null, label = '';
   if (comet.on && comet.fall === 0) { target = comet.d; label = 'COMET'; }
   else if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
@@ -3257,7 +3343,7 @@ function render(dt) {
 // ---------------------------------------------------------------- boot
 const saved = store.get();
 if (saved) {
-  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, gift3: saved.gift3 || (saved.planetIdx || 0) > 2 ? 1 : 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, objDone: (saved.objDone && typeof saved.objDone === 'object') ? saved.objDone : {}, objP: (saved.objP && typeof saved.objP === 'object') ? saved.objP : {}, objSeen: (saved.objSeen && typeof saved.objSeen === 'object') ? saved.objSeen : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
+  Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, gift3: saved.gift3 || (saved.planetIdx || 0) > 2 ? 1 : 0, coached: saved.coached || (saved.planetIdx || 0) > 0 ? 1 : 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, objDone: (saved.objDone && typeof saved.objDone === 'object') ? saved.objDone : {}, objP: (saved.objP && typeof saved.objP === 'object') ? saved.objP : {}, objSeen: (saved.objSeen && typeof saved.objSeen === 'object') ? saved.objSeen : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
   if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
@@ -3378,6 +3464,7 @@ function frame(now) {
   }
   SFX.update(started && !paused && !garageOpen && !gardenOpen && !Platform.adBusy && S.mode === 'drive' && !document.hidden, S.v.length(), S.grounded, !!S.boosting, S.drift || 0);
   uiAcc += dt; if (uiAcc > 0.15) { uiAcc = 0; updateUI(); }
+  { const d = G.nitro - nitroShow; nitroShow += clamp(d, -1.2 * dt, 0.5 * dt); const w = (nitroShow * 100).toFixed(1) + '%'; if (w !== nitroW) { nitroW = w; $('nitrofill').style.width = w; } } // the bar slides, never jumps
   if (gardenOpen) renderGardenScene(dt); else render(dt);
   requestAnimationFrame(frame);
 }
