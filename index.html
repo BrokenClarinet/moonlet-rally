@@ -29,6 +29,8 @@
   #right { top:12px; right:12px; padding:9px 12px 12px; text-align:right; }
   #gems { font-size:24px; font-weight:900; color:var(--gem); text-shadow:2px 2px 0 var(--ink); }
   #rate { font-size:12px; opacity:.85; }
+  #nextCar { margin:4px 0 2px; text-align:right; } #nextCar small { display:block; font-size:11px; font-weight:800; color:var(--paper); opacity:.9; } #nextCar i { display:block; height:7px; margin-top:2px; border-radius:4px; background:rgba(0,0,0,.35); overflow:hidden; border:1.5px solid var(--ink); } #nextCar s { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--coral),var(--sun)); transition:width .3s; }
+  #nextCar.ready small { color:var(--sun); } #nextCar.ready i { box-shadow:0 0 8px var(--sun); }
   #shop { margin-top:8px; display:flex; flex-direction:column; gap:7px; pointer-events:auto; }
   .btn { pointer-events:auto; background:var(--sun); color:var(--ink); border:2.5px solid var(--ink); border-radius:12px; padding:6px 10px; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; box-shadow:2px 3px 0 var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:4px; }
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
@@ -225,7 +227,7 @@
 </head>
 <body>
 <div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div><div id="stars"></div><div id="missions"></div></div>
-<div id="right" class="hud"><div id="gems">0</div><div id="rate">0.0 / sec</div>
+<div id="right" class="hud"><div id="gems">0</div><div id="rate">0.0 / sec</div><div id="nextCar" hidden><small></small><i><s></s></i></div>
   <div id="shop"><button class="btn" id="upT">Upgrades</button><button class="btn alt" id="buyAll" hidden>Buy all</button><button class="btn alt2" id="gardenBtn">Gem Garden (H)</button><button class="btn alt" id="garageBtn">Garage (G)</button><button class="btn" id="mapBtn" hidden style="background:var(--paper)">Moonlets (M)</button></div></div>
 <div id="toast" class="hud"></div>
 <div id="drift" class="hud"></div>
@@ -280,6 +282,7 @@
 </div>
 <div id="pause" class="modal" hidden><div class="gpanel menu">
   <div class="ghead"><b>Paused</b></div>
+  <p class="gdhint" id="pTomorrow" hidden></p>
   <button class="btn" id="pResume">Resume</button><button class="btn alt" id="pSettings">Settings</button><button class="btn alt" id="pControls">Controls</button><button class="btn alt" id="pMap">Moonlets</button><button class="btn alt" id="pStats">Stats</button><button class="btn alt2" id="pMenu">Main menu</button>
 </div></div>
 <div id="settings" class="modal" hidden><div class="gpanel">
@@ -950,7 +953,7 @@ function disposePlanet(p) {
   p.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
 }
 
-function startPlanet() { for (const k in starProg) delete starProg[k]; cometEnd(); comet.t = Math.min(comet.t, 30); for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); objStart(); if (started || G.missions) checkMissions(); }
+function startPlanet() { for (const k in starProg) delete starProg[k]; cometEnd(); if (typeof giftEnd === 'function') giftEnd(); comet.t = Math.min(comet.t, 30); for (const pod of planet.pods) placePod(pod); if (planet.hoops.length) makeHoopChain(); resetCritters(); objStart(); if (started || G.missions) checkMissions(); }
 
 function recount(p) {
   let n = 0; for (let i = 0; i < p.N; i++) { if (p.life[i] >= 0.5) n++; p.paint(i); }
@@ -1356,7 +1359,15 @@ function updateGoal(frac) {
   el.querySelector('b').innerHTML = main; el.querySelector('small').textContent = sub;
   if (key !== goalKey) { goalKey = key; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 }
+function updateNextCar() {
+  const o = CAR_OPTS.body.filter(b => b.cost > 0 && b.trophy == null && b.stars == null && !owns('body', b.id)).sort((a, b) => a.cost - b.cost)[0], el = $('nextCar');
+  if (!o) { el.hidden = true; return; }
+  const c = price(o.cost), f = Math.min(1, G.gems / c); el.hidden = false; el.classList.toggle('ready', f >= 1);
+  el.querySelector('small').textContent = f >= 1 ? `${o.name} car ready! Open the Garage` : `Next car: ${o.name} · ${Math.floor(f * 100)}%`;
+  el.querySelector('s').style.width = (f * 100).toFixed(1) + '%';
+}
 function updateUI() {
+  updateNextCar();
   renderMissions(); renderStars();
   updateGoal(planet.restored / planet.N);
   $('missions').hidden = $('stars').hidden = G.planetIdx === 0 && planet.restored / planet.N < 0.2 && !planet.pad.visible;
@@ -1465,6 +1476,7 @@ const SFX = (() => {
     arrive() { notes([392, 523, 659, 784], 0.09, { type: 'triangle', vol: 0.14, dur: 0.35 }); },
     rush() { notes([659, 784, 988, 1319, 988, 1319], 0.07, { type: 'square', vol: 0.06, dur: 0.14 }); },
     ramp() { notes([523, 784, 1047], 0.1, { type: 'triangle', vol: 0.15, dur: 0.3 }); },
+    paint(c, i) { const sc = [523, 587, 659, 784, 880, 1047, 1175, 1319]; tone(sc[(i % 4) + Math.min(4, c - 1)] , 0.09, { type: 'sine', vol: 0.035 + 0.01 * c }); }, // soft rising notes while you paint fresh ground
     harvest() { notes([1047, 1319, 1568, 2093, 2637], 0.04, { type: 'sine', vol: 0.12, dur: 0.22 }); },
   };
   return api;
@@ -1781,7 +1793,7 @@ function renderGardenScene(dt) {
 
 // ---------------------------------------------------------------- input
 const keys = {};
-const touch = { sx: 0, sy: 0, D: false, B: false, J: false, P: false, active: false, tapUntil: 0, hard: 0 };
+const touch = { sx: 0, sy: 0, D: false, B: false, J: false, P: false, active: false, tapUntil: 0, hard: 0, lastT: 0, nudged: false };
 // rebindable keys: two slots per action, saved per device
 const ACTIONS = [
   ['up', 'Drive / flip forward', ['KeyW', 'ArrowUp']], ['down', 'Reverse / flip back', ['KeyS', 'ArrowDown']],
@@ -1931,10 +1943,11 @@ $('mapBtn').onclick = openMap;
 $('mapClose').onclick = closeModal;
 $('pMap').onclick = () => { if (G.planetIdx < 1) return; $('pause').hidden = true; openModal('map'); };
 const canPause = () => started && !paused && !garageOpen && !gardenOpen && S.mode === 'drive' && !Platform.adBusy;
-function pause() { if (!canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); $('pause').hidden = false; save(); }
+function tomorrowText() { const items = gardenItems(); if (!items.length) return ''; const v = items.reduce((a, it) => a + Math.min(capOf(it), (it.d.silo || 0) + prodOf(it) * 86400), 0); return v >= 1 ? `Your Gem Garden keeps growing while you're away: about <b style="color:var(--gem)">${fmt(v)} ${GEM}</b> waiting by tomorrow.` : ''; }
+function pause() { if (!canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); $('pause').hidden = false; { const t = tomorrowText(); $('pTomorrow').innerHTML = t; $('pTomorrow').hidden = !t; } save(); }
 function resume() {
   if (!paused || resuming) return; closeModal(); $('pause').hidden = true; $('title').hidden = true; resuming = true;
-  Platform.commercialBreak().then(() => { resuming = false; paused = false; S.jumpHeld = true; Platform.gameplayStart(); });
+  Platform.commercialBreak().then(() => { resuming = false; paused = false; S.jumpHeld = true; touch.lastT = performance.now(); Platform.gameplayStart(); });
 }
 let resuming = false;
 function showMenu() {
@@ -2015,8 +2028,9 @@ function swMove(e) {
   const dz = (v, z) => Math.abs(v) < z ? 0 : Math.sign(v) * (Math.abs(v) - z) / (1 - z);
   touch.sx = dz(dx / SW_X, 0.1); touch.sy = dz(-dy / SW_Y, 0.2);
 }
-function swUp(e) { if (performance.now() - SW.t0 < 240 && SW.moved < 14) touch.tapUntil = performance.now() + 240; touch.tapJ = true; swRest(); }
+function swUp(e) { touch.lastT = performance.now(); if (performance.now() - SW.t0 < 240 && SW.moved < 14) { touch.tapUntil = performance.now() + 240; touch.tapJ = true; } swRest(); }
 $('tzone').addEventListener('pointerdown', (e) => {
+  touch.lastT = performance.now(); touch.nudged = false;
   e.preventDefault(); if (swipeMode()) return swDown(e); if (stick.id !== null) return;
   const r = $('tzone').getBoundingClientRect();
   stick.id = e.pointerId; stick.ox = e.clientX; stick.oy = e.clientY; capture($('tzone'), e);
@@ -2036,7 +2050,7 @@ $('tzone').addEventListener('pointermove', (e) => {
 for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) $('tzone').addEventListener(t, (e) => { if (e.pointerId === SW.id) { if (t === 'pointerup') swUp(e); else swRest(); } else if (e.pointerId === stick.id) stickRest(); });
 for (const [id, k] of [['tD', 'D'], ['tB', 'B'], ['tJ', 'J'], ['tP', 'P']]) {
   const el = $(id); let pid = null;
-  const on = (e) => { e.preventDefault(); pid = e.pointerId; capture(el, e); touch[k] = true; el.classList.add('on'); };
+  const on = (e) => { e.preventDefault(); touch.lastT = performance.now(); touch.nudged = false; pid = e.pointerId; capture(el, e); touch[k] = true; el.classList.add('on'); };
   const off = (e) => { if (e.pointerId !== pid) return; pid = null; touch[k] = false; el.classList.remove('on'); };
   el.addEventListener('pointerdown', on); for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(t, off);
 }
@@ -2051,8 +2065,12 @@ function readInput() {
     steer -= touch.sx; if (touch.D) drift = true; if (touch.B) boost = true; if (touch.J) jump = true; if (touch.P) precise = true;
     if (swipeMode()) {
       if (touch.tapJ || performance.now() < touch.tapUntil) { jump = true; touch.tapJ = false; } // a tap always gives at least one frame of jump, and lands as a jump just after touchdown
-      if (thr === 0) thr = touch.sy < -0.7 && -touch.sy > Math.abs(touch.sx) ? -1 : 1; // drag down to brake and reverse
-      if (guideA != null && Math.abs(touch.sx) < 0.12 && S.grounded) steer += clamp(-guideA * 1.1, -0.5, 0.5); // hands-off: drift gently toward the yellow arrow
+      // the car drives itself only while you're playing: a thumb down, or a touch in the last 4 s. Leave it alone and it coasts to a stop
+      const down = SW.id !== null, idle = performance.now() - touch.lastT;
+      if (thr === 0 && (down || idle < 4000)) thr = touch.sy < -0.7 && -touch.sy > Math.abs(touch.sx) ? -1 : 1; // drag down to brake and reverse
+      if (!down && idle > 4000 && !touch.nudged && !document.body.classList.contains('coaching') && S.mode === 'drive' && started && !paused && $('goalCard').hidden) { touch.nudged = true; toast('Drag to steer!<br><span style="font-size:16px">The car waits for you</span>', 2.5, true); }
+      // thumb resting near the middle: ease toward the yellow arrow (weaker for a moment after you let go, then off)
+      if (guideA != null && Math.abs(touch.sx) < 0.12 && S.grounded && (down || idle < 1500)) steer += down ? clamp(-guideA * 1.1, -0.5, 0.5) : clamp(-guideA * 0.5, -0.2, 0.2);
       // hold full lock at speed and the car slides into a (gentler) drift by itself: wider grass, nitro
       const hard = Math.abs(touch.sx) > 0.85 && S.grounded && S.v.length() > 9;
       if (!hard) touch.hard = 0; else if (!touch.hard) touch.hard = performance.now(); else if (performance.now() - touch.hard > 300) drift = drift || 'auto';
@@ -2128,7 +2146,7 @@ function renderMissions() {
     return `<div class="${m.done ? 'done' : ''}"><i style="width:${(pr * 100).toFixed(0)}%"></i><span>${d.txt(m.n)}</span><b>${m.done ? 'DONE' : `${num}/${m.n}`}</b></div>`; }).join('');
 }
 
-let driftCombo = 0, driftShown = 0, freshFrame = 0, freshTimer = 0, comboTime = 0, combo = 1, shake = 0;
+let paintBeat = 0, paintStep = 0, driftCombo = 0, driftShown = 0, freshFrame = 0, freshTimer = 0, comboTime = 0, combo = 1, shake = 0;
 const hints = {};
 const FLAME = [new THREE.Color(0xffc040), new THREE.Color(0xff6a2a)];
 const TRAILS = { sparks: [0xffd84a, 0xffa53d, 0xfff3b0], frost: [0x9fe8ff, 0xffffff, 0x7fc8ff], candy: [0xff8fc7, 0xb48cff, 0xfff1f8], petals: [0xff8fc7, 0xffffff, 0xffe066, 0xffb3d9], aurora: [0x6fffc8, 0x7fe3ff, 0xb48cff], stardust: [0xffc43d, 0xfff3b0, 0xffffff, 0x7fe3ff], comettail: [0xffffff, 0xfff3b0, 0x7fe3ff], nova: [0xff6b4a, 0xffc43d, 0xffffff] };
@@ -2169,13 +2187,13 @@ function trickKeys() {
 function takeoff() {
   if (!S.grounded) return;
   const k = trickKeys();
-  S.tr = { pitch: 0, yaw: 0 };
+  S.tr = { pitch: 0, yaw: 0 }; S.playerAir = false;
   S.arm = { fl: !k.fl || (touch.active && !act('up')), bk: !k.bk, l: !k.l, r: !k.r }; // keys held at takeoff only count once re-pressed (the touch stick's forward isn't the throttle, so it counts at once)
 }
 function airTricks(dt) {
   const k = trickKeys();
   for (const n in k) if (!k[n]) S.arm[n] = true;
-  const f = (k.fl && S.arm.fl ? 1 : 0) - (k.bk && S.arm.bk ? 1 : 0), y = (k.l && S.arm.l ? 1 : 0) - (k.r && S.arm.r ? 1 : 0);
+  const f = (k.fl && S.arm.fl ? 1 : 0) - (k.bk && S.arm.bk ? 1 : 0), y = (k.l && S.arm.l ? 1 : 0) - (k.r && S.arm.r ? 1 : 0); if (f || y) S.playerAir = true;
   const snap = (a) => { const t = Math.round(a / TAU) * TAU, d = t - a; return Math.abs(d) < 0.9 ? Math.sign(d) * Math.min(Math.abs(d), 4 * dt) : 0; };
   S.tr.pitch += f ? f * 9.5 * CS.spin * dt : snap(S.tr.pitch);
   S.tr.yaw += y ? y * 10 * CS.spin * dt : snap(S.tr.yaw);
@@ -2191,7 +2209,9 @@ function land() {
     burst(at, S.p, new THREE.Color(planet.def.dead[0]), 30, 8); SFX.crash(); bonusText('CRASH!'); stat('crashes', 1); return;
   }
   if (yr > 0.7) { S.v.multiplyScalar(1 - 0.45 * (CS.soft || 1)); trickChain = 0; shake = 0.5; SFX.sloppy(); bonusText('SLOPPY LANDING'); return; }
-  starQuest('air', air); if (air > 0.6) objTrick(air * 10); // clean landings after big air count toward a trick show too
+  const mine = S.playerAir; S.playerAir = false;
+  starQuest('air', air); if (air > 0.6 && mine) objTrick(air * 10); // geyser or bump air only counts if you jumped or tricked in it
+  if (air > 0.4) shake = Math.max(shake, Math.min(0.55, 0.15 + air * 0.18)); // a clean landing thumps // clean landings after big air count toward a trick show too
   const flips = Math.round(Math.abs(P) / TAU), spins = Math.round(Math.abs(Y) / TAU), names = [];
   const MULTI = ['', '', 'DOUBLE ', 'TRIPLE ', 'QUAD '], multi = (n) => MULTI[n] ?? `${n}x `;
   if (flips) names.push(multi(flips) + (P > 0 ? 'FRONTFLIP' : 'BACKFLIP'));
@@ -2204,6 +2224,7 @@ function land() {
     const lucky = Math.random() < (CS.luck || 0), gems = Math.round(points * (1 + 0.5 * (trickChain - 1)) * gemUnit() * mult() * CS.bonus * CS.trick * (lucky ? 2 : 1));
     if (lucky) names.push('LUCKY x2');
     G.gems += gems; G.nitro = Math.min(1, G.nitro + 0.15 * (flips + spins)); SFX.trick(flips + spins + trickChain - 1);
+    if (trickChain >= 3 && trickChain > (G.stats.bestCombo || 0) && (G.stats.bestCombo || 0) >= 2) celebrate(`<span style="font-size:28px;color:var(--sun)">NEW BEST COMBO!</span><br><span style="font-size:16px">x${trickChain} · your record</span>`, 2, 0.3);
     objTrick(points); stat('tricks', 1); stat('bestCombo', trickChain, true); stat('mostFlips', flips, true);
     if (flips) quest('flip', flips); if (spins) quest('spin', spins); quest('combo', trickChain);
     starQuest('turns', turns); starQuest('combo', trickChain);
@@ -2592,6 +2613,47 @@ function cometMesh() {
   ring.rotation.x = Math.PI / 2; ring.position.y = 0.2; core.position.y = 1.3; g.add(core, ring, beam); g.userData.core = core; g.visible = false;
   return (comet.mesh = g);
 }
+// gift crates: a surprise that drops just ahead of you every 40-55 s, between golden comets. Drive into it for a burst of gems and full nitro
+const gift = { t: 45, on: false, left: 0, fall: 0, d: V(), mesh: null };
+function giftMesh() {
+  if (gift.mesh) return gift.mesh;
+  const g = new THREE.Group();
+  const box = inked(new THREE.BoxGeometry(1.3, 1.1, 1.3).translate(0, 0.55, 0), toon({ color: 0xff6b4a }), 0.05);
+  const r1 = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.14, 0.28).translate(0, 0.56, 0), toon({ color: 0xffc43d })), r2 = r1.clone(); r2.rotation.y = Math.PI / 2;
+  const bow = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.1, 5, 10), toon({ color: 0xffc43d })), bow2 = bow.clone(); bow.position.set(-0.22, 1.25, 0); bow2.position.set(0.22, 1.25, 0); bow.rotation.y = 0.5; bow2.rotation.y = -0.5;
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.7, 12, 8, 1, true).translate(0, 6, 0), new THREE.MeshBasicMaterial({ color: 0xff8fc7, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  const core = new THREE.Group(); core.add(box, r1, r2, bow, bow2); g.add(core, beam); g.userData.core = core;
+  return (gift.mesh = g);
+}
+function giftEnd() { gift.on = false; if (gift.mesh) gift.mesh.visible = false; }
+function updateGift(dt) {
+  const R = planet.R;
+  if (!gift.on) {
+    gift.t -= dt; if (gift.t > 0 || S.mode !== 'drive' || !S.grounded || comet.on || !(G.coached || G.planetIdx > 0)) return;
+    const a = (10 + Math.random() * 5) / R, d = V().copy(S.p).multiplyScalar(Math.cos(a)).addScaledVector(S.f, Math.sin(a)).normalize().applyAxisAngle(S.p, (Math.random() - 0.5) * 1.2);
+    if (planet.rocks.some(rk => !rk.smashed && d.angleTo(rk.d) * R < rk.r + 1.5)) { gift.t = 1; return; }
+    const m = giftMesh(); planet.group.add(m); gift.d.copy(d); m.quaternion.setFromUnitVectors(Y_AXIS, d); m.visible = true;
+    gift.on = true; gift.fall = 1; gift.left = 18; gift.t = 40 + Math.random() * 15; SFX.whoosh(); bonusText('GIFT DROP!');
+  }
+  const m = gift.mesh;
+  if (gift.fall > 0) {
+    gift.fall = Math.max(0, gift.fall - dt * 1.5);
+    m.position.copy(gift.d).multiplyScalar(R + groundH(gift.d) + gift.fall * gift.fall * 30);
+    if (gift.fall === 0) { burst(V().copy(gift.d).multiplyScalar(R + groundH(gift.d) + 0.4), gift.d, new THREE.Color(0xff8fc7), 26, 9); shake = Math.max(shake, 0.3); SFX.land(1); }
+    return;
+  }
+  gift.left -= dt; m.userData.core.rotation.y += dt * 1.5; m.userData.core.position.y = 0.15 * Math.abs(Math.sin(performance.now() / 160));
+  m.scale.setScalar(gift.left < 3 ? 0.6 + 0.4 * Math.abs(Math.sin(gift.left * 8)) : 1);
+  if (S.p.angleTo(gift.d) * R < 1.9 * CS.reach && Math.abs(S.alt - groundH(gift.d)) < 2.5) {
+    const gems = Math.round(Math.max(25 * gemUnit() * mult() * CS.bonus, gemRate() * 15));
+    G.gems += gems; G.nitro = 1; stat('gifts', 1);
+    const at = V().copy(gift.d).multiplyScalar(R + groundH(gift.d) + 1);
+    for (const c of [0xff6b4a, 0xffc43d, 0xff8fc7, 0x7fe3ff]) burst(at, gift.d, new THREE.Color(c), 18, 11);
+    shake = Math.max(shake, 0.5);
+    celebrate(`<span style="font-size:30px;color:var(--sun)">GIFT CRATE!</span><br><span style="font-size:16px">+${fmt(gems)} ${GEM} · full nitro</span>`, 2.2, 0.35); giftEnd(); return;
+  }
+  if (gift.left <= 0) giftEnd();
+}
 function cometEnd() { comet.on = false; if (comet.mesh) comet.mesh.visible = false; $('comet').hidden = true; }
 // ---- moonlet goals: painting is only one of five main goals, so moonlets play differently from each other.
 // Every goal opens the launch ramp; painting still grows the garden, blooms and stars on every moonlet.
@@ -2836,7 +2898,7 @@ function updateCoach(dt, frac) {
   el.hidden = false; coach.t += dt;
   if ((coach.step === 'goal' && innerHeight >= 500) || camera.aspect < 0.9) { const r = $('goal').getBoundingClientRect(); el.style.top = (r.bottom + (coach.step === 'goal' ? 34 : 14)) + 'px'; el.style.bottom = 'auto'; } else el.style.top = el.style.bottom = ''; // portrait: under the goal box, clear of the car and thumbs
   const i = COACH.indexOf(coach.step);
-  if (coach.step === 'steer') { if (lastInp && Math.abs(lastInp.steer) > 0.35) coach.acc += dt; if (coach.acc > 0.8 || coach.t > 7) coachGo(i + 1); }
+  if (coach.step === 'steer') { if (lastInp && Math.abs(lastInp.steer) > 0.35) coach.acc += dt; if (coach.acc > 0.8 || (coach.t > 7 && !swipeMode())) coachGo(i + 1); /* swipe phones: the car waits for a first steer */ }
   else if (coach.step === 'goal') { if (coach.t > 5) coachGo(i + 1); }
   else if (coach.step === 'jump') { if (!S.grounded && coach.t > 0.2 && hints.jump) coach.acc = 1; if ((coach.acc && S.grounded) || coach.t > 10) { hints.jump = true; coachGo(i + 1); } }
 }
@@ -3022,7 +3084,7 @@ function step(dt) {
     const onIce = hasTwist(planet.def, 'ice') && S.grounded && planet.lifeAt(S.p) < 0.5, traction = onIce ? 0.7 : 1;
     S.onIce = onIce;
     S.precise = inp.precise && S.grounded;
-    const steerAmt = inp.steer * (inp.drift ? 3.0 : S.precise ? 3.2 : 2.3) * clamp(Math.abs(fwd) / (S.precise ? 2 : 4), 0, 1) * Math.sign(fwd || 1) * airK;
+    const steerAmt = inp.steer * (inp.drift ? 3.0 : S.precise ? 3.2 : swipeMode() ? 2.6 : 2.3) * clamp(Math.abs(fwd) / (S.precise ? 2 : 4), 0, 1) * Math.sign(fwd || 1) * airK;
     S.f.applyAxisAngle(up, steerAmt * dt);
     if (S.grounded) {
       if (boosting) S.v.addScaledVector(S.f, ACCEL * CS.accel * 2.2 * dt * traction);
@@ -3068,7 +3130,7 @@ function step(dt) {
 
     // jump: off the ground the instant it's pressed; keep holding for a higher hop
     if (S.grounded && inp.jump && !S.jumpHeld) {
-      takeoff(); S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3; SFX.jump();
+      takeoff(); S.playerAir = true; S.valt = 9.5 * Math.sqrt(CS.air); S.grounded = false; S.alt += 0.15; S.jumpBoost = 0.3; SFX.jump();
       if (!hints.jump) { hints.jump = true; toast(touch.active ? `In the air: ${TT.air()}. Land upright!` : `In the air: ${kn('up')} ${kn('down')} to flip, ${kn('left')} ${kn('right')} to spin. Land upright!`, 3.5); }
     }
     S.jumpHeld = inp.jump;
@@ -3108,7 +3170,7 @@ function step(dt) {
     if (planet.portals.length) updatePortals(dt);
     if (planet.meteors.length) updateMeteors(dt);
     updateCritters(dt);
-    updateRush(dt); updateComet(dt); checkBloom(dt); updateObjective(dt);
+    updateRush(dt); updateComet(dt); updateGift(dt); checkBloom(dt); updateObjective(dt);
 
     // seed pods
     for (const pod of planet.pods) {
@@ -3140,7 +3202,7 @@ function step(dt) {
     }
 
     // fresh-ground combo: keep painting new ground to build a multiplier
-    if (freshFrame > 0) { freshTimer = CS.comboHold; comboTime += dt; }
+    if (freshFrame > 0) { freshTimer = CS.comboHold; comboTime += dt; paintBeat -= dt; if (paintBeat <= 0) { paintBeat = 0.32; SFX.paint(combo, paintStep++); } }
     else { freshTimer -= dt; if (freshTimer <= 0) comboTime = 0; }
     combo = 1 + Math.min(4, Math.floor(comboTime / 2.5));
     G.gems += freshFrame * 0.006 * combo * gemUnit() * mult() * CS.fresh * (rush.on ? 3 : 1);
@@ -3182,7 +3244,7 @@ function step(dt) {
     $('fade').style.opacity = 1 - smooth(0, 0.8, S.t);
     const g = groundH(S.p);
     if (S.t > 0.25 && $('teaser').classList.contains('on')) teaserOff();
-    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); if (planet.index < G.planetIdx) toast(`Welcome back to ${planet.def.title}!`, 3); else goalCard(); setTimeout(arrivalGift, 3200); }
+    if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); touch.lastT = performance.now(); if (planet.index < G.planetIdx) toast(`Welcome back to ${planet.def.title}!`, 3); else goalCard(); setTimeout(arrivalGift, 3200); }
   }
 
   grow(dt);
@@ -3214,6 +3276,7 @@ function step(dt) {
   $('precise').hidden = !S.precise; $('tB').classList.toggle('full', G.nitro > 0.95 && swipeMode()); updateCoach(dt, frac);
   let target = null, label = '';
   if (comet.on && comet.fall === 0) { target = comet.d; label = 'COMET'; }
+  else if (gift.on && gift.fall === 0 && S.p.angleTo(gift.d) * planet.R < 20) { target = gift.d; label = 'GIFT'; }
   else if (planet.pad.visible) { target = planet.padDir; label = 'RAMP'; }
   else if (objTarget()) { const ot = objTarget(); target = ot.d; label = ot.label; }
   else if (obj && obj.type !== 'paint') { /* trick show: no arrow */ }
@@ -3431,7 +3494,7 @@ $('wTake').onclick = () => collectWelcome(1);
 $('wAd').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { stat('adDoubles', 1); collectWelcome(2); } });
 function start() {
   if (modal === 'welcome' || modal === 'daily') return;
-  if (started) return resume(); started = true; $('title').hidden = true; setTimeout(() => { if (S.mode === 'drive' && !modal) goalCard(); }, 400); S.jumpHeld = true; Platform.gameplayStart(); checkMissions();
+  touch.lastT = performance.now(); if (started) return resume(); started = true; $('title').hidden = true; setTimeout(() => { if (S.mode === 'drive' && !modal) goalCard(); }, 400); S.jumpHeld = true; Platform.gameplayStart(); checkMissions();
   toast(offlineMsg || (G.planetIdx > 0 ? planet.def.intro : 'Let\'s go!<br><span style="font-size:16px">Glowing seed pods fill your nitro</span>'), 3.5);
 }
 
@@ -3498,7 +3561,7 @@ addEventListener('visibilitychange', () => {
   if (document.hidden && started) { hidePaused = !paused; hiddenAt = performance.now(); pause(); save(); return; }
   // back within a minute from an app switch: straight back to driving, no pause menu, no ad
   if (!document.hidden && hidePaused && paused && !resuming && !modal && performance.now() - hiddenAt < 60000) {
-    hidePaused = false; paused = false; $('pause').hidden = true; S.jumpHeld = true; clearKeys(); Platform.gameplayStart(); toast("Back in! Let's go", 1.4, true);
+    hidePaused = false; paused = false; $('pause').hidden = true; S.jumpHeld = true; touch.lastT = performance.now(); clearKeys(); Platform.gameplayStart(); toast("Back in! Let's go", 1.4, true);
   } else if (!document.hidden) hidePaused = false;
 });
 addEventListener('pagehide', () => { if (started) save(); });
@@ -3528,7 +3591,7 @@ if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
   setTimeout(() => send(false), 5000);
   addEventListener('pagehide', () => send(true, 'unload')); addEventListener('visibilitychange', () => { if (document.hidden) send(true, 'hidden'); });
 }
-if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet, get obj() { return obj; }, objDone };
+if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet, gift, get obj() { return obj; }, objDone };
 requestAnimationFrame(frame);
 </script>
 </body>

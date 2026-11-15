@@ -229,3 +229,10 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 - Pace: Moonlet II needs 4 shards and Moonlet III 100 trick points. The free car arrives on Moonlet II. With swipe steering and no thumb on the screen, the car steers gently toward the yellow arrow.
 - During the launch flight a "NEXT UP" teaser names the next moonlet's goal.
 - Coming back to the tab within 60 s resumes driving straight away (no pause menu, no ad).
+
+## Round 13: captivation pass (2026-11-15)
+- Surprise gift crates drop just ahead of you every 40-55 s (between golden comets): drive into one for gems and full nitro. The arrow points at it when it's near.
+- HUD shows progress toward the next car, and says when it's ready to buy. Beating your best trick combo (x3+) gets a celebration. The pause screen says roughly what your Gem Garden will hold by tomorrow.
+- Feel: swipe steering turns a little faster, painting fresh ground plays soft notes that climb with the combo, and clean landings thump the camera.
+- No more playing itself: on swipe phones the car only drives while you're playing (a thumb down, or a touch in the last 4 s). Left alone, it coasts to a stop with a "Drag to steer!" nudge. The ease toward the arrow works only while your thumb rests near the middle (and weakly for 1.5 s after letting go). Air time from geysers and bumps counts for trick shows only if you jumped or flipped in it. The coach's steer step waits for a real steer on phones.
+- Fix: releasing a steering drag no longer triggers a jump (only a quick tap does).
