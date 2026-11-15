@@ -236,3 +236,8 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 - Feel: swipe steering turns a little faster, painting fresh ground plays soft notes that climb with the combo, and clean landings thump the camera.
 - No more playing itself: on swipe phones the car only drives while you're playing (a thumb down, or a touch in the last 4 s). Left alone, it coasts to a stop with a "Drag to steer!" nudge. The ease toward the arrow works only while your thumb rests near the middle (and weakly for 1.5 s after letting go). Air time from geysers and bumps counts for trick shows only if you jumped or flipped in it. The coach's steer step waits for a real steer on phones.
 - Fix: releasing a steering drag no longer triggers a jump (only a quick tap does).
+
+## Round 14: pre-submit polish (2026-11-15)
+- While the big goal card is up, nothing else talks: the GOAL box, toasts and reward pops wait and show after it flies away. On portrait phones the card sits higher (clear of the car) and confetti is halved.
+- Portrait: the left panel narrows so it never runs under the gem panel at 390 px.
+- Moonlet I's ramp opens at 35% so the first launch comes sooner.

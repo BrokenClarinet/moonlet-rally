@@ -66,6 +66,8 @@
   #goalCard p { margin:0; font-size:16px; font-weight:800; color:var(--paper); } #goalCard p em { font-style:normal; color:var(--gem); }
   #goalCard .gt { margin-top:8px; font-size:13px; font-weight:800; color:var(--mint); } #goalCard .gt:empty { display:none; }
   @media (max-width:600px) { #goalCard h2 { font-size:24px; } #goalCard p { font-size:14px; } }
+  @media (max-width:600px) and (orientation:portrait) { #goalCard { top:31%; } }
+  body.carding #toast { opacity:0 !important; }
   @media (max-height:500px) { #goalCard { top:31%; width:min(600px,66vw); padding:7px 14px 8px; border-width:3px; } #goalCard .gm { display:none; } #goalCard h2 { font-size:20px; margin:3px 0 2px; } #goalCard p { font-size:13px; } #goalCard .gt { font-size:11px; margin-top:3px; } #goalCard .gk { font-size:11px; } }
   #goal.ramp { background:var(--sun); } #goal.ramp b { color:var(--ink); } #goal.ramp b em { color:var(--coral); } #goal.ramp small { color:var(--ink); }
   #goal.flash { animation:goalpop .6s ease-out 2, goalglow 2.4s ease-in-out infinite; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
@@ -135,7 +137,7 @@
   .maprow b { font-size:14px; } .maprow small { display:block; font-size:11px; opacity:.8; }
   .maprow .here { font-size:12px; font-weight:900; color:var(--mint); padding:0 8px; }
   @media (max-width:600px) {
-    #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; } #right { transform-origin:top right; }
+    #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; max-width:calc((100vw - 170px) / .68); box-sizing:border-box; } #right { transform-origin:top right; }
     #toast { white-space:normal; width:92vw; font-size:19px; }
     body.touch #nitro { bottom:auto; top:140px; } body.touch #combo { bottom:auto; top:162px; }
     #goal { top:132px; max-width:94vw; min-width:0; padding:7px 10px 6px; } #goal b { font-size:15px; } #goal small { font-size:12px; }
@@ -439,7 +441,7 @@ function lumpy(g, amt, seed = 0) {
 const shade = (hex, l) => new THREE.Color(hex).offsetHSL(0, 0, l).getHex();
 
 const PLANET_DEFS = [
-  { name: 'Moonlet I',   R: 8,  goal: 0.4,  seed: 7,  rate: 4,
+  { name: 'Moonlet I',   R: 8,  goal: 0.35,  seed: 7,  rate: 4,
     dead: [0xa496b8, 0x84779c], alive: [0x93d66c, 0x52a95c], pollen: 0xffd66b, leaf: 0x5cb85c, trunk: 0x8a5a3c,
     flowers: [0xffcf4a, 0xff7fa8, 0x8fe3ff], rock: [0xd6cce6, 0x9a8db4, 0x655981],
     sky: { top: 0x1c1650, hor: 0xff9f86, top2: 0x2d4fa0, hor2: 0xffd9a8 },
@@ -1276,9 +1278,11 @@ function chanTick(c, dt) {
 function chanClear(c) { c.q.length = 0; c.t = 0; c.gap = 0; c.live = false; $(c.id).style.opacity = 0; }
 const toastC = mkChan('toast', 1.6, 3, 0.32), bonusC = mkChan('drift', 0.75, 4, 0.12);
 const coachQ = [];
-function toast(msg, secs = 2.5, now = false) { if (!now && document.body.classList.contains('coaching')) { if (coachQ.length < 4) coachQ.push([msg, secs]); return; } chanPush(toastC, msg, secs, now); } // tips wait while the first-minute coach talks
+const cardUp = () => { const c = $('goalCard'); return !c.hidden && !c.classList.contains('fly'); };
+function toast(msg, secs = 2.5, now = false) { if ((!now && document.body.classList.contains('coaching')) || cardUp()) { if (coachQ.length < 4) coachQ.push([msg, secs]); return; } chanPush(toastC, msg, secs, now); } // tips wait while the first-minute coach talks
 // a reward moment: shown at once, with a pop, a sound, confetti and a beat of slow motion (never over the car: toasts sit up top)
 function celebrate(msg, secs = 2.6, slow = 0.4) {
+  if (cardUp()) { if (coachQ.length < 4) coachQ.push([msg, secs]); return; } // waits for the goal card, then shows
   toast(msg, secs, true); slowT = Math.max(slowT, slow); SFX.bigGems();
   const t = $('toast'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
   if (planet && S.mode === 'drive') { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [0xffc43d, 0x7fe3ff, 0xff8fc7]) burst(at, S.p, new THREE.Color(c), 14, 11); }
@@ -1304,12 +1308,12 @@ function showCard(kick, isNew, title, text, tip = '') {
   c.querySelector('.gk').textContent = kick; c.querySelector('.gk').classList.toggle('new', isNew);
   c.querySelector('.gm').textContent = `${planet.def.name} · ${planet.def.title}`;
   c.querySelector('h2').textContent = title; c.querySelector('p').innerHTML = text; c.querySelector('.gt').textContent = tip;
-  c.classList.remove('fly', 'show'); c.hidden = false; void c.offsetWidth; c.classList.add('show'); SFX.star();
+  c.classList.remove('fly', 'show'); c.hidden = false; void c.offsetWidth; c.classList.add('show'); SFX.star(); $('goal').hidden = true; document.body.classList.add('carding');
   cardT = setTimeout(flyCard, innerHeight < 500 ? 2300 : 3000); // short landscape: the card sits nearer the car, so it leaves sooner
 }
 function flyCard() {
   const c = $('goalCard'); if (c.hidden || c.classList.contains('fly')) return; clearTimeout(cardT);
-  c.classList.add('fly'); cardT = setTimeout(() => { c.hidden = true; c.classList.remove('fly', 'show'); const g = $('goal'); g.classList.remove('flash'); void g.offsetWidth; g.classList.add('flash'); }, 520);
+  c.classList.add('fly'); cardT = setTimeout(() => { c.hidden = true; c.classList.remove('fly', 'show'); document.body.classList.remove('carding'); if (!document.body.classList.contains('coaching')) for (const [m, sc] of coachQ.splice(0)) chanPush(toastC, m, sc); const g = $('goal'); g.classList.remove('flash'); void g.offsetWidth; g.classList.add('flash'); }, 520);
 }
 $('goalCard').addEventListener('click', flyCard);
 function goalCard() {
@@ -2160,7 +2164,7 @@ function trailColor() {
 const ROCK_DUST = new THREE.Color(0x8a8296);
 
 function bonusText(msg) { chanPush(bonusC, msg, 1.3); }
-function burst(at, up, color, n, spread) { for (let i = 0; i < n; i++) spawn(at, up, color, spread); }
+function burst(at, up, color, n, spread) { if (camera.aspect < 0.9) n = Math.ceil(n / 2); for (let i = 0; i < n; i++) spawn(at, up, color, spread); }
 
 function smashRock(rk) {
   rk.smashed = true; rk.mesh.visible = false; SFX.smash(); quest('rock'); starQuest('rock', 1); objSmash();
