@@ -64,7 +64,7 @@
   #goalCard p { margin:0; font-size:16px; font-weight:800; color:var(--paper); } #goalCard p em { font-style:normal; color:var(--gem); }
   #goalCard .gt { margin-top:8px; font-size:13px; font-weight:800; color:var(--mint); } #goalCard .gt:empty { display:none; }
   @media (max-width:600px) { #goalCard h2 { font-size:24px; } #goalCard p { font-size:14px; } }
-  @media (max-height:500px) { #goalCard { top:50%; padding:10px 14px; } #goalCard h2 { font-size:22px; } #goalCard p { font-size:13px; } }
+  @media (max-height:500px) { #goalCard { top:31%; width:min(600px,66vw); padding:7px 14px 8px; border-width:3px; } #goalCard .gm { display:none; } #goalCard h2 { font-size:20px; margin:3px 0 2px; } #goalCard p { font-size:13px; } #goalCard .gt { font-size:11px; margin-top:3px; } #goalCard .gk { font-size:11px; } }
   #goal.ramp { background:var(--sun); } #goal.ramp b { color:var(--ink); } #goal.ramp b em { color:var(--coral); } #goal.ramp small { color:var(--ink); }
   #goal.flash { animation:goalpop .6s ease-out 2, goalglow 2.4s ease-in-out infinite; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
   #rush { top:122px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
@@ -77,6 +77,9 @@
   #guide { bottom:96px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; font-weight:900; text-shadow:1px 1px 0 var(--ink); }
   #guide i { width:34px; height:34px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M17 3 30 28 17 21 4 28z' fill='%23ffc43d' stroke='%232a1838' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; }
   #fade { inset:0; background:#fff6ea; opacity:0; }
+  #teaser { left:50%; top:40%; transform:translate(-50%,-50%); z-index:6; text-align:center; width:min(520px,90vw); opacity:0; transition:opacity .4s; }
+  #teaser.on { opacity:1; } #teaser span { display:inline-block; font-size:13px; font-weight:900; letter-spacing:.14em; background:var(--coral); color:var(--paper); border:2.5px solid var(--ink); border-radius:10px; padding:2px 12px; }
+  #teaser b { display:block; margin-top:8px; font-size:30px; font-weight:900; line-height:1.05; color:var(--sun); text-shadow:2px 3px 0 var(--ink); } #teaser small { display:block; margin-top:6px; font-size:16px; font-weight:800; color:var(--ink); }
   #speedlines { inset:-10%; opacity:0; transition:opacity .25s; background:repeating-conic-gradient(from 0deg at 50% 55%, transparent 0 5deg, rgba(255,246,234,.22) 5deg 5.6deg, transparent 5.6deg 11deg);
     -webkit-mask-image:radial-gradient(ellipse at 50% 55%, transparent 32%, #000 78%); mask-image:radial-gradient(ellipse at 50% 55%, transparent 32%, #000 78%); }
   #speedlines.on { opacity:1; animation:slines .18s steps(2) infinite; } @keyframes slines { 50% { transform:rotate(2.5deg); } }
@@ -114,22 +117,21 @@
   /* first-minute coach: one instruction at a time with a moving demo dot */
   #coach { left:50%; bottom:70px; transform:translateX(-50%); z-index:5; display:flex; flex-direction:column; align-items:center; gap:10px; width:min(440px,90vw); text-align:center; }
   #coach b { font-size:22px; font-weight:900; line-height:1.15; color:var(--paper); text-shadow:2px 3px 0 var(--ink); background:rgba(42,24,56,.88); border:3px solid var(--sun); border-radius:16px; padding:8px 14px; }
-  @media (max-height:500px) { #coach { gap:4px; bottom:58px; } #coach b { font-size:17px; padding:6px 12px; } #coach b small { font-size:12px; } #coach .cd { height:36px; } }
+  @media (max-height:500px) { #coach.goal b::before { display:none; } #coach { gap:4px; bottom:58px; } #coach b { font-size:17px; padding:6px 12px; } #coach b small { font-size:12px; } #coach .cd { height:36px; } }
   #coach b em { font-style:normal; color:var(--sun); } #coach b small { display:block; font-size:14px; margin-top:3px; color:var(--mint); }
   #coach .cd { position:relative; width:150px; height:46px; } #coach .cd i { position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:var(--sun); border:3px solid var(--ink); box-shadow:0 0 0 6px rgba(255,196,61,.35); }
   #coach .cd s { position:absolute; left:8px; right:8px; top:50%; height:6px; margin-top:-3px; border-radius:3px; background:rgba(255,246,234,.4); }
   #coach.steer .cd i { animation:cslide 1.6s ease-in-out infinite; } @keyframes cslide { 0%,100% { transform:translateX(-52px); } 50% { transform:translateX(52px); } }
   #coach.tap .cd s, #coach.goal .cd { display:none; } #coach.tap .cd i { animation:ctap 1s ease-out infinite; } @keyframes ctap { 0% { transform:scale(1.3); box-shadow:0 0 0 0 rgba(255,196,61,.7); } 30% { transform:scale(.85); } 100% { transform:scale(1); box-shadow:0 0 0 22px rgba(255,196,61,0); } }
-  #coach.goal { bottom:auto; top:118px; } #coach.goal b::before { content:''; display:block; margin:-30px auto 6px; width:0; height:0; border:12px solid transparent; border-bottom:16px solid var(--sun); border-top:0; }
-  body.in-garden #coach, body.in-garage #coach { display:none !important; } body.coaching #toast { visibility:hidden; }
+  #coach.goal b::before { content:''; display:block; margin:-30px auto 6px; width:0; height:0; border:12px solid transparent; border-bottom:16px solid var(--sun); border-top:0; }
+  body.in-garden #coach, body.in-garage #coach { display:none !important; }
+  #toast.pop { animation:tpop .5s cubic-bezier(.3,1.6,.5,1); } @keyframes tpop { 0% { transform:translateX(-50%) scale(.4); } 100% { transform:translateX(-50%) scale(1); } }
   body.touch #combo { bottom:48px; } body.touch #nitro { bottom:16px; width:min(200px,34vw); }
   body.touch #guide { bottom:auto; top:96px; } body.touch.toasting #guide { visibility:hidden; }
   .maprow { display:grid; grid-template-columns:24px 1fr auto; gap:10px; align-items:center; padding:7px 0; border-top:2px solid var(--panel2); }
   .maprow .dot { width:22px; height:22px; border-radius:50%; border:2.5px solid var(--ink); box-sizing:border-box; }
   .maprow b { font-size:14px; } .maprow small { display:block; font-size:11px; opacity:.8; }
   .maprow .here { font-size:12px; font-weight:900; color:var(--mint); padding:0 8px; }
-  #rotateHint { display:none; font-weight:800; color:var(--sun); }
-  @media (orientation:portrait) and (pointer:coarse) { #rotateHint { display:block; } }
   @media (max-width:600px) {
     #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; } #right { transform-origin:top right; }
     #toast { white-space:normal; width:92vw; font-size:19px; }
@@ -138,9 +140,9 @@
     #toast { top:128px; bottom:auto; } body.touch #nitro { top:auto !important; bottom:236px; } body.touch #combo { top:auto !important; bottom:258px; } body.touch #nitro { top:222px; } body.touch #combo { top:244px; }
     body.touch #guide { top:258px; } #rush { top:262px; } #comet { top:292px; } }
   @media (max-height:500px) {
-    body.touch #left, body.touch #right { transform:scale(.72); } body.touch #left { transform-origin:top left; } body.touch #right { transform-origin:top right; }
+    body.touch #left, body.touch #right { transform:scale(.72); } body.touch #left { transform-origin:top left; max-width:290px; box-sizing:border-box; } body.touch #right { transform-origin:top right; }
     body.touch #comet { left:auto; right:12px; top:58%; transform:rotate(2deg); }
-    body.touch #goal { top:56px; max-width:48vw; min-width:0; padding:6px 10px 5px; } body.touch #goal b { font-size:13px; } body.touch #goal small { font-size:10px; } body.touch #goal .gbar { height:5px; margin-top:4px; }
+    body.touch #goal { top:56px; max-width:min(48vw,calc(100vw - 460px)); min-width:0; padding:6px 10px 5px; } body.touch #goal b { font-size:13px; } body.touch #goal small { font-size:10px; } body.touch #goal .gbar { height:5px; margin-top:4px; }
     body.touch .tb { transform:scale(.85); } body.touch .tb.on { transform:scale(.85) translate(1px,2px); } body.touch #stick { transform:scale(.85); transform-origin:bottom left; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
@@ -238,6 +240,7 @@
 <div id="nitro" class="hud"><div id="nitrofill"></div><span>NITRO</span></div>
 <div id="speedlines" class="hud"></div>
 <div id="fade" class="hud"></div>
+<div id="teaser" class="hud" hidden><span>NEXT UP</span><b></b><small></small></div>
 <div id="garage" hidden>
   <div class="gpanel">
     <div class="ghead"><b>Garage</b><span id="ggems"></span><button class="btn ad" id="gad" hidden><svg class="vid" width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1.5" width="11" height="11" rx="2.5" fill="#2a1838"/><path d="M12.5 5.2 17 2.6v8.8l-4.5-2.6z" fill="#2a1838"/><path d="M5 4.3v5.4L9.2 7z" fill="#fff6ea"/></svg>Free gems</button><button class="btn" id="gclose">Drive!</button></div>
@@ -270,7 +273,6 @@
     <p>Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
     <p style="font-weight:800;color:var(--sun)">Paint each moonlet green with your tire tracks, then launch off the golden ramp to the next one.</p>
     <p id="hint" style="font-size:13px;opacity:.75"></p>
-    <p id="rotateHint">Turn your phone sideways for the best view</p>
     <button class="go" id="playBtn">PLAY</button>
     <div class="menurow"><button class="btn alt" id="mSettings">Settings</button><button class="btn alt" id="mControls">Controls</button></div>
     <button class="btn alt" id="login" hidden style="margin-top:12px">Log in to save progress across devices</button>
@@ -594,7 +596,9 @@ document.body.prepend(renderer.domElement);
 renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); try { if (started) save(); } catch {} const el = document.getElementById('errbar'); el.hidden = false; el.textContent = 'The 3D view was reset by the browser. Reloading...'; setTimeout(() => location.reload(), 1200); });
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
-addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+function applyView() { const w = innerWidth, h = innerHeight; if (w / h < 0.9) camera.setViewOffset(w, h, 0, Math.round(-h * 0.18), w, h); else camera.clearViewOffset(); } // portrait: aim lower so the moonlet fills the middle
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; applyView(); camera.updateProjectionMatrix(); });
+applyView();
 
 scene.add(new THREE.HemisphereLight(0xffe8f2, 0x4a3a6a, 1.5));
 const sun = new THREE.DirectionalLight(0xfff0d8, 2.4); sun.position.set(40, 60, 30); scene.add(sun); scene.add(sun.target);
@@ -1268,7 +1272,14 @@ function chanTick(c, dt) {
 }
 function chanClear(c) { c.q.length = 0; c.t = 0; c.gap = 0; c.live = false; $(c.id).style.opacity = 0; }
 const toastC = mkChan('toast', 1.6, 3, 0.32), bonusC = mkChan('drift', 0.75, 4, 0.12);
-function toast(msg, secs = 2.5, now = false) { if (!now && document.body.classList.contains('coaching')) return; chanPush(toastC, msg, secs, now); } // the first-minute coach talks alone
+const coachQ = [];
+function toast(msg, secs = 2.5, now = false) { if (!now && document.body.classList.contains('coaching')) { if (coachQ.length < 4) coachQ.push([msg, secs]); return; } chanPush(toastC, msg, secs, now); } // tips wait while the first-minute coach talks
+// a reward moment: shown at once, with a pop, a sound, confetti and a beat of slow motion (never over the car: toasts sit up top)
+function celebrate(msg, secs = 2.6, slow = 0.4) {
+  toast(msg, secs, true); slowT = Math.max(slowT, slow); SFX.bigGems();
+  const t = $('toast'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+  if (planet && S.mode === 'drive') { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [0xffc43d, 0x7fe3ff, 0xff8fc7]) burst(at, S.p, new THREE.Color(c), 14, 11); }
+}
 // prices follow your total income: the base growth of every moonlet you've restored (at the level you restored it)
 // plus the one you're working on (at its ramp goal). Multipliers you buy (sprinklers, garden levels) are left out,
 // so buying them never makes everything else pricier. A price is that income times a proportion: base / 10 seconds.
@@ -1281,7 +1292,7 @@ const price = (base) => { const v = base * econ(); return v < 1000 ? Math.round(
 const costT = () => price(50 * Math.pow(1.7, G.tires)), costS = () => price(75 * Math.pow(1.8, G.sprink));
 $('upT').onclick = () => openGarage('upg');
 $('buyAll').onclick = (e) => { e.currentTarget.blur(); buyCheapest(); updateUI(); };
-let nitroShow = 0.5, nitroW = '';
+let nitroShow = 0.5, nitroW = '', guideA = null;
 let goalKey = '', goalAt = 0, goalGems = 0, cardT = null;
 // the goal card: a big centred card when you land (and when the ramp opens) that then flies up into the GOAL box,
 // so the box reads as "this is what you're doing" rather than one more HUD panel
@@ -1291,7 +1302,7 @@ function showCard(kick, isNew, title, text, tip = '') {
   c.querySelector('.gm').textContent = `${planet.def.name} · ${planet.def.title}`;
   c.querySelector('h2').textContent = title; c.querySelector('p').innerHTML = text; c.querySelector('.gt').textContent = tip;
   c.classList.remove('fly', 'show'); c.hidden = false; void c.offsetWidth; c.classList.add('show'); SFX.star();
-  cardT = setTimeout(flyCard, 3000);
+  cardT = setTimeout(flyCard, innerHeight < 500 ? 2300 : 3000); // short landscape: the card sits nearer the car, so it leaves sooner
 }
 function flyCard() {
   const c = $('goalCard'); if (c.hidden || c.classList.contains('fly')) return; clearTimeout(cardT);
@@ -1341,7 +1352,7 @@ function updateGoal(frac) {
     if (key === 'paint') pf = frac / goal;
     else if (obj && key === 'obj-' + obj.type) pf = obj.type === 'shards' ? (obj.items ? obj.items.filter(x => x.got).length : 0) / obj.n : obj.type === 'race' ? obj.next / obj.n : p / obj.n;
     const bar = el.querySelector('.gbar'); bar.hidden = pf == null; if (pf != null) bar.firstChild.style.width = (Math.min(1, pf) * 100).toFixed(1) + '%'; }
-  el.hidden = false; el.classList.toggle('ramp', key === 'ramp');
+  el.hidden = !$('goalCard').hidden && !$('goalCard').classList.contains('fly'); el.classList.toggle('ramp', key === 'ramp');
   el.querySelector('b').innerHTML = main; el.querySelector('small').textContent = sub;
   if (key !== goalKey) { goalKey = key; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 }
@@ -1907,6 +1918,14 @@ function renderMap() {
 const TWIST_TAG = { meadow: 'Meadow', ice: 'Ice', geysers: 'Geysers', wisps: 'Wisps', wind: 'Wind', hoops: 'Hoops', stars: 'Stars', bouncy: 'Bouncy', pads: 'Speed pads', portals: 'Portals', meteors: 'Meteors' };
 const twistTags = (def) => `<span class="tags">${(def.twists || [def.twist]).map(t => `<i>${TWIST_TAG[t] || t}</i>`).join('')}${def.grav && def.grav < 1 ? '<i>Low gravity</i>' : ''}${def.R <= 8 ? '<i>Tiny</i>' : def.R >= 15 ? '<i>Big</i>' : ''}</span>`;
 function openMap() { if (G.planetIdx < 1 || !canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); openModal('map'); }
+const GOAL_TITLE = { paint: 'TURN THE GREY GROUND GREEN', shards: 'FIND THE STAR SHARDS', trick: 'PUT ON A TRICK SHOW', rescue: 'RESCUE THE MOON PUPS', race: 'GATE RALLY', chase: 'CATCH THE ZOOMER', smash: 'ROCK SMASH' };
+// while the car flies to a new moonlet, show what's waiting there, so the trip is a cliffhanger
+function teaser(to) {
+  const el = $('teaser');
+  const d = planetDef(to); el.querySelector('b').textContent = GOAL_TITLE[objType(to)] || '';
+  el.querySelector('small').textContent = `${d.name} · ${d.title}`; el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+}
+function teaserOff() { const el = $('teaser'); el.classList.remove('on'); setTimeout(() => { if (!el.classList.contains('on')) el.hidden = true; }, 450); }
 function startTravel(i) { if (S.mode !== 'drive' || i === atIdx()) return; S.travel = i; S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); }
 $('mapBtn').onclick = openMap;
 $('mapClose').onclick = closeModal;
@@ -2033,6 +2052,7 @@ function readInput() {
     if (swipeMode()) {
       if (touch.tapJ || performance.now() < touch.tapUntil) { jump = true; touch.tapJ = false; } // a tap always gives at least one frame of jump, and lands as a jump just after touchdown
       if (thr === 0) thr = touch.sy < -0.7 && -touch.sy > Math.abs(touch.sx) ? -1 : 1; // drag down to brake and reverse
+      if (guideA != null && Math.abs(touch.sx) < 0.12 && S.grounded) steer += clamp(-guideA * 1.1, -0.5, 0.5); // hands-off: drift gently toward the yellow arrow
       // hold full lock at speed and the car slides into a (gentler) drift by itself: wider grass, nitro
       const hard = Math.abs(touch.sx) > 0.85 && S.grounded && S.v.length() > 9;
       if (!hard) touch.hard = 0; else if (!touch.hard) touch.hard = performance.now(); else if (performance.now() - touch.hard > 300) drift = drift || 'auto';
@@ -2091,7 +2111,7 @@ function quest(ev, amt = 1) {
     if (m.p >= m.n) {
       m.p = m.n; m.done = 1.8; G.mDone = (G.mDone || 0) + 1; stat('missions', 1);
       const r = mReward(); G.gems += r; G.nitro = 1; SFX.bigGems();
-      toast(`MISSION COMPLETE! +${fmt(r)} ${GEM}`, 2.2);
+      celebrate(`MISSION COMPLETE! +${fmt(r)} ${GEM}`, 2.4, 0.3);
     }
   }
 }
@@ -2597,6 +2617,7 @@ function objDone() {
 const objTier = (i) => Math.floor(i / 5);
 function objSize(type, i) {
   const t = objTier(i);
+  if (i <= 2 && type === 'shards') return 4; if (i <= 2 && type === 'trick') return 100; // the first moonlets are quick wins
   return type === 'shards' ? 6 + Math.min(4, t) : type === 'trick' ? 150 + 75 * Math.min(6, t) : type === 'rescue' ? 4 + Math.min(2, t) : type === 'race' ? 8 + Math.min(4, t) : type === 'chase' ? 3 + Math.min(2, t) : type === 'smash' ? 5 + Math.min(3, t) : 0;
 }
 function objGeos() {
@@ -2796,7 +2817,7 @@ const COACH = ['steer', 'goal', 'jump'];
 function coachText(step) {
   const sw = swipeMode(), tc = touch.active;
   if (step === 'steer') return sw ? '<em>Drag left or right</em> anywhere to steer<small>The car drives by itself</small>' : tc ? 'Drag the <em>left stick</em> to steer<small>The car drives by itself</small>' : `Hold <em>${kn('up')}</em> to drive, <em>${kn('left')} ${kn('right')}</em> to steer`;
-  if (step === 'goal') return 'Your <em>GOAL</em>: drive over grey ground to turn it green<small>Fill the bar to open the launch ramp to the next moonlet</small>';
+  if (step === 'goal') return 'The <em>GOAL</em> box up top says what to do<small>Here: drive over grey ground to turn it green. A full bar opens the launch ramp</small>';
   return sw ? '<em>Tap</em> anywhere to jump!<small>Swipe up or down in the air to flip</small>' : tc ? 'Tap <em>JUMP</em>!<small>Push the stick in the air to flip</small>' : `Press <em>${kn('jump')}</em> to jump!<small>${kn('up')} ${kn('down')} in the air to flip</small>`;
 }
 function coachGo(i) {
@@ -2809,10 +2830,11 @@ function updateCoach(dt, frac) {
   const el = $('coach');
   const live = started && !paused && S.mode === 'drive' && !garageOpen && !gardenOpen && !modal && $('goalCard').hidden && G.planetIdx === 0 && atIdx() === 0;
   document.body.classList.toggle('coaching', !G.coached && live);
+  if ((G.coached || !live) && coachQ.length) for (const [m, sc] of coachQ.splice(0)) chanPush(toastC, m, sc);
   if (G.coached || !live) { if (!el.hidden) el.hidden = true; return; }
   if (!coach.step) return coachGo(0);
   el.hidden = false; coach.t += dt;
-  if (coach.step === 'goal' || camera.aspect < 0.9) { const r = $('goal').getBoundingClientRect(); el.style.top = (r.bottom + (coach.step === 'goal' ? 34 : 14)) + 'px'; el.style.bottom = 'auto'; } else el.style.top = el.style.bottom = ''; // portrait: under the goal box, clear of the car and thumbs
+  if ((coach.step === 'goal' && innerHeight >= 500) || camera.aspect < 0.9) { const r = $('goal').getBoundingClientRect(); el.style.top = (r.bottom + (coach.step === 'goal' ? 34 : 14)) + 'px'; el.style.bottom = 'auto'; } else el.style.top = el.style.bottom = ''; // portrait: under the goal box, clear of the car and thumbs
   const i = COACH.indexOf(coach.step);
   if (coach.step === 'steer') { if (lastInp && Math.abs(lastInp.steer) > 0.35) coach.acc += dt; if (coach.acc > 0.8 || coach.t > 7) coachGo(i + 1); }
   else if (coach.step === 'goal') { if (coach.t > 5) coachGo(i + 1); }
@@ -2871,7 +2893,7 @@ function updateComet(dt) {
     const at = V().copy(comet.d).multiplyScalar(R + groundH(comet.d) + 1);
     for (const c of [0xffc43d, 0xfff3a0, 0x7fe3ff, planet.def.flowers[0]]) burst(at, comet.d, new THREE.Color(c), 22, 12);
     paintAt(comet.d, 7, 1); SFX.bigGems(); shake = Math.max(shake, 0.7); slowT = 0.4;
-    bonusText(`COMET JACKPOT! +${fmt(gems)} ${GEM}`); cometEnd(); return;
+    celebrate(`<span style="font-size:30px;color:var(--sun)">COMET JACKPOT!</span><br><span style="font-size:16px">+${fmt(gems)} ${GEM}</span>`, 2.4, 0.4); cometEnd(); return;
   }
   if (comet.left <= 0) { cometEnd(); bonusText('The comet faded...'); }
 }
@@ -2883,7 +2905,7 @@ function grantTrophies(loud) {
     const i = o.trophy, done = o.stars != null ? starCount() >= o.stars : (G.bloom && G.bloom[i] >= 4) || (G.done[i] && G.done[i].frac >= 0.9);
     if (!done) continue;
     G.owned.push(key);
-    if (loud) toast(`${o.stars != null ? 'STAR REWARD' : 'TROPHY'}! ${o.name} ${kind === 'paint' ? 'paint' : kind} unlocked in the garage`, 3);
+    if (loud) celebrate(`${o.stars != null ? 'STAR REWARD' : 'TROPHY'}! ${o.name} ${kind === 'paint' ? 'paint' : kind} unlocked in the garage`, 3);
   }
 }
 // Three stars per moonlet: bloom it to 75%, land a big trick, chain a trick combo. Each star pays out, adds +1% to all
@@ -2914,7 +2936,7 @@ function awardStar(bit) {
   G.stars[i] = (G.stars[i] || 0) | (1 << bit);
   const gems = Math.round(Math.max(gemUnit() * 10, baseIncome()) * 30);
   G.gems += gems; stat('stars', 1); computeStats();
-  toast(`<span style="font-size:34px;color:var(--sun)">&#9733; STAR!</span><br><span style="font-size:16px">${starGoals(i)[bit].txt} · +${fmt(gems)} ${GEM}</span>`, 2.6, true);
+  celebrate(`<span style="font-size:34px;color:var(--sun)">&#9733; STAR!</span><br><span style="font-size:16px">${starGoals(i)[bit].txt} · +${fmt(gems)} ${GEM}</span>`, 2.6, 0.45);
   const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [0xffc43d, 0xfff3b0, 0xffffff]) burst(at, S.p, new THREE.Color(c), 20, 12);
   SFX.star(); grantTrophies(true); save();
 }
@@ -2945,7 +2967,7 @@ function checkBloom(dt) {
   const f = BLOOM_MS[got - 1][0], secs = BLOOM_MS.slice(G.bloom[i], got).reduce((t, m) => t + m[1], 0); G.bloom[i] = got; if (got >= 4) grantTrophies(true);
   const gems = Math.round(Math.max(gemUnit() * 8, baseIncome()) * secs);
   G.gems += gems; stat('blooms', 1);
-  toast(`${f >= 0.98 ? 'FULL BLOOM!' : `${Math.round(f * 100)}% BLOOMED!`} +${fmt(gems)} ${GEM}`, 2.2);
+  celebrate(`${f >= 0.98 ? 'FULL BLOOM!' : `${Math.round(f * 100)}% BLOOMED!`} +${fmt(gems)} ${GEM}`, 2.2, 0.25);
   const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5);
   for (const c of [...planet.def.flowers, 0xffc43d]) burst(at, S.p, new THREE.Color(c), 16, 10);
   SFX.rush();
@@ -3135,7 +3157,7 @@ function step(dt) {
     if (objDone()) {
       if (!planet.pad.visible) { planet.pad.visible = true; SFX.ramp(); { const at = V().copy(S.p).multiplyScalar(planet.R + S.alt + 1.5); for (const c of [...planet.def.flowers, 0xffc43d, 0x7fe3ff]) burst(at, S.p, new THREE.Color(c), 22, 13); shake = Math.max(shake, 0.6); } rampCard(); }
       // any forward roll onto the ramp counts, even slow (precision) or slightly airborne over a bump
-      if (S.p.angleTo(planet.padDir) * R < 3.6 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); }
+      if (S.p.angleTo(planet.padDir) * R < 3.6 && fwd > 0.8 && S.alt - groundH(S.p) < 0.8) { S.mode = 'launch'; S.t = 0; S.valt = 18; Platform.gameplayStop(); SFX.launch(); starNag(); setTimeout(() => teaser(atIdx() + 1), 700); }
     }
   } else if (S.mode === 'launch') {
     S.t += dt; S.alt += S.valt * dt; S.valt += 10 * dt;
@@ -3159,6 +3181,7 @@ function step(dt) {
     S.t += dt; S.valt -= 22 * dt; S.alt += S.valt * dt;
     $('fade').style.opacity = 1 - smooth(0, 0.8, S.t);
     const g = groundH(S.p);
+    if (S.t > 0.25 && $('teaser').classList.contains('on')) teaserOff();
     if (S.alt <= g) { S.alt = g; S.valt = 0; S.mode = 'drive'; S.grounded = true; S.air = 0; SFX.arrive(); if (planet.index < G.planetIdx) toast(`Welcome back to ${planet.def.title}!`, 3); else goalCard(); setTimeout(arrivalGift, 3200); }
   }
 
@@ -3201,8 +3224,9 @@ function step(dt) {
   if (target && S.mode === 'drive' && SET.guide) {
     const to = tmp2.copy(target).addScaledVector(S.p, -target.dot(S.p)); const m = Math.round(S.p.angleTo(target) * planet.R);
     const a = Math.atan2(-to.dot(left.crossVectors(S.p, S.f)), to.dot(S.f));
+    guideA = m >= 4 ? a : null;
     $('guide').hidden = m < 3 && label !== 'JUMP!'; $('guide').querySelector('i').style.transform = `rotate(${a.toFixed(2)}rad)`; $('guide').querySelector('span').textContent = `${label} ${m}m`;
-  } else $('guide').hidden = true;
+  } else { $('guide').hidden = true; guideA = null; }
 }
 
 // nearest patch of unrestored ground (sampled, so it stays cheap on big moonlets)
@@ -3415,7 +3439,7 @@ let bonkFrame = false, lastGems = G.gems, last = performance.now(), saveAcc = 0,
 let slowT = 0;
 // reaching Moonlet III is the first big milestone: a free new car, swapped in on the spot so you see it right away
 function arrivalGift() {
-  if (planet.index !== 2 || G.gift3) return; G.gift3 = 1;
+  if (planet.index < 1 || planet.index > 2 || G.gift3) return; G.gift3 = 1; // the free car lands on Moonlet II (saves already past II got it on III)
   const o = CAR_OPTS.body.find(b => b.cost > 0 && !owns('body', b.id)); if (!o) { save(); return; }
   G.owned.push(`body:${o.id}`); G.car.body = o.id; applyCar(); SFX.bigGems();
   slowT = 0.6; shake = Math.max(shake, 0.8);
@@ -3468,7 +3492,15 @@ function frame(now) {
   if (gardenOpen) renderGardenScene(dt); else render(dt);
   requestAnimationFrame(frame);
 }
-addEventListener('visibilitychange', () => { SFX.hidden(document.hidden); if (document.hidden && started) { pause(); save(); } });
+let hiddenAt = 0, hidePaused = false;
+addEventListener('visibilitychange', () => {
+  SFX.hidden(document.hidden);
+  if (document.hidden && started) { hidePaused = !paused; hiddenAt = performance.now(); pause(); save(); return; }
+  // back within a minute from an app switch: straight back to driving, no pause menu, no ad
+  if (!document.hidden && hidePaused && paused && !resuming && !modal && performance.now() - hiddenAt < 60000) {
+    hidePaused = false; paused = false; $('pause').hidden = true; S.jumpHeld = true; clearKeys(); Platform.gameplayStart(); toast("Back in! Let's go", 1.4, true);
+  } else if (!document.hidden) hidePaused = false;
+});
 addEventListener('pagehide', () => { if (started) save(); });
 applySettings();
 try { renderer.compile(scene, camera); } catch {}

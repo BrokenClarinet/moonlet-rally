@@ -221,3 +221,11 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 - New default phone steering, "Swipe anywhere": put a thumb down anywhere and slide left or right. A small slider shows under your thumb, and the anchor follows past full lock so turning back is instant. The car drives itself. A quick tap (or a second finger) jumps, and taps buffer briefly so one just before landing still jumps. Swipe up or down in the air to flip, sideways to spin, and drag down to brake. Holding full lock at speed slides into a gentler automatic drift. Only BOOST and JUMP buttons remain; BOOST pulses when nitro is full. The old stick + 4 buttons layout is in Settings > Touch steering.
 - First-minute coach on Moonlet I for new players: one instruction at a time with a moving demo dot. Steps are steer, then what the GOAL box means, then jump. Each step ends as soon as you do it. Other tips wait while it talks.
 - The nitro bar slides instead of jumping, and drifts charge it gently, building up the longer the drift lasts.
+
+## Round 12: the first two minutes on phone (2026-11-15)
+- Landscape phones: the goal card is compact and sits above the car, and leaves after 2.3 s. The GOAL box hides while the big card is up, so the ramp-open message shows once. The goal box respects the side panels at 844 px.
+- Portrait: the camera view is shifted so the moonlet sits higher on screen. The "turn your phone sideways" line is gone.
+- Tips that arrive while the first-minute coach talks are queued, not dropped. Rewards (STAR!, MISSION COMPLETE, bloom milestones, star rewards, comet jackpot) pop with a sound, confetti and a beat of slow motion.
+- Pace: Moonlet II needs 4 shards and Moonlet III 100 trick points. The free car arrives on Moonlet II. With swipe steering and no thumb on the screen, the car steers gently toward the yellow arrow.
+- During the launch flight a "NEXT UP" teaser names the next moonlet's goal.
+- Coming back to the tab within 60 s resumes driving straight away (no pause menu, no ad).
