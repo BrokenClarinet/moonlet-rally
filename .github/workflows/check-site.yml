@@ -1,0 +1,32 @@
+# Read-only check of the live website: HTTP status of key files, and file permissions on the host.
+# Runs only when you start it (Actions tab > Check website > Run workflow). Changes nothing on the server.
+name: Check website
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Site URL including the game folder, e.g. https://example.com/moonlet-rally
+        required: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: HTTP status of key files
+        env:
+          BASE: ${{ inputs.base }}
+        run: |
+          for p in "" index.php assets/thumbnail.png assets/car.png three.module.min.js play/ play/index.html play.php stats.php private/game.php; do
+            curl -s -o /tmp/body -D /tmp/head --max-time 30 -A "Mozilla/5.0 site-check" "${BASE%/}/$p" -w "$p -> %{http_code} %{content_type} %{size_download} bytes\n" || echo "$p -> curl failed"
+            grep -iE "^(server|location|content-encoding):" /tmp/head | sed 's/^/    /'
+          done
+          echo "--- thumbnail first bytes:"; curl -s --max-time 30 "${BASE%/}/assets/thumbnail.png" | head -c 64 | xxd | head -4
+      - name: Permissions on the host
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ vars.FTP_DIR || '.' }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp >/dev/null
+          host="${FTP_SERVER#*://}"; export LFTP_PASSWORD="$FTP_PASSWORD"
+          lftp -c "set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20; open -u \"$FTP_USERNAME\" --env-password sftp://$host; cd '$FTP_DIR'; ls -la; ls -la assets; ls -la play" || echo "listing failed"
