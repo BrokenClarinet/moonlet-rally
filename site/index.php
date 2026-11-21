@@ -27,7 +27,9 @@ $h = fn($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Moonlet Rally</title>
 <link rel="icon" type="image/png" href="assets/thumbnail.png">
-<meta property="og:image" content="assets/thumbnail.png">
+<?php $mrBase = (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https') . '://' . preg_replace('/[^a-zA-Z0-9.:-]/', '', $_SERVER['HTTP_HOST'] ?? '') . rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/'); ?>
+<meta property="og:image" content="<?= htmlspecialchars($mrBase) ?>/assets/thumbnail.png">
+<meta property="og:title" content="Moonlet Rally">
 <meta name="description" content="Moonlet Rally: drive a little car around dead moonlets and bring them back to life with your tire tracks.">
 <style>
   :root { --ink:#2a1838; --paper:#fff6ea; --panel:#3a2758; --panel2:#4c3470; --sun:#ffc43d; --coral:#ff6b4a; --mint:#9be37a; --gem:#7fe3ff;

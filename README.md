@@ -245,3 +245,4 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 ## Playtest stats removed (2026-11-20)
 
 - The website's playtest stats panel is gone: `site/stats.php` is now a 404 stub (it overwrites the old page, since the deploy upload never deletes files) and the "Playtest stats" link is off the home page. Logging (`log.php`) still runs for signed-in players; its data stays in `private/data`, which the web server never serves.
+- `/play/` returned 403 on Apache because `.htaccess` only listed `index.php` as the folder index; it now lists `index.html` too. The home page's link-preview image (`og:image`) is now a full URL, so chat apps can show it.
