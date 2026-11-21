@@ -1,0 +1,46 @@
+# Uploads the password-protected website to your web host (FTP with TLS when available, or SFTP).
+# Runs only when you start it (Actions tab > Deploy website > Run workflow).
+# Repository secrets needed: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, SITE_PASSWORD
+# Optional repository variables: FTP_DIR (folder on the host, default the login folder)
+#   and FTP_PROTOCOL (sftp or ftp; by default it tries sftp, then ftp)
+name: Deploy website
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check settings
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+        run: |
+          missing=""
+          for v in FTP_SERVER FTP_USERNAME FTP_PASSWORD SITE_PASSWORD; do [ -n "${!v}" ] || missing="$missing $v"; done
+          if [ -n "$missing" ]; then echo "::error::Add these repository secrets first (Settings > Secrets and variables > Actions):$missing"; exit 1; fi
+      - name: Build site
+        run: python3 tools/build_site.py
+        env:
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+      - name: Upload
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL }}
+          FTP_DIR: ${{ vars.FTP_DIR || '.' }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp >/dev/null
+          host="${FTP_SERVER#*://}"
+          # Tries SFTP first, then FTP (with TLS when the server offers it), unless FTP_PROTOCOL picks one.
+          export LFTP_PASSWORD="$FTP_PASSWORD"
+          for proto in ${FTP_PROTOCOL:-sftp ftp}; do
+            echo "Trying $proto..."
+            if lftp -c "set ftp:ssl-allow yes; set ftp:ssl-force no; set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20;
+              open -u \"$FTP_USERNAME\" --env-password $proto://$host;
+              mirror --reverse --verbose --no-perms ./dist/site/ '$FTP_DIR'"; then echo "Uploaded with $proto"; exit 0; fi
+          done
+          echo "::error::Upload failed. Check FTP_SERVER, FTP_USERNAME and FTP_PASSWORD, and FTP_DIR if your site lives in a subfolder."; exit 1
