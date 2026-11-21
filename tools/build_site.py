@@ -21,6 +21,11 @@ game = game.replace("'./vendor/three.module.min.js'", "'./three.module.min.js'")
 game = game.replace("window.MR_PLATFORM = 'poki';", "window.MR_PLATFORM = 'demo';")  # stand-in ad cards so ad placements can be tried privately
 game = game.replace("window.MR_PLATFORM = 'demo';", "window.MR_PLATFORM = 'demo'; window.MR_LOG = 'log.php';")  # anonymous playtest logging, website only
 assert "'./three.module.min.js'" in game and "MR_PLATFORM = 'demo'" in game and 'MR_LOG' in game
+def icons(html, base):  # website copies get the site's favicon (the Poki build has none: Poki shows its own)
+    tags = f'<link rel="icon" type="image/svg+xml" href="{base}assets/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="{base}assets/favicon-32.png"><link rel="apple-touch-icon" href="{base}assets/apple-touch-icon.png">'
+    assert html.count('</title>') == 1
+    return html.replace('</title>', '</title>' + tags, 1)
+game = icons(game, '')
 guard = "<?php if (!defined('MR_OK')) { http_response_code(403); exit; } ?>\n"
 (OUT / 'private' / 'game.php').write_text(guard + game)
 
@@ -29,7 +34,7 @@ pub = (ROOT / 'index.html').read_text()
 pub = pub.replace("'./vendor/three.module.min.js'", "'../three.module.min.js'").replace("window.MR_PLATFORM = 'poki';", "window.MR_PLATFORM = 'demo';")
 assert "'../three.module.min.js'" in pub and "MR_PLATFORM = 'demo'" in pub and 'MR_LOG =' not in pub
 (OUT / 'play').mkdir(exist_ok=True)
-(OUT / 'play' / 'index.html').write_text(pub)
+(OUT / 'play' / 'index.html').write_text(icons(pub, '../'))
 shutil.copy(ROOT / 'vendor' / 'three.module.min.js', OUT / 'three.module.min.js')
 shutil.copy(ROOT / 'vendor' / 'THREE-LICENSE.txt', OUT / 'THREE-LICENSE.txt')
 

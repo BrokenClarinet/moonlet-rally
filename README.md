@@ -254,3 +254,9 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 - On short screens (640x360) the pause menu uses two columns, so Main menu is no longer cut off.
 - On phones the scaled-down HUD panels use bigger print for missions, stars and the next-car line. The least useful lines (garden rate, star reward hint) are hidden there.
 - Keyboard: arrow keys or W/S move between pause-menu buttons, and Enter/Space presses the focused one (Poki: menus usable with keyboard).
+- Fixed square corner artifacts on pulsing glows (Upgrades button, GOAL box, tap hint): only transform and opacity animate now.
+- Fixed: the "YOUR GOAL" card could sit invisibly over the pause menu's Resume button on phones; it never takes taps now and hides under panels.
+- Phone and tablet layout: portrait rules no longer catch small landscape phones (568x320); the goal box is placed clear of the corner panels (`layoutHud`); stars, garden rate and the next-car line are hidden on phones (a ready car makes the Garage button glow instead). Checked at 21 screen sizes with an overlap/off-screen/tiny-text script.
+- Leaving the tab always shows the pause menu on return (no more quick auto-resume); leaving mid-launch pauses as soon as the car is driving again.
+- Each moonlet's twists show as colored chips under its name and as a TWIST line on the goal card.
+- Website: own favicon (SVG + 32px PNG + Apple touch icon) on all site pages.

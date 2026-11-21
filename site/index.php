@@ -26,7 +26,10 @@ $h = fn($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Moonlet Rally</title>
-<link rel="icon" type="image/png" href="assets/thumbnail.png">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#3a2758">
 <?php $mrBase = (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https') . '://' . preg_replace('/[^a-zA-Z0-9.:-]/', '', $_SERVER['HTTP_HOST'] ?? '') . rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/'); ?>
 <meta property="og:image" content="<?= htmlspecialchars($mrBase) ?>/assets/thumbnail.png">
 <meta property="og:title" content="Moonlet Rally">

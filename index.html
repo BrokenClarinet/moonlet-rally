@@ -50,7 +50,10 @@
   #goal { top:62px; left:50%; transform:translateX(-50%); max-width:min(560px,62vw,calc(100vw - 620px)); min-width:240px; box-sizing:border-box; text-align:center; background:rgba(58,39,88,.95); border:3px solid var(--sun); border-radius:16px; box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 18px rgba(255,196,61,.45); padding:9px 16px 8px; line-height:1.2; animation:goalglow 2.4s ease-in-out infinite; }
   #goal::before { content:'GOAL'; position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--sun); color:var(--ink); font-size:11px; font-weight:900; letter-spacing:.12em; padding:1px 10px; border:2.5px solid var(--ink); border-radius:9px; }
   #goal.ramp::before { content:'GO!'; background:var(--mint); }
-  @keyframes goalglow { 50% { box-shadow:0 0 0 2.5px var(--ink), 3px 4px 0 2.5px var(--ink), 0 0 30px rgba(255,196,61,.85); } }
+  /* the glow pulse animates only opacity of its own layer (animated box-shadows left corner artifacts in some browsers) */
+  #goal::after { content:''; position:absolute; inset:-3px; border-radius:16px; box-shadow:0 0 30px rgba(255,196,61,.85); opacity:0; pointer-events:none; animation:goalglow 2.4s ease-in-out infinite; }
+  @keyframes goalglow { 50% { opacity:1; } }
+  @media (prefers-reduced-motion: reduce) { #goal::after { animation:none; } }
   #goal .gbar { display:block; height:7px; margin:6px 4px 0; border-radius:4px; background:rgba(0,0,0,.35); overflow:hidden; } #goal .gbar s { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--mint),var(--sun)); border-radius:4px; transition:width .3s; }
   #goal .gbar[hidden] { display:none; }
   #goal b { display:block; font-size:17px; font-weight:900; color:var(--paper); } #goal b em { font-style:normal; color:var(--sun); white-space:nowrap; }
@@ -59,6 +62,12 @@
   #goalCard.show { transform:translate(-50%,-50%) scale(1); opacity:1; }
   #goalCard.fly { top:62px; transform:translate(-50%,0) scale(.42); opacity:0; transition:top .5s ease-in, transform .5s ease-in, opacity .5s ease-in; }
   #goalCard[hidden] { display:none; }
+  .twc { display:flex; flex-wrap:wrap; gap:4px; } .twc:empty { display:none; }
+  .twc i { font-style:normal; font-size:11px; font-weight:900; color:var(--ink); padding:1px 8px; border-radius:8px; border:2px solid var(--ink); }
+  #ptw { margin-top:5px; }
+  #goalCard .gw { justify-content:center; align-items:center; margin:6px 0 2px; } #goalCard .gw b { font-size:12px; font-weight:900; letter-spacing:.12em; color:var(--paper); margin-right:2px; } #goalCard .gw i { font-size:14px; padding:2px 10px; }
+  /* the goal card is information only: it never takes taps (it used to sit over the pause menu's Resume button), and it hides while a panel is open */
+  #goalCard { pointer-events:none; } body:has(.modal:not([hidden])) #goalCard { visibility:hidden; }
   #goalCard .gk { display:inline-block; background:var(--sun); color:var(--ink); font-size:13px; font-weight:900; letter-spacing:.14em; padding:2px 12px; border:2.5px solid var(--ink); border-radius:10px; }
   #goalCard .gk.new { background:var(--coral); color:var(--paper); }
   #goalCard .gm { font-size:13px; font-weight:800; opacity:.8; margin-top:8px; }
@@ -70,7 +79,7 @@
   body.carding #toast { opacity:0 !important; }
   @media (max-height:500px) { #goalCard { top:31%; width:min(600px,66vw); padding:7px 14px 8px; border-width:3px; } #goalCard .gm { display:none; } #goalCard h2 { font-size:20px; margin:3px 0 2px; } #goalCard p { font-size:13px; } #goalCard .gt { font-size:11px; margin-top:3px; } #goalCard .gk { font-size:11px; } }
   #goal.ramp { background:var(--sun); } #goal.ramp b { color:var(--ink); } #goal.ramp b em { color:var(--coral); } #goal.ramp small { color:var(--ink); }
-  #goal.flash { animation:goalpop .6s ease-out 2, goalglow 2.4s ease-in-out infinite; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
+  #goal.flash { animation:goalpop .6s ease-out 2; } @keyframes goalpop { 40% { transform:translateX(-50%) scale(1.12); } }
   #rush { top:122px; left:50%; transform:translateX(-50%) rotate(-2deg); font-size:18px; font-weight:900; color:var(--ink); background:var(--mint); border:2.5px solid var(--ink); border-radius:12px; box-shadow:2px 3px 0 var(--ink); padding:3px 12px; animation:pulse 0.8s infinite; }
   #precise { bottom:44px; left:calc(50% + 140px); font-size:11px; font-weight:900; letter-spacing:2px; color:var(--ink); background:var(--gem); border:2px solid var(--ink); border-radius:8px; padding:2px 7px; }
   .statgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
@@ -87,7 +96,11 @@
   #speedlines { inset:-10%; opacity:0; transition:opacity .25s; background:repeating-conic-gradient(from 0deg at 50% 55%, transparent 0 5deg, rgba(255,246,234,.22) 5deg 5.6deg, transparent 5.6deg 11deg);
     -webkit-mask-image:radial-gradient(ellipse at 50% 55%, transparent 32%, #000 78%); mask-image:radial-gradient(ellipse at 50% 55%, transparent 32%, #000 78%); }
   #speedlines.on { opacity:1; animation:slines .18s steps(2) infinite; } @keyframes slines { 50% { transform:rotate(2.5deg); } }
-  #upT.nudge { animation:upnudge 1s ease-in-out infinite; } @keyframes upnudge { 50% { transform:scale(1.12); box-shadow:0 0 0 4px rgba(255,196,61,.55), 2px 3px 0 var(--ink); } }
+  /* Upgrades nudge: only transform and opacity animate (an animated box-shadow left square corner artifacts in some browsers) */
+  #upT { position:relative; }
+  #upT.nudge { animation:upnudge 1s ease-in-out infinite; } @keyframes upnudge { 50% { transform:scale(1.1); } }
+  #upT.nudge::after { content:''; position:absolute; inset:-6px; border-radius:16px; border:4px solid rgba(255,196,61,.6); opacity:0; pointer-events:none; animation:upglow 1s ease-in-out infinite; } @keyframes upglow { 50% { opacity:1; } }
+  @media (prefers-reduced-motion: reduce) { #upT.nudge, #upT.nudge::after { animation:none; } #upT.nudge::after { opacity:1; } }
   #title { position:fixed; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 60%, rgba(255,159,134,.35), rgba(28,22,80,.92) 70%); text-align:center; padding:16px; box-sizing:border-box; }
   #title h1 { font-size:clamp(40px,9vw,84px); margin:0; line-height:.95; letter-spacing:1px; color:var(--sun); font-weight:900; text-shadow:3px 4px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink); transform:rotate(-3deg); }
   #title h1 span { display:block; color:var(--mint); font-size:.62em; transform:rotate(2deg); }
@@ -126,7 +139,8 @@
   #coach .cd { position:relative; width:150px; height:46px; } #coach .cd i { position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:var(--sun); border:3px solid var(--ink); box-shadow:0 0 0 6px rgba(255,196,61,.35); }
   #coach .cd s { position:absolute; left:8px; right:8px; top:50%; height:6px; margin-top:-3px; border-radius:3px; background:rgba(255,246,234,.4); }
   #coach.steer .cd i { animation:cslide 1.6s ease-in-out infinite; } @keyframes cslide { 0%,100% { transform:translateX(-52px); } 50% { transform:translateX(52px); } }
-  #coach.tap .cd s, #coach.goal .cd { display:none; } #coach.tap .cd i { animation:ctap 1s ease-out infinite; } @keyframes ctap { 0% { transform:scale(1.3); box-shadow:0 0 0 0 rgba(255,196,61,.7); } 30% { transform:scale(.85); } 100% { transform:scale(1); box-shadow:0 0 0 22px rgba(255,196,61,0); } }
+  #coach.tap .cd s, #coach.goal .cd { display:none; } #coach.tap .cd i { animation:ctap 1s ease-out infinite; } @keyframes ctap { 0% { transform:scale(1.3); } 30% { transform:scale(.85); } 100% { transform:scale(1); } }
+  #coach.tap .cd i::after { content:''; position:absolute; inset:-3px; border-radius:50%; border:6px solid rgba(255,196,61,.7); animation:cring 1s ease-out infinite; } @keyframes cring { 0% { transform:scale(1); opacity:1; } 100% { transform:scale(2.2); opacity:0; } }
   #coach.goal b::before { content:''; display:block; margin:-30px auto 6px; width:0; height:0; border:12px solid transparent; border-bottom:16px solid var(--sun); border-top:0; }
   body.in-garden #coach, body.in-garage #coach { display:none !important; }
   #toast.pop { animation:tpop .5s cubic-bezier(.3,1.6,.5,1); } @keyframes tpop { 0% { transform:translateX(-50%) scale(.4); } 100% { transform:translateX(-50%) scale(1); } }
@@ -136,8 +150,8 @@
   .maprow .dot { width:22px; height:22px; border-radius:50%; border:2.5px solid var(--ink); box-sizing:border-box; }
   .maprow b { font-size:14px; } .maprow small { display:block; font-size:11px; opacity:.8; }
   .maprow .here { font-size:12px; font-weight:900; color:var(--mint); padding:0 8px; }
-  @media (max-width:600px) {
-    #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; max-width:calc((100vw - 170px) / .68); box-sizing:border-box; } #right { transform-origin:top right; }
+  @media (max-width:600px) and (orientation:portrait) {
+    #left, #right { transform:scale(.68); } #left { transform-origin:top left; min-width:170px; max-width:calc((50vw - 44px) / .68); box-sizing:border-box; } #right { transform-origin:top right; }
     #toast { white-space:normal; width:92vw; font-size:19px; }
     body.touch #nitro { bottom:auto; top:140px; } body.touch #combo { bottom:auto; top:162px; }
     #goal { top:132px; max-width:94vw; min-width:0; padding:7px 10px 6px; } #goal b { font-size:15px; } #goal small { font-size:12px; }
@@ -146,7 +160,7 @@
   @media (max-height:500px) {
     body.touch #left, body.touch #right { transform:scale(.72); } body.touch #left { transform-origin:top left; max-width:290px; box-sizing:border-box; } body.touch #right { transform-origin:top right; }
     body.touch #comet { left:auto; right:12px; top:58%; transform:rotate(2deg); }
-    body.touch #goal { top:56px; max-width:min(48vw,calc(100vw - 460px)); min-width:0; padding:6px 10px 5px; } body.touch #goal b { font-size:13px; } body.touch #goal small { font-size:10px; } body.touch #goal .gbar { height:5px; margin-top:4px; }
+    body.touch #goal { top:56px; max-width:min(48vw,360px); min-width:0; padding:6px 10px 5px; } body.touch #goal b { font-size:13px; } body.touch #goal small { font-size:10px; } body.touch #goal .gbar { height:5px; margin-top:4px; }
     body.touch .tb { transform:scale(.85); } body.touch .tb.on { transform:scale(.85) translate(1px,2px); } body.touch #stick { transform:scale(.85); transform-origin:bottom left; } }
   #garage { position:fixed; inset:auto 0 0 0; display:flex; justify-content:center; padding:0 12px 12px; pointer-events:none; }
   #garage[hidden] { display:none; }
@@ -231,19 +245,25 @@
   /* short screens: pause buttons in two columns so Main menu is never cut off */
   @media (max-height:500px) { #pause .gpanel.menu { width:min(420px,100%); display:grid; grid-template-columns:1fr 1fr; gap:6px; } #pause .gpanel.menu > .ghead, #pause .gpanel.menu > p, #pResume, #pMenu { grid-column:1 / -1; } #pause .gpanel.menu .btn { padding:7px; font-size:14px; } #lore { display:none; } }
   /* phones: the HUD panels are scaled down, so their small print gets bigger and the least useful lines go */
-  @media (max-width:600px), (max-height:500px) and (pointer:coarse) { #missions div { font-size:14px; } #stars span { font-size:13px; } #stars small, #rate { display:none; } #nextCar small { font-size:14px; } }
+  @media (max-width:600px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) { #missions div { font-size:14px; } #ptw i { font-size:14px; } #stars, #rate, #nextCar { display:none; } #shop .btn { font-size:14px; } }
+  /* phones/tablets: the next-car line is hidden there, so a ready car makes the Garage button glow instead */
+  #garageBtn { position:relative; } #garageBtn.ready::after { content:''; position:absolute; inset:-6px; border-radius:16px; border:4px solid rgba(255,196,61,.6); pointer-events:none; animation:upglow 1s ease-in-out infinite; opacity:0; }
+  @media (prefers-reduced-motion: reduce) { #garageBtn.ready::after { animation:none; opacity:1; } }
+  /* the goal box and toasts size to their text instead of shrinking to half the screen (left:50% + translate) */
+  @media (max-width:600px) and (orientation:portrait) { #goal { width:max-content; max-width:min(94vw,440px); } }
+  @media (max-height:500px) { body.touch #goal { width:max-content; } body.touch #toast { white-space:normal; max-width:max(260px,calc(100vw - 400px)); font-size:20px; } body.touch #nitro { width:min(200px,30vw); } }
   @media (prefers-reduced-motion: reduce) { #title .go, .kb.wait { animation:none; } }
 </style>
 </head>
 <body>
-<div id="left" class="hud"><div id="pname">Moonlet I</div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div><div id="stars"></div><div id="missions"></div></div>
+<div id="left" class="hud"><div id="pname">Moonlet I</div><div id="ptw" class="twc"></div><div id="bar"><div id="barfill"></div></div><div id="pct">0% restored</div><div id="stars"></div><div id="missions"></div></div>
 <div id="right" class="hud"><div id="gems">0</div><div id="rate">0.0 / sec</div><div id="nextCar" hidden><small></small><i><s></s></i></div>
   <div id="shop"><button class="btn" id="upT">Upgrades</button><button class="btn alt" id="buyAll" hidden>Buy all</button><button class="btn alt2" id="gardenBtn">Gem Garden (H)</button><button class="btn alt" id="garageBtn">Garage (G)</button><button class="btn" id="mapBtn" hidden style="background:var(--paper)">Moonlets (M)</button></div></div>
 <div id="toast" class="hud"></div>
 <div id="drift" class="hud"></div>
 <div id="combo" class="hud"></div>
 <div id="goal" class="hud" hidden><b></b><small></small><i class="gbar" hidden><s></s></i></div>
-<div id="goalCard" hidden><span class="gk">YOUR GOAL</span><div class="gm"></div><h2></h2><p></p><div class="gt"></div></div>
+<div id="goalCard" hidden><span class="gk">YOUR GOAL</span><div class="gm"></div><div class="gw twc"></div><h2></h2><p></p><div class="gt"></div></div>
 <div id="rush" class="hud" hidden></div>
 <div id="comet" class="hud" hidden></div>
 <div id="precise" class="hud" hidden>PRECISION</div>
@@ -1315,6 +1335,7 @@ function showCard(kick, isNew, title, text, tip = '') {
   const c = $('goalCard'); clearTimeout(cardT);
   c.querySelector('.gk').textContent = kick; c.querySelector('.gk').classList.toggle('new', isNew);
   c.querySelector('.gm').textContent = `${planet.def.name} · ${planet.def.title}`;
+  { const tw = twistChips(planet.def); c.querySelector('.gw').innerHTML = tw ? `<b>TWIST</b>${tw}` : ''; }
   c.querySelector('h2').textContent = title; c.querySelector('p').innerHTML = text; c.querySelector('.gt').textContent = tip;
   c.classList.remove('fly', 'show'); c.hidden = false; void c.offsetWidth; c.classList.add('show'); SFX.star(); $('goal').hidden = true; document.body.classList.add('carding');
   cardT = setTimeout(flyCard, innerHeight < 500 ? 2300 : 3000); // short landscape: the card sits nearer the car, so it leaves sooner
@@ -1373,8 +1394,8 @@ function updateGoal(frac) {
 }
 function updateNextCar() {
   const o = CAR_OPTS.body.filter(b => b.cost > 0 && b.trophy == null && b.stars == null && !owns('body', b.id)).sort((a, b) => a.cost - b.cost)[0], el = $('nextCar');
-  if (!o) { el.hidden = true; return; }
-  const c = price(o.cost), f = Math.min(1, G.gems / c); el.hidden = false; el.classList.toggle('ready', f >= 1);
+  if (!o) { el.hidden = true; $('garageBtn').classList.remove('ready'); return; }
+  const c = price(o.cost), f = Math.min(1, G.gems / c); el.hidden = false; el.classList.toggle('ready', f >= 1); $('garageBtn').classList.toggle('ready', f >= 1);
   el.querySelector('small').textContent = f >= 1 ? `${o.name} car ready! Open the Garage` : `Next car: ${o.name} · ${Math.floor(f * 100)}%`;
   el.querySelector('s').style.width = (f * 100).toFixed(1) + '%';
 }
@@ -1385,6 +1406,7 @@ function updateUI() {
   $('missions').hidden = $('stars').hidden = G.planetIdx === 0 && planet.restored / planet.N < 0.2 && !planet.pad.visible;
   const frac = planet.restored / planet.N;
   $('pname').textContent = `${planet.def.name} · ${planet.def.title}`;
+  { const h = twistChips(planet.def); if ($('ptw').dataset.h !== h) { $('ptw').dataset.h = h; $('ptw').innerHTML = h; } }
   const goal = planet.def.goal;
   const paintGoal = !obj || obj.type === 'paint';
   $('pct').hidden = paintGoal && frac < goal && S.mode === 'drive'; $('pct').style.opacity = paintGoal ? '' : '.55';
@@ -1940,6 +1962,9 @@ function renderMap() {
   requestAnimationFrame(() => { const h = L.querySelector('.here'); if (h) h.parentElement.scrollIntoView({ block: 'center' }); });
 }
 const TWIST_TAG = { meadow: 'Meadow', ice: 'Ice', geysers: 'Geysers', wisps: 'Wisps', wind: 'Wind', hoops: 'Hoops', stars: 'Stars', bouncy: 'Bouncy', pads: 'Speed pads', portals: 'Portals', meteors: 'Meteors' };
+const TWIST_COLOR = { ice: '#9fe6ff', geysers: '#ff9a5a', wisps: '#c9a6ff', wind: '#d7f2e6', hoops: '#ffc43d', stars: '#fff1a8', bouncy: '#ff8fc8', pads: '#7fe3ff', portals: '#b38cff', meteors: '#ff7a5a' };
+// the moonlet's twists as bright chips, so a new moonlet's rule is obvious at a glance (HUD and goal card)
+const twistChips = (def) => (def.twists || [def.twist]).filter((t) => t !== 'meadow').map((t) => `<i style="background:${TWIST_COLOR[t] || '#fff6ea'}">${TWIST_TAG[t] || t}</i>`).join('') + (def.grav && def.grav < 1 ? '<i style="background:#e6dcff">Low gravity</i>' : '');
 const twistTags = (def) => `<span class="tags">${(def.twists || [def.twist]).map(t => `<i>${TWIST_TAG[t] || t}</i>`).join('')}${def.grav && def.grav < 1 ? '<i>Low gravity</i>' : ''}${def.R <= 8 ? '<i>Tiny</i>' : def.R >= 15 ? '<i>Big</i>' : ''}</span>`;
 function openMap() { if (G.planetIdx < 1 || !canPause()) return; paused = true; Platform.gameplayStop(); clearKeys(); openModal('map'); }
 const GOAL_TITLE = { paint: 'TURN THE GREY GROUND GREEN', shards: 'FIND THE STAR SHARDS', trick: 'PUT ON A TRICK SHOW', rescue: 'RESCUE THE MOON PUPS', race: 'GATE RALLY', chase: 'CATCH THE ZOOMER', smash: 'ROCK SMASH' };
@@ -2010,6 +2035,20 @@ addEventListener('keydown', (e) => {
   if (isAct('map', e.code)) { if (modal === 'map') closeModal(); else if (!modal && !paused) openMap(); return; }
   if (isAct('pause', e.code) && !modal) { if (paused && $('title').hidden) resume(); else pause(); }
 });
+// HUD layout: the corner panels change height (missions, next car), so the goal box is placed around them
+function layoutHud() {
+  const g = $('goal'), L = $('left').getBoundingClientRect(), R = $('right').getBoundingClientRect(), P = $('pauseBtn').getBoundingClientRect();
+  g.style.top = ''; g.style.maxWidth = '';
+  const cs = getComputedStyle(g), top = parseFloat(cs.top) || 0, cx = innerWidth / 2;
+  if (innerWidth / innerHeight < 0.9) { const hb = Math.max(L.bottom, R.bottom, P.bottom) + 14; if (hb > top) g.style.top = Math.round(hb) + 'px'; return; }
+  if (top < Math.max(L.bottom, R.bottom)) {
+    const room = 2 * Math.min(cx - L.right, R.left - cx) - 16;
+    if (room >= 200) g.style.maxWidth = Math.round(room) + 'px';
+    else { g.style.top = Math.round(Math.max(L.bottom, R.bottom, P.bottom) + 14) + 'px'; g.style.maxWidth = Math.round(Math.min(innerWidth * 0.6, 420)) + 'px'; } // too tight between the panels: sit below them
+  }
+}
+try { const ro = new ResizeObserver(() => layoutHud()); ro.observe($('left')); ro.observe($('right')); } catch {}
+addEventListener('resize', layoutHud);
 // keyboard menus: in the pause menu, arrow keys or W/S move between buttons and Enter/Space presses the focused one
 addEventListener('keydown', (e) => {
   if (modal || $('pause').hidden || !['ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'].includes(e.code)) return;
@@ -3576,13 +3615,14 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 let hiddenAt = 0, hidePaused = false;
+// left the tab mid-jump or mid-launch: show the pause menu as soon as the car is back to driving
+let pendingPause = false;
+setInterval(() => { if (pendingPause && !document.hidden && !garageOpen && !gardenOpen) { if (paused || !started) pendingPause = false; else if (canPause()) { pendingPause = false; pause(); } } }, 250);
 addEventListener('visibilitychange', () => {
   SFX.hidden(document.hidden);
-  if (document.hidden && started) { hidePaused = !paused; hiddenAt = performance.now(); pause(); save(); return; }
-  // back within a minute from an app switch: straight back to driving, no pause menu, no ad
-  if (!document.hidden && hidePaused && paused && !resuming && !modal && performance.now() - hiddenAt < 60000) {
-    hidePaused = false; paused = false; $('pause').hidden = true; S.jumpHeld = true; touch.lastT = performance.now(); clearKeys(); Platform.gameplayStart(); toast("Back in! Let's go", 1.4, true);
-  } else if (!document.hidden) hidePaused = false;
+  if (document.hidden && started) { hidePaused = !paused; hiddenAt = performance.now(); if (canPause()) pause(); else if (!paused && !garageOpen && !gardenOpen && !modal) pendingPause = true; save(); return; }
+  // coming back to the tab always shows the pause menu (user request): the player resumes when ready, and Resume is the natural ad break
+  if (!document.hidden) hidePaused = false;
 });
 addEventListener('pagehide', () => { if (started) save(); });
 applySettings();
