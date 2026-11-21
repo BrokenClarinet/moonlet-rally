@@ -241,3 +241,7 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 - While the big goal card is up, nothing else talks: the GOAL box, toasts and reward pops wait and show after it flies away. On portrait phones the card sits higher (clear of the car) and confetti is halved.
 - Portrait: the left panel narrows so it never runs under the gem panel at 390 px.
 - Moonlet I's ramp opens at 35% so the first launch comes sooner.
+
+## Playtest stats removed (2026-11-20)
+
+- The website's playtest stats panel is gone: `site/stats.php` is now a 404 stub (it overwrites the old page, since the deploy upload never deletes files) and the "Playtest stats" link is off the home page. Logging (`log.php`) still runs for signed-in players; its data stays in `private/data`, which the web server never serves.
