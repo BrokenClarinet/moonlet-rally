@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the password-protected website into dist/site and dist/moonlet-rally-site.zip.
+"""Build the website (password-protected playtest build, plus a public /play/ page) into dist/site and dist/moonlet-rally-site.zip.
 
 The game itself (index.html) is copied into site/private/game.php behind a PHP guard,
 so it can only be loaded through play.php after logging in.
@@ -24,6 +24,12 @@ assert "'./three.module.min.js'" in game and "MR_PLATFORM = 'demo'" in game and 
 guard = "<?php if (!defined('MR_OK')) { http_response_code(403); exit; } ?>\n"
 (OUT / 'private' / 'game.php').write_text(guard + game)
 
+# public play page (no login, no logging) for publisher submission forms that need an open link: /play/
+pub = (ROOT / 'index.html').read_text()
+pub = pub.replace("'./vendor/three.module.min.js'", "'../three.module.min.js'").replace("window.MR_PLATFORM = 'poki';", "window.MR_PLATFORM = 'demo';")
+assert "'../three.module.min.js'" in pub and "MR_PLATFORM = 'demo'" in pub and 'MR_LOG =' not in pub
+(OUT / 'play').mkdir(exist_ok=True)
+(OUT / 'play' / 'index.html').write_text(pub)
 shutil.copy(ROOT / 'vendor' / 'three.module.min.js', OUT / 'three.module.min.js')
 shutil.copy(ROOT / 'vendor' / 'THREE-LICENSE.txt', OUT / 'THREE-LICENSE.txt')
 
