@@ -224,6 +224,14 @@
   body.in-garage #pauseBtn, body.in-garden #pauseBtn { display:none !important; }
   @media (max-height:500px) { #title h1 { font-size:50px; } #title p { font-size:13px; margin:4px 0; } #title .go { font-size:19px; padding:8px 30px; margin-top:8px; } .menurow { margin-top:10px; }
     .modal { padding:8px; } .modal .gpanel { max-height:calc(100vh - 16px); } .srow { grid-template-columns:110px 1fr; } .kbrow { grid-template-columns:1fr 84px 84px; } }
+  /* title screen: show only the title over the moonlet (the HUD behind it read as clutter and overlapped the logo) */
+  body:has(#title:not([hidden])) .hud, body:has(#title:not([hidden])) #touch, body:has(#title:not([hidden])) #pauseBtn { visibility:hidden !important; }
+  /* an open panel (pause, settings, map...) hides the in-game messages that used to bleed through around it */
+  body:has(.modal:not([hidden])) #coach, body:has(.modal:not([hidden])) #toast, body:has(.modal:not([hidden])) #teaser { visibility:hidden !important; }
+  /* short screens: pause buttons in two columns so Main menu is never cut off */
+  @media (max-height:500px) { #pause .gpanel.menu { width:min(420px,100%); display:grid; grid-template-columns:1fr 1fr; gap:6px; } #pause .gpanel.menu > .ghead, #pause .gpanel.menu > p, #pResume, #pMenu { grid-column:1 / -1; } #pause .gpanel.menu .btn { padding:7px; font-size:14px; } #lore { display:none; } }
+  /* phones: the HUD panels are scaled down, so their small print gets bigger and the least useful lines go */
+  @media (max-width:600px), (max-height:500px) and (pointer:coarse) { #missions div { font-size:14px; } #stars span { font-size:13px; } #stars small, #rate { display:none; } #nextCar small { font-size:14px; } }
   @media (prefers-reduced-motion: reduce) { #title .go, .kb.wait { animation:none; } }
 </style>
 </head>
@@ -274,7 +282,7 @@
 <div id="title"><h1>MOONLET<span>RALLY</span></h1>
   <div id="loadView"><div id="loadbar"><div id="loadfill"></div></div><div id="loadtxt">Loading...</div></div>
   <div id="menuView" hidden>
-    <p>Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
+    <p id="lore">Dead little planets. One little car. Every tire track brings the ground back to life, and living planets grow gems for you, even while you're away.</p>
     <p style="font-weight:800;color:var(--sun)">Paint each moonlet green with your tire tracks, then launch off the golden ramp to the next one.</p>
     <p id="hint" style="font-size:13px;opacity:.75"></p>
     <button class="go" id="playBtn">PLAY</button>
@@ -1848,8 +1856,8 @@ function renderControls() {
   }
 }
 function updateLabels() {
-  $('hint').innerHTML = touchActive() ? (SET.tctl !== 'stick' ? 'Drag anywhere to steer. The car drives itself!<br>Tap to jump · in the air, swipe to flip and spin · BOOST for speed' : 'Left thumb: drag to steer, pull back to brake<br>Right thumb: JUMP, BOOST, DRIFT · in the air, push the stick to flip and spin')
-    : `${kn('up')} ${kn('left')} ${kn('down')} ${kn('right')} drive · ${kn('drift')} drift · ${kn('boost')} boost · ${kn('jump')} jump · ${kn('precise')} precision<br>In the air: ${kn('up')} ${kn('down')} flip, ${kn('left')} ${kn('right')} spin · ${kn('garage')} garage · ${kn('garden')} Gem Garden · ${kn('map')} moonlets · ${kn('pause')} pause`;
+  $('hint').innerHTML = touchActive() ? (SET.tctl !== 'stick' ? 'Drag anywhere to steer. The car drives itself!<br>Tap to jump · BOOST for speed' : 'Left thumb: drag to steer, pull back to brake<br>Right thumb: JUMP, BOOST, DRIFT · in the air, push the stick to flip and spin')
+    : `${kn('up')} ${kn('left')} ${kn('down')} ${kn('right')} drive · ${kn('jump')} jump · ${kn('drift')} drift · ${kn('boost')} boost<br>All keys: Controls`;
   $('garageBtn').innerHTML = touchActive() ? 'Garage' : `Garage (${kn('garage')})`;
   $('mapBtn').innerHTML = touchActive() ? 'Moonlets' : `Moonlets (${kn('map')})`;
 }
@@ -2002,6 +2010,14 @@ addEventListener('keydown', (e) => {
   if (isAct('map', e.code)) { if (modal === 'map') closeModal(); else if (!modal && !paused) openMap(); return; }
   if (isAct('pause', e.code) && !modal) { if (paused && $('title').hidden) resume(); else pause(); }
 });
+// keyboard menus: in the pause menu, arrow keys or W/S move between buttons and Enter/Space presses the focused one
+addEventListener('keydown', (e) => {
+  if (modal || $('pause').hidden || !['ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'].includes(e.code)) return;
+  const bs = [...$('pause').querySelectorAll('button')].filter((b) => b.offsetParent); if (!bs.length) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const i = bs.indexOf(document.activeElement), d = (e.code === 'ArrowUp' || e.code === 'KeyW') ? -1 : 1;
+  bs[i < 0 ? 0 : (i + d + bs.length) % bs.length].focus();
+}, true);
 // clicked buttons drop focus so Space and Enter keep driving the car
 addEventListener('pointerup', () => { const a = document.activeElement; if (a && a.tagName === 'BUTTON') a.blur(); });
 // touch: a floating thumb stick on the left half, buttons on the right; each finger is tracked on its own

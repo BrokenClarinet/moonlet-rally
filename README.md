@@ -246,3 +246,11 @@ Order: I paint, II shards, III trick, IV rescue, V race, then a mix through XX a
 
 - The website's playtest stats panel is gone: `site/stats.php` is now a 404 stub (it overwrites the old page, since the deploy upload never deletes files) and the "Playtest stats" link is off the home page. Logging (`log.php`) still runs for signed-in players; its data stays in `private/data`, which the web server never serves.
 - `/play/` returned 403 on Apache because `.htaccess` only listed `index.php` as the folder index; it now lists `index.html` too. The home page's link-preview image (`og:image`) is now a full URL, so chat apps can show it.
+
+## UI pass against Poki's UI and accessibility guidance (2026-11-20, v42)
+
+- Title screen shows only the title: the HUD, touch buttons and pause button no longer sit behind it. The long key list is down to the four main actions plus "All keys: Controls", and the phone hint is one short line. On short screens the story line is hidden.
+- In-game messages (coach, toasts, next-up teaser) hide while a panel like pause or settings is open, instead of bleeding through around it.
+- On short screens (640x360) the pause menu uses two columns, so Main menu is no longer cut off.
+- On phones the scaled-down HUD panels use bigger print for missions, stars and the next-car line. The least useful lines (garden rate, star reward hint) are hidden there.
+- Keyboard: arrow keys or W/S move between pause-menu buttons, and Enter/Space presses the focused one (Poki: menus usable with keyboard).
