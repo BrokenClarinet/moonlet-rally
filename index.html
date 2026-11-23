@@ -356,23 +356,31 @@
   <p class="gdhint">Phones and tablets use the on-screen buttons. Esc always pauses or goes back.</p>
 </div></div>
 
-<div id="adfake" hidden style="position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,14,50,.92);color:#fff6ea;font:800 18px system-ui,sans-serif;text-align:center"><div><b></b><br><small style="font-weight:600;opacity:.75">A real ad plays here on Poki</small></div></div>
+<div id="adfake" hidden style="position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,14,50,.92);color:#fff6ea;font:800 18px system-ui,sans-serif;text-align:center"><div><b></b><br><small style="font-weight:600;opacity:.75">A real ad plays here when the game is live</small></div></div>
 <div id="errbar" hidden style="position:fixed;left:8px;bottom:8px;z-index:30;max-width:min(560px,90vw);background:#3a2758;border:2.5px solid #2a1838;border-radius:12px;padding:6px 10px;font:600 12px system-ui,sans-serif;color:#fff6ea"></div>
 <script>
 // show errors on screen so testers can report them (the game keeps running)
 (function () {
   let n = 0;
-  const show = (msg) => { const el = document.getElementById('errbar'); if (!el || n++ > 4 || window.MR_PLATFORM === 'poki') return; el.hidden = false; el.textContent = 'Something went wrong: ' + String(msg).slice(0, 200) + ' (please include this in your bug report)'; };
+  const show = (msg) => { const el = document.getElementById('errbar'); if (!el || n++ > 4 || window.MR_PLATFORM === 'poki' || window.MR_PLATFORM === 'crazygames') return; el.hidden = false; el.textContent = 'Something went wrong: ' + String(msg).slice(0, 200) + ' (please include this in your bug report)'; };
   addEventListener('error', (e) => { if (e.message) show(e.message); });
   addEventListener('unhandledrejection', (e) => { const r = e.reason; if (r && !/fetch|network/i.test(String(r.message || r))) show(r.message || r); });
 })();
 </script>
-<script>window.MR_PLATFORM = 'poki'; // 'poki' = Poki SDK, 'demo' = pretend ads for private testing, 'none' = no ads
-// Poki injects the player's cloud save into localStorage around init, so the SDK starts first and the game waits for it before reading any save
+<script>window.MR_PLATFORM = 'poki'; // 'poki' = Poki SDK, 'crazygames' = CrazyGames SDK v3, 'demo' = pretend ads for private testing, 'none' = no ads
+// Portals inject or preload the player's cloud save around init, so the SDK starts first and the game waits for it before reading any save
 window.MR_SDK_READY = new Promise((resolve) => {
-  if (window.MR_PLATFORM !== 'poki') return resolve(false);
-  const s = document.createElement('script'); s.src = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
-  s.onload = () => { try { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); const pill = () => { try { window.PokiSDK.movePill(0, 58); } catch (e) {} }; window.PokiSDK.init().then(() => { pill(); resolve(true); }).catch(() => { pill(); resolve(true); }); } catch (e) { resolve(false); } };
+  const P = window.MR_PLATFORM;
+  if (P !== 'poki' && P !== 'crazygames') return resolve(false);
+  const s = document.createElement('script');
+  if (P === 'poki') {
+    s.src = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
+    s.onload = () => { try { if (/[?&]pokidebug\b/.test(location.search)) window.PokiSDK.setDebug(true); const pill = () => { try { window.PokiSDK.movePill(0, 58); } catch (e) {} }; window.PokiSDK.init().then(() => { pill(); resolve(true); }).catch(() => { pill(); resolve(true); }); } catch (e) { resolve(false); } };
+  } else {
+    // CrazyGames SDK v3: usable only after init(); on other sites its environment is 'disabled' and every call throws, so we skip it there
+    s.src = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
+    s.onload = () => { try { const sdk = window.CrazyGames.SDK; sdk.init().then(() => { const ok = sdk.environment === 'crazygames' || sdk.environment === 'local'; if (ok) { window.MR_CG = sdk; try { sdk.game.loadingStart(); } catch (e) {} } resolve(ok); }).catch(() => resolve(false)); } catch (e) { resolve(false); } };
+  }
   s.onerror = () => resolve(false);
   document.head.appendChild(s);
 });
@@ -392,12 +400,31 @@ const loadStep = async (f, txt) => { document.getElementById('loadfill').style.w
 // wait for the portal SDK (and its cloud save) before touching storage; never hang the game on it
 await loadStep(0.05, 'Loading your save');
 await Promise.race([window.MR_SDK_READY || Promise.resolve(false), new Promise((r) => setTimeout(() => r(false), 8000))]);
-// ---------------------------------------------------------------- settings (saved per device; Poki syncs these too)
+// ---------------------------------------------------------------- storage
+// Every save goes through STORE. It is plain localStorage, except on CrazyGames where it is the SDK's Data module
+// (synced to the player's CrazyGames account). The Data module can't list its keys, so we keep our own list of them.
+const STORE = (() => {
+  const ls = { get: (k) => localStorage.getItem(k), set: (k, v) => localStorage.setItem(k, v), del: (k) => localStorage.removeItem(k),
+    keys: () => { const out = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('moonletRally.')) out.push(k); } return out; } };
+  const d = window.MR_CG && window.MR_CG.data; if (!d) return ls;
+  const IDX = 'moonletRally.index';
+  let idx = []; try { idx = JSON.parse(d.getItem(IDX)) || []; } catch (e) { if (e && e.code === 'dataModuleDisabled') return ls; } // Progress Save switched off on the portal: fall back to this device
+  // first run on CrazyGames with an old local save on this device: copy it over once (never over existing cloud data)
+  try { if (!d.getItem('moonletRally.v1') && localStorage.getItem('moonletRally.v1')) { for (const k of ls.keys()) { d.setItem(k, localStorage.getItem(k)); if (!idx.includes(k)) idx.push(k); } d.setItem(IDX, JSON.stringify(idx)); } } catch {}
+  const keep = () => { try { d.setItem(IDX, JSON.stringify(idx)); } catch {} };
+  return {
+    get: (k) => d.getItem(k),
+    set: (k, v) => { d.setItem(k, v); if (!idx.includes(k)) { idx.push(k); keep(); } },
+    del: (k) => { d.removeItem(k); const i = idx.indexOf(k); if (i >= 0) { idx.splice(i, 1); keep(); } },
+    keys: () => idx.slice(),
+  };
+})();
+// ---------------------------------------------------------------- settings (saved per device; Poki and CrazyGames sync these too)
 const SET_KEY = 'moonletRally.settings';
 const SET_DEF = { quality: matchMedia('(pointer: coarse)').matches ? 'medium' : 'high', outlines: true, shake: true, speedfx: true, cam: 'normal', guide: true, touch: 'auto', tctl: 'swipe', fps: false, sound: true, vol: 'med' };
 let SET = { ...SET_DEF };
-try { Object.assign(SET, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch {}
-const saveSettings = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch {} };
+try { Object.assign(SET, JSON.parse(STORE.get(SET_KEY)) || {}); } catch {}
+const saveSettings = () => { try { STORE.set(SET_KEY, JSON.stringify(SET)); } catch {} };
 let resetting = false, started = false;
 
 // ---------------------------------------------------------------- art kit: toon shading, ink outlines, faceted props
@@ -1264,7 +1291,7 @@ function spawn(at, up, color, spread) {
 const SAVE_KEY = 'moonletRally.v1';
 const playLog = { t: 0, m: {}, ld: 0, fs: 0, fn: 0 }; // playtest timing (only sent on the website build)
 const G = { at: null, curFrac: 0, up: {}, gems: 0, tires: 0, sprink: 0, done: [], planetIdx: 0, nitro: 0.5, cur: { silo: 0, lvl: 0 }, car: { ...DEFAULT_CAR }, owned: [], stats: {}, siloLvl: 0, lifeV: 2, missions: null, mDone: 0, daily: null };
-const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; } }, set(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} } };
+const store = { get() { try { return JSON.parse(STORE.get(SAVE_KEY)); } catch { return null; } }, set(v) { try { STORE.set(SAVE_KEY, JSON.stringify(v)); } catch {} } };
 const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const mult = () => 1 + 0.25 * G.sprink;
@@ -1434,7 +1461,7 @@ function audioMute(m) { SFX.adMute(m); }
 const SFX = (() => {
   let ctx = null, master = null, sfxBus = null, noiseBuf = null, eng = null, drift = null, adMuted = false, lastGem = 0;
   const VOL = { low: 0.35, med: 0.6, high: 0.9 };
-  const level = () => (SET.sound ? (VOL[SET.vol] ?? 0.6) : 0);
+  const level = () => (SET.sound && !window.MR_PORTAL_MUTE ? (VOL[SET.vol] ?? 0.6) : 0);
   function init() {
     if (ctx) { if (ctx.state === 'suspended' && !adMuted) ctx.resume().catch(() => {}); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
@@ -1518,20 +1545,45 @@ const SFX = (() => {
 
 const Platform = (() => {
   const sdk = () => (window.PokiSDK && window.MR_PLATFORM === 'poki') ? window.PokiSDK : null;
-  let inGameplay = false, adBusy = false;
+  const cg = () => (window.MR_PLATFORM === 'crazygames' && window.MR_CG) || null;
+  let inGameplay = false, adBusy = false, rewardOff = false; const lastReward = {};
   const ready = window.MR_SDK_READY || Promise.resolve(false);
   const demo = window.MR_PLATFORM === 'demo';
   // demo builds (private website, test link) show a stand-in card where a real ad would play
   const fakeAd = (text, ms) => new Promise((res) => { const el = $('adfake'); el.querySelector('b').textContent = text; el.hidden = false; setTimeout(() => { el.hidden = true; res(); }, ms); });
   let demoLastBreak = performance.now();
+  // CrazyGames: video rewards can't play (ad blocker, or ads still off during Basic Launch), so hide every rewarded button
+  const REWARD_BTNS = ['gad', 'gdad', 'gdx', 'wAd', 'dAd'];
+  const noRewards = () => { if (rewardOff) return; rewardOff = true; for (const id of REWARD_BTNS) { const el = $(id); if (el) el.hidden = true; } };
+  // CrazyGames ad: block input at once, mute only when the ad really starts, carry on when it ends or fails.
+  // The SDK quietly skips midgame ads asked for too soon (max one per 3 minutes), so give up waiting if nothing starts.
+  const cgAd = (kind) => new Promise((res) => {
+    let started = false, done = false;
+    const end = (ok, err) => { if (done) { if (started) audioMute(false); return; } done = true; if (err && (err.code === 'adblock' || err.code === 'adsDisabled') && kind === 'rewarded') noRewards(); res(ok); };
+    const wait = setTimeout(() => { if (!started) end(false); }, kind === 'rewarded' ? 30000 : 10000); // the SDK normally answers at once (adCooldown, unfilled...); this is only a safety net
+    try {
+      cg().ad.requestAd(kind, {
+        adStarted: () => { started = true; clearTimeout(wait); audioMute(true); clearKeys(); },
+        adFinished: () => { clearTimeout(wait); end(true); },
+        adError: (e) => { clearTimeout(wait); end(false, e); },
+      });
+    } catch (e) { clearTimeout(wait); end(false, e); }
+  });
   const api = {
-    ready, get hasAds() { return !!sdk() || demo; }, get adBusy() { return adBusy; },
-    loadingFinished() { ready.then(() => sdk()?.gameLoadingFinished()); },
-    gameplayStart() { if (!inGameplay && !adBusy) { inGameplay = true; sdk()?.gameplayStart(); } },
-    gameplayStop() { if (inGameplay && !adBusy) { inGameplay = false; sdk()?.gameplayStop(); } },
+    ready, get hasAds() { return !!sdk() || demo || (!!cg() && !rewardOff); }, get adBusy() { return adBusy; },
+    loadingFinished() { ready.then(() => { sdk()?.gameLoadingFinished(); try { cg()?.game.loadingStop(); } catch (e) {} }); },
+    gameplayStart() { if (!inGameplay && !adBusy) { inGameplay = true; sdk()?.gameplayStart(); try { cg()?.game.gameplayStart(); } catch (e) {} } },
+    gameplayStop() { if (inGameplay && !adBusy) { inGameplay = false; sdk()?.gameplayStop(); try { cg()?.game.gameplayStop(); } catch (e) {} } },
+    // a short celebration from the portal for rare big moments (CrazyGames only; Poki has no equivalent)
+    happy() { try { cg()?.game.happytime(); } catch (e) {} },
     // natural break (between moonlets, leaving the garage); resolves when play may continue
     commercialBreak() {
-      const s = sdk();
+      const s = sdk(), c = cg();
+      if (c) {
+        if (adBusy) return Promise.resolve();
+        api.gameplayStop(); adBusy = true; clearKeys();
+        return cgAd('midgame').then(() => { adBusy = false; audioMute(false); clearKeys(); });
+      }
       if (!s) { // demo: Poki decides real ad frequency; here, at most one stand-in break every 3 minutes
         if (!demo || adBusy || performance.now() - demoLastBreak < 180000) return Promise.resolve();
         demoLastBreak = performance.now(); api.gameplayStop(); adBusy = true; audioMute(true); clearKeys();
@@ -1543,14 +1595,30 @@ const Platform = (() => {
     },
     // opt-in reward ad; resolves true when the reward should be given
     rewardedBreak() {
-      const s = sdk(); if (adBusy || (!s && !demo)) return Promise.resolve(false);
-      const was = inGameplay; api.gameplayStop(); adBusy = true; audioMute(true); clearKeys();
-      const run = s ? s.rewardedBreak().catch(() => false) : fakeAd('Rewarded ad', 1800).then(() => true);
-      return run.then((ok) => { adBusy = false; audioMute(false); clearKeys(); if (was) api.gameplayStart(); return !!ok; });
+      const s = sdk(), c = cg(); if (adBusy || (!s && !demo && !c) || (c && rewardOff)) return Promise.resolve(false);
+      const was = inGameplay; api.gameplayStop(); adBusy = true; if (!c) audioMute(true); clearKeys();
+      const run = c ? cgAd('rewarded') : s ? s.rewardedBreak().catch(() => false) : fakeAd('Rewarded ad', 1800).then(() => true);
+      return run.then((ok) => {
+        adBusy = false; audioMute(false); clearKeys(); if (was) api.gameplayStart();
+        if (c && !ok) toast(rewardOff ? 'Video rewards are not available right now' : 'No video right now, try again later', 2.5);
+        return !!ok;
+      });
     },
-    getUser() { const s = sdk(); return s && s.getUser ? s.getUser().catch(() => null) : Promise.resolve(null); },
-    login() { const s = sdk(); return s && s.login ? s.login().catch(() => {}) : Promise.resolve(); },
+    // login button on the title screen: shown to guests only, and only where the portal has accounts
+    // CrazyGames doesn't allow the same rewarded button to be watched back to back: rest it for a few minutes after a reward
+    cooling(id) { return !!cg() && performance.now() - (lastReward[id] ?? -1e9) < 240000; },
+    rewarded(id) { lastReward[id] = performance.now(); },
+    get canLogin() { const c = cg(); return !!sdk() || !!(c && c.user && c.user.isUserAccountAvailable); },
+    getUser() { const s = sdk(), c = cg(); if (c) { try { return c.user.getUser().catch(() => null); } catch (e) { return Promise.resolve(null); } } return s && s.getUser ? s.getUser().catch(() => null) : Promise.resolve(null); },
+    login() { const s = sdk(), c = cg(); if (c) { try { return c.user.showAuthPrompt().catch(() => {}); } catch (e) { return Promise.resolve(); } } return s && s.login ? s.login().catch(() => {}) : Promise.resolve(); },
   };
+  // CrazyGames: ad blocker means no rewarded videos; the portal's own mute switch overrides our sound setting
+  ready.then(() => {
+    const c = cg(); if (!c) return;
+    try { c.ad.hasAdblock().then((b) => { if (b) noRewards(); }).catch(() => {}); } catch (e) {}
+    const applyMute = (st) => { window.MR_PORTAL_MUTE = !!(st && st.muteAudio); SFX.setLevel(); };
+    try { applyMute(c.game.settings); c.game.addSettingsChangeListener(applyMute); } catch (e) {}
+  });
   return api;
 })();
 function clearKeys() { for (const k in keys) keys[k] = false; }
@@ -1625,7 +1693,7 @@ function renderGarage() {
   $('tabParts').classList.toggle('on', garageTab === 'parts'); $('tabUpg').classList.toggle('on', garageTab === 'upg');
   $('gParts').hidden = garageTab !== 'parts'; $('gUpg').hidden = garageTab !== 'upg';
   renderUpgrades();
-  $('gad').hidden = !Platform.hasAds;
+  $('gad').hidden = !Platform.hasAds || Platform.cooling('gad');
   for (const [kind, el] of GARAGE_ROWS) {
     const row = $(el); row.innerHTML = '';
     for (const o of CAR_OPTS[kind]) {
@@ -1655,7 +1723,7 @@ $('garageBtn').onclick = () => openGarage('parts');
 $('tabParts').onclick = () => { garageTab = 'parts'; renderGarage(); };
 $('tabUpg').onclick = () => { garageTab = 'upg'; renderGarage(); };
 $('gclose').onclick = closeGarage;
-$('gad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { const g = Math.round(Math.max(40 * (1 + G.planetIdx), gemRate() * 600)); G.gems += g; toast(`+${g} ${GEM} thanks for watching!`, 2); renderGarage(); save(); } });
+$('gad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { Platform.rewarded('gad'); const g = Math.round(Math.max(40 * (1 + G.planetIdx), gemRate() * 600)); G.gems += g; toast(`+${g} ${GEM} thanks for watching!`, 2); renderGarage(); save(); } });
 addEventListener('keydown', (e) => { if (isAct('garage', e.code) && started && !paused) garageOpen ? closeGarage() : openGarage(); if (e.code === 'Escape' && garageOpen) closeGarage(); });
 
 // ---------------------------------------------------------------- gem garden (idle area)
@@ -1695,20 +1763,20 @@ function unpackLife(str, N, into) {
 function pruneLife() {
   try {
     let total = 0; const keys = [];
-    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || !k.startsWith('moonletRally.')) continue; total += k.length + (localStorage.getItem(k) || '').length; if (k.startsWith('moonletRally.life.')) keys.push(k); }
+    for (const k of STORE.keys()) { total += k.length + (STORE.get(k) || '').length; if (k.startsWith('moonletRally.life.')) keys.push(k); }
     keys.sort((a, b) => +a.split('.').pop() - +b.split('.').pop());
-    while (total > 700000 && keys.length > 1) { const k = keys.shift(); if (+k.split('.').pop() === atIdx()) continue; total -= (localStorage.getItem(k) || '').length; localStorage.removeItem(k); }
+    while (total > 700000 && keys.length > 1) { const k = keys.shift(); if (+k.split('.').pop() === atIdx()) continue; total -= (STORE.get(k) || '').length; STORE.del(k); }
   } catch {}
 }
 function stashLife() {
-  try { localStorage.setItem(LIFE_KEY(atIdx()), packLife(planet.life)); } catch {}
+  try { STORE.set(LIFE_KEY(atIdx()), packLife(planet.life)); } catch {}
   pruneLife();
   const here = atIdx(), frac = planet.restored / planet.N;
   if (here < G.done.length) G.done[here].frac = Math.max(G.done[here].frac, frac); else G.curFrac = frac;
 }
 function restoreLife(idx) {
   let ok = false;
-  try { ok = unpackLife(localStorage.getItem(LIFE_KEY(idx)), planet.N, planet.life); } catch {}
+  try { ok = unpackLife(STORE.get(LIFE_KEY(idx)), planet.N, planet.life); } catch {}
   if (!ok && idx < G.done.length) { // older saves: grow back a restored cap of the right size
     const ax = new THREE.Vector3(0.3, 1, 0.2).normalize(), d = planet.dirs, order = [...Array(planet.N).keys()];
     const dot = (i) => d[i * 3] * ax.x + d[i * 3 + 1] * ax.y + d[i * 3 + 2] * ax.z;
@@ -1779,7 +1847,7 @@ function renderGarden() {
   const items = gardenItems();
   $('gdgems').innerHTML = fmt(G.gems) + ' ' + GEM;
   $('gdall').innerHTML = `Harvest all · ${fmt(gardenReady())} ${GEM}`;
-  $('gdad').hidden = !Platform.hasAds;
+  $('gdad').hidden = !Platform.hasAds || Platform.cooling('gdad');
   $('gS').innerHTML = `Sprinklers: all gardens +25% · ${fmt(costS())} ${GEM}`; $('gS').disabled = G.gems < costS();
   const maxSilo = (G.siloLvl || 0) >= SILO_STEPS.length - 1;
   $('gSilo').innerHTML = maxSilo ? `Silos: ${hrs(siloHours())} (max)` : `Bigger silos: hold ${hrs(SILO_STEPS[(G.siloLvl || 0) + 1])} · ${fmt(siloCost())} ${GEM}`; $('gSilo').disabled = maxSilo || G.gems < siloCost();
@@ -1806,7 +1874,7 @@ $('gdall').onclick = () => { doubleOffer = 0; gardenItems().forEach(it => harves
 $('gdx').onclick = () => { const v = doubleOffer; if (v < 1) return; Platform.rewardedBreak().then((ok) => { if (ok) { G.gems += v; stat('adDoubles', 1); doubleOffer = 0; toast(`Doubled! +${fmt(v)} ${GEM}`, 2); renderGarden(); save(); } }); };
 $('gS').onclick = () => { if (G.gems >= costS()) { G.gems -= costS(); G.sprink++; renderGarden(); save(); } };
 $('gSilo').onclick = () => { if ((G.siloLvl || 0) < SILO_STEPS.length - 1 && G.gems >= siloCost()) { G.gems -= siloCost(); G.siloLvl = (G.siloLvl || 0) + 1; renderGarden(); save(); toast(`Silos now hold ${hrs(siloHours())}!`, 2); } };
-$('gdad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { tickGarden(1800); renderGarden(); save(); } });
+$('gdad').onclick = () => Platform.rewardedBreak().then((ok) => { if (ok) { Platform.rewarded('gdad'); tickGarden(1800); renderGarden(); save(); } });
 addEventListener('keydown', (e) => { if (isAct('garden', e.code) && started && !paused) gardenOpen ? closeGarden() : openGarden(); if (e.code === 'Escape' && gardenOpen) closeGarden(); });
 let gardenUiAcc = 0;
 function renderGardenScene(dt) {
@@ -1839,11 +1907,11 @@ const ACTIONS = [
 const BIND_KEY = 'moonletRally.keys';
 const defaultBinds = () => Object.fromEntries(ACTIONS.map(([a, , d]) => [a, [...d]]));
 let binds = defaultBinds();
-try { const b = JSON.parse(localStorage.getItem(BIND_KEY)); if (b) for (const [a] of ACTIONS) if (Array.isArray(b[a]) && b[a].length === 2) binds[a] = b[a].map(c => typeof c === 'string' && c !== 'Escape' ? c : null); } catch {}
+try { const b = JSON.parse(STORE.get(BIND_KEY)); if (b) for (const [a] of ACTIONS) if (Array.isArray(b[a]) && b[a].length === 2) binds[a] = b[a].map(c => typeof c === 'string' && c !== 'Escape' ? c : null); } catch {}
 let BOUND = new Set();
 const rebuildBound = () => { BOUND = new Set(Object.values(binds).flat().filter(Boolean)); };
 rebuildBound();
-const saveBinds = () => { rebuildBound(); try { localStorage.setItem(BIND_KEY, JSON.stringify(binds)); } catch {} };
+const saveBinds = () => { rebuildBound(); try { STORE.set(BIND_KEY, JSON.stringify(binds)); } catch {} };
 const act = (a) => binds[a].some(c => c && keys[c]);
 const isAct = (a, code) => binds[a].includes(code);
 const KN = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', ShiftLeft: 'L Shift', ShiftRight: 'R Shift', ControlLeft: 'L Ctrl', ControlRight: 'R Ctrl', AltLeft: 'L Alt', AltRight: 'R Alt', MetaLeft: 'L Meta', MetaRight: 'R Meta', Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\', CapsLock: 'Caps' };
@@ -1886,7 +1954,9 @@ function updateLabels() {
 addEventListener('keydown', (e) => { if (Platform.adBusy) { e.preventDefault(); return; } keys[e.code] = true; if (BOUND.has(e.code) || ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; for (const k of ['D', 'B', 'J', 'P']) touch[k] = false; touch.sx = touch.sy = 0; if (typeof swRest === 'function') swRest(); });
-const touchDetected = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+// CrazyGames asks games to trust its device info over touch detection
+const cgDevice = (() => { try { return window.MR_CG.user.systemInfo.device.type || null; } catch (e) { return null; } })();
+const touchDetected = cgDevice ? (cgDevice !== 'desktop' || matchMedia('(pointer: coarse)').matches) : (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
 const touchActive = () => SET.touch === 'on' || (SET.touch === 'auto' && touchDetected);
 const swipeMode = () => touch.active && SET.tctl !== 'stick';
 // touch help text, worded for whichever steering the player uses
@@ -1933,7 +2003,7 @@ function renderSettings() {
 }
 let resetArm = 0;
 $('sReset').onclick = () => {
-  if (Date.now() - resetArm < 3000) { resetting = true; try { localStorage.removeItem(SAVE_KEY); for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} location.reload(); return; }
+  if (Date.now() - resetArm < 3000) { resetting = true; try { STORE.del(SAVE_KEY); for (const k of STORE.keys()) if (k.startsWith('moonletRally.life.')) STORE.del(k); } catch {} location.reload(); return; }
   resetArm = Date.now(); $('sReset').textContent = 'Tap again to erase all progress';
   setTimeout(() => { $('sReset').textContent = 'Reset progress'; }, 3000);
 };
@@ -2012,7 +2082,7 @@ function renderStats() {
 // save code: move progress to another browser or device by copy and paste
 // grass is stored run-length encoded at 16 levels, so the code stays short
 const encodeSave = () => {
-  save(); let o = {}; try { o = JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch {}
+  save(); let o = {}; try { o = JSON.parse(STORE.get(SAVE_KEY)) || {}; } catch {}
   delete o.rate; return 'MR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
 };
 const decodeSave = (code) => { const m = String(code).trim().match(/^MR1\.([A-Za-z0-9+/=\s]+)$/); if (!m) return null; try { const o = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/\s/g, ''))))); if (!o || typeof o.gems !== 'number' || typeof o.planetIdx !== 'number') return null;
@@ -2027,7 +2097,7 @@ $('sCopy').onclick = async () => {
 $('sLoad').onclick = () => { $('sCodeBox').hidden = false; $('sCode').readOnly = false; $('sCode').value = ''; $('sCodeGo').hidden = false; $('sCodeHint').textContent = 'Paste a save code. This replaces the progress on this device.'; $('sCode').focus(); };
 $('sCodeGo').onclick = () => {
   const o = decodeSave($('sCode').value); if (!o) { $('sCodeHint').textContent = "That code doesn't look right. Copy the whole thing, starting with MR1."; return; }
-  resetting = true; try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch {} location.reload();
+  resetting = true; try { for (const k of STORE.keys()) if (k.startsWith('moonletRally.life.')) STORE.del(k); STORE.set(SAVE_KEY, JSON.stringify(o)); } catch {} location.reload();
 };
 $('kReset').onclick = () => { binds = defaultBinds(); saveBinds(); $('kHint').textContent = 'Keys are back to the defaults.'; renderControls(); updateLabels(); };
 addEventListener('keydown', (e) => {
@@ -3026,7 +3096,7 @@ function grantTrophies(loud) {
     const i = o.trophy, done = o.stars != null ? starCount() >= o.stars : (G.bloom && G.bloom[i] >= 4) || (G.done[i] && G.done[i].frac >= 0.9);
     if (!done) continue;
     G.owned.push(key);
-    if (loud) celebrate(`${o.stars != null ? 'STAR REWARD' : 'TROPHY'}! ${o.name} ${kind === 'paint' ? 'paint' : kind} unlocked in the garage`, 3);
+    if (loud) { celebrate(`${o.stars != null ? 'STAR REWARD' : 'TROPHY'}! ${o.name} ${kind === 'paint' ? 'paint' : kind} unlocked in the garage`, 3); Platform.happy(); }
   }
 }
 // Three stars per moonlet: bloom it to 75%, land a big trick, chain a trick combo. Each star pays out, adds +1% to all
@@ -3492,7 +3562,7 @@ if (saved) {
   Object.assign(G, { gems: saved.gems || 0, tires: saved.tires || 0, sprink: saved.sprink || 0, done: saved.done || [], planetIdx: saved.planetIdx || 0, car: { ...DEFAULT_CAR, ...(saved.car || {}) }, owned: saved.owned || [], cur: saved.cur || { silo: 0, lvl: 0 }, up: saved.up || {}, at: saved.at ?? null, curFrac: saved.curFrac || 0, stats: (saved.stats && typeof saved.stats === 'object') ? saved.stats : {}, siloLvl: saved.siloLvl ?? (saved.t ? 3 : 0), missions: Array.isArray(saved.missions) ? saved.missions : null, mDone: saved.mDone || 0, daily: saved.daily || null, upSeen: saved.upSeen ?? null, upHint: saved.upHint || 0, gift3: saved.gift3 || (saved.planetIdx || 0) > 2 ? 1 : 0, coached: saved.coached || (saved.planetIdx || 0) > 0 ? 1 : 0, stars: (saved.stars && typeof saved.stars === 'object') ? saved.stars : {}, bloom: (saved.bloom && typeof saved.bloom === 'object') ? saved.bloom : {}, objDone: (saved.objDone && typeof saved.objDone === 'object') ? saved.objDone : {}, objP: (saved.objP && typeof saved.objP === 'object') ? saved.objP : {}, objSeen: (saved.objSeen && typeof saved.objSeen === 'object') ? saved.objSeen : {}, nag: (saved.nag && typeof saved.nag === 'object') ? saved.nag : {} }); // saves from before silo upgrades keep their 2 hours
   if (G.at !== null && !(G.at >= 0 && G.at < G.planetIdx)) G.at = null;
   // saves from before the fix above may have grass filed under the wrong moonlet: drop it (visited moonlets regrow a cap of the right size)
-  if (saved.lifeV !== 2) { try { for (const k of Object.keys(localStorage)) if (k.startsWith('moonletRally.life.')) localStorage.removeItem(k); } catch {} }
+  if (saved.lifeV !== 2) { try { for (const k of STORE.keys()) if (k.startsWith('moonletRally.life.')) STORE.del(k); } catch {} }
 }
 applyCar();
 await loadStep(0.65, 'Waking the moonlet');
@@ -3632,12 +3702,12 @@ showMenu();
 Platform.loadingFinished();
 prepDaily(!!saved);
 showWelcome(); if (!welcome) showDaily();
-Platform.getUser().then((u) => { if (Platform.hasAds && !u) $('login').hidden = false; });
+Platform.getUser().then((u) => { if (Platform.canLogin && !u) $('login').hidden = false; });
 $('login').onclick = (e) => { e.stopPropagation(); Platform.login(); };
 $('login').onpointerdown = (e) => e.stopPropagation();
 // Playtest logging: only the password-protected website build sets window.MR_LOG (tools/build_site.py). Anonymous:
 // random ids, seconds played, moonlet, screen and device type. Never in the Poki build.
-if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
+if (window.MR_LOG && window.MR_PLATFORM !== 'poki' && window.MR_PLATFORM !== 'crazygames') {
   const rid = () => Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8);
   let vid = ''; try { vid = localStorage.getItem('moonletRally.vid') || ''; if (!vid) { vid = rid(); localStorage.setItem('moonletRally.vid', vid); } } catch (e) {}
   const sid = rid(), ret = !!saved;
@@ -3651,7 +3721,7 @@ if (window.MR_LOG && window.MR_PLATFORM !== 'poki') {
   setTimeout(() => send(false), 5000);
   addEventListener('pagehide', () => send(true, 'unload')); addEventListener('visibilitychange', () => { if (document.hidden) send(true, 'hidden'); });
 }
-if (window.MR_PLATFORM !== 'poki' || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet, gift, get obj() { return obj; }, objDone };
+if ((window.MR_PLATFORM !== 'poki' && window.MR_PLATFORM !== 'crazygames') || /[?&]pokidebug\b/.test(location.search)) window.__moonlet = { S, G, get planet() { return planet; }, keys, Platform, critters, SFX, toast, bonusText, quest, comet, gift, get obj() { return obj; }, objDone };
 requestAnimationFrame(frame);
 </script>
 </body>
